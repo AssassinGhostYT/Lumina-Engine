@@ -105,7 +105,7 @@ The **Build APK** workflow (`.github/workflows/android-build.yml`) runs on every
 2. Click the latest run.
 3. Download **LuminaEngine-apk** from **Artifacts**.
 
-Without signing secrets the APK is **debug-signed**: it installs normally, but it cannot update an APK signed with another key. To produce a release-signed APK, add these repository secrets:
+The CI APK is **debug-signed**: it installs normally, but it cannot update an APK signed with another key. For a release-signed APK, use the *Aab & Apk Build* workflow with these repository secrets:
 
 | Secret | What it is |
 |---|---|
