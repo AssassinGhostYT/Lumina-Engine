@@ -28,11 +28,17 @@ Visual blocks, a real code editor, an AI assistant and GitHub sync, powered by L
 
 ## 📥 Where do I download the app?
 
-> **Option 1 — Releases:** open the [latest release](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) and download the `.apk` from **Assets**.
+> **Option 1 — direct download:** **[LuminaEngine-0.5.1Beta.apk](https://github.com/AssassinGhostYT/Lumina-Engine/releases/download/v0.5.1Beta/LuminaEngine-0.5.1Beta.apk)** (97 MB, debug-signed, installs on any phone).
 >
-> **Option 2 — the robot builds it:** every push to `main` runs **Actions → Build APK**. Open the latest green run, scroll to **Artifacts** and download **LuminaEngine-apk**. This APK is debug-signed, so Android will ask you to allow installation from your browser/file manager.
+> **Option 2 — Releases page:** open the [latest release](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) and download the `.apk` from **Assets**.
+>
+> **Option 3 — the robot builds it:** every push to `main` runs **Actions → Build APK**. Open the latest green run, scroll to **Artifacts** and download **LuminaEngine-apk**.
+>
+> On Android you will need to allow installation from your browser/file manager the first time.
 >
 > You do **not** need a computer to try the engine. The source in this page is for developers who want to read, build or contribute.
+
+**Checksum (SHA-256):** `1f2aa901fdcc6b0b786360e845bfc157483226fef7411a3a4d72178e771bf977`
 
 | I want to... | Go to |
 |---|---|
@@ -91,9 +97,11 @@ Requirements: **JDK 21** and the **Android SDK** (Android Studio works).
 git clone https://github.com/AssassinGhostYT/Lumina-Engine.git
 cd Lumina-Engine
 chmod +x gradlew
-./gradlew :app:assembleRelease
-# APK: app/build/outputs/apk/release/app-release.apk
+./gradlew :app:assembleDebug
+# APK: app/build/outputs/apk/debug/app-debug.apk
 ```
+
+This debug build installs on any phone and needs no signing setup. To build a **release-signed** APK you need your own keystore (or the `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` environment variables) and then run `./gradlew :app:assembleRelease`.
 
 ---
 
