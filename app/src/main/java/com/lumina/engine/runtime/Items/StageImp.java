@@ -1,0 +1,1601 @@
+package com.lumina.engine.runtime.Items;
+
+import box2dLight.Light;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
+//import com.lumina.engine.LuminaApp;
+import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.ContactFilter;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.Joint;
+import com.badlogic.gdx.physics.box2d.Manifold;
+import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.Array;
+import com.lumina.engine.Helpers.Project;
+import com.lumina.engine.runtime.LoadingStage;
+import com.kotcrab.vis.ui.util.ToastManager;
+import com.lumina.engine.runtime.Utils.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
+import java.util.HashMap;
+import com.lumina.engine.Helpers.Pair;
+import box2dLight.RayHandler;
+
+public class StageImp extends ApplicationAdapter {
+    public static float WORLD_SCALE = 0.25f;
+	public World world = new World(new Vector2(0,-9.8f),true);
+	public boolean playing=true, debugBox2d = false;
+	/** True while a CameraView draws the scene again: elements must not run their update a second time. */
+	public static boolean secondaryPass = false;
+	/** The 3D world of a 3D scene (null in 2D scenes until something asks for it). */
+	protected com.lumina.engine.runtime.d3.World3D world3d;
+	public Stage UiStage,GameStage;
+	int steps=6,backgroundColor=0xFFFFFF;
+    public Box2DDebugRenderer debugRenderer;
+	SceneScript sceneScript;
+	ToastManager toastManager;
+	Color backgroundColorGdx= Color.WHITE;
+	public Project project;
+	public PropertySet<String,Object> propertySet;
+	public java.util.LinkedHashSet<StageImp> previousStages= new java.util.LinkedHashSet<>();
+	HashMap<String,Object> collisionMap= new HashMap<>();
+	//Image background;
+	StagePair stagePair;//useless...
+	public ProjectAssetLoader assetLoader;
+	LoadingStage loadingStage;
+	public Preferences preferences;
+	PlayerItem followX,followY,followRotation;
+	float[] cameraOffset = new float[]{0,0};
+	FPSCalc fPSCalc=new FPSCalc();
+	StageImp currentStage;
+	
+	private RayHandler rayHandler;
+	Viewport viewport;
+	boolean loadComplete=false,onCreateCalled=false;
+	public SpriteSheetLoader spriteSheetLoader;
+	public InputMultiplexer multiplexer;
+	CameraItem cameraItem;
+	private PropertySet<String,BitmapFont> bitmapFonts = new PropertySet<>();
+	ArrayList<LightInfo> lights= new ArrayList<>();
+	HashMap<String, Joint> joints = new HashMap<>();
+	int viewportWidth = -1,viewportHeight = -1;
+	
+	public StageImp(){
+		viewport = new FitViewport(720,1560);
+		fixCamera();
+	}
+	
+	public StageImp(Viewport port){
+		viewport = port;
+		fixCamera();
+	}
+	
+	public StageImp(ProjectAssetLoader loader){
+		this(new FitViewport(720,1560),loader);
+		fixCamera();
+	}
+	
+	public StageImp(Viewport port,ProjectAssetLoader projectAssetLoader){
+		super();
+		assetLoader = projectAssetLoader;
+		viewport = port;
+		fixCamera();
+	}
+	
+	private void fixCamera(){
+	    try {
+    	    OrthographicCamera cam = (OrthographicCamera) getCamera();
+            cam.zoom  = WORLD_SCALE;
+            cam.position.set(
+                cam.viewportWidth * cam.zoom / 2f,
+                cam.viewportHeight * cam.zoom / 2f,
+                0
+            );
+        } catch(Exception ex){}
+	}
+	
+	boolean needsUpdate = true;
+	public void init(Viewport viewport){
+	    if(propertySet==null || Gdx.app==null || Gdx.files == null) {
+	        //Gdx.files.external("init.null.error.txt").writeString(String.format("property: %1$s, app : %2$s, files : %3$s\n\n",propertySet!=null,Gdx.app!=null,Gdx.files != null),true);
+	        return;
+	    }
+		boolean landscape = propertySet.getString("or").equals("") || propertySet.getString("or").equals("landscape");
+	    float height = propertySet==null?0:propertySet.getFloat("logicHeight"),
+			width = propertySet==null?0:propertySet.getFloat("logicWidth");
+		if(height==0) height=1560;
+		if(width==0) width=720;
+		if(!landscape){
+			//invert when isn't landscape
+			float temp = height;
+			height = width;
+			width = temp;
+		}
+		float ratio = width/height;
+		//viewport = new FitViewport(10,10/ratio);
+		/*if(true || viewport==null || needsUpdate)*/
+		    viewport = new FitViewport(width,height);
+		    //else viewport.setWorldSize(width,height);
+		needsUpdate = (propertySet==null);
+		preferences = Gdx.app.getPreferences("prefs");
+		Gdx.input.setCatchKey(4,true);//back key
+		UiStage = new Stage(new FitViewport(width,height));
+		toastManager = new ToastManager(UiStage);
+		GameStage = new Stage(viewport){
+			@Override
+			public boolean keyDown(int key){
+				if(key == 4){
+					(currentStage==null?StageImp.this:currentStage).finish();
+					return true;
+				}
+				return false;
+			}
+		};
+		
+		loadingStage = new LoadingStage();
+		stagePair = new StagePair(UiStage,GameStage);
+		
+		if(project==null)
+		    project = new Project(Gdx.files.getExternalStoragePath());
+		initDone = true;
+		if(spriteSheetLoader!=null&&assetLoader!=null&&!isMain()){
+			onCreate();
+			if(sceneScript!=null)
+			sceneScript.onCreate();
+	    onCreateCalled = true;
+	    notifyBodies();
+	}
+		
+		rayHandler = new RayHandler(world);
+		rayHandler.setAmbientLight(0.1f, 0.1f, 0.1f, 1f);
+		setupLight();
+		setupCollision();
+		setupCollision();
+		multiplexer = new InputMultiplexer();
+		multiplexer.addProcessor(getInputProcessor());
+		if(is3D()) multiplexer.addProcessor(world3d().input());
+		// multiplexer.addProcessor(UiStage);
+		// multiplexer.addProcessor(GameStage);
+		Gdx.input.setInputProcessor(multiplexer);
+		
+		if(assetLoader==null){
+			assetLoader = new ProjectAssetLoader(project);
+			if(spriteSheetLoader==null){
+				spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
+					loadComplete = true;
+				});
+			}
+		} else if(spriteSheetLoader==null){
+			spriteSheetLoader = new SpriteSheetLoader(assetLoader,project,(errorHappend,message)->{
+				loadComplete = true;
+			});
+		} else {
+			loadComplete = true;
+			onCreateCalled = true;
+			if(assetLoader.isFinished()){
+		    	onCreate();
+			if(sceneScript!=null)
+				sceneScript.onCreate();
+			notifyBodies();
+		} else {
+			onCreateCalled = false;
+				loadComplete = false;
+			}
+		}
+		assetLoader.setAssetsLoadListener(()->{
+			spriteSheetLoader.start();
+		});
+		this.viewport = viewport;
+		updateViewport();
+		fixCamera();
+	}
+	
+	public StageImp updateViewport(){
+	    if(viewportWidth!=-1 && getGameStage()!=null && getUiStage()!=null){
+	        getGameStage().getViewport().update(viewportWidth,viewportHeight);
+            getUiStage().getViewport().update(viewportWidth,viewportHeight);
+	    }
+	    return this;
+	}
+	
+	public StageImp updateViewport(int width,int height){
+	    viewportWidth = width;
+	    viewportHeight = height;
+	    updateViewport();
+	    return this;
+	}
+	
+	/** The scene script object (or null); the generated code sets its public variables from the inspector. */
+	public SceneScript getSceneScript(){
+		return sceneScript;
+	}
+	
+	public StageImp setScript(SceneScript sceneScript){
+		this.sceneScript = sceneScript;
+		return this;
+	}
+	
+	public BitmapFont getFont(String path){
+		while(path.contains("//")){
+			path = path.replace("//","/");
+		}
+		if(!path.startsWith("/")) path = "/"+path;
+		if(bitmapFonts.containsKey(path))
+			return (BitmapFont)bitmapFonts.get(path);
+		BitmapFont font = com.lumina.engine.runtime.Utils.Utils.generateFontFrom(Gdx.files.absolute(path));
+		bitmapFonts.put(path,font);
+		return font;
+	}
+	
+	public RayHandler getRayHandler(){
+	    return rayHandler;
+	}
+	
+	public void addJoint(String name, Joint joint){
+		joints.put(name, joint);
+	}
+	
+	public Joint getJoint(String name){
+		return joints.get(name);
+	}
+	
+	ArrayList<Actor> actors = null;
+	
+	public void updateActors(){
+	    actors = null;
+	    orderBodies();
+	}
+	
+	public void setCamera(PlayerItem item){
+	    if(item instanceof CameraItem)
+	        this.cameraItem = (CameraItem) item;
+	}
+	
+	public void setCamera(CameraItem camera){
+	    this.cameraItem = camera;
+	    setCameraXY(camera);
+		cameraFollowX(camera);
+		cameraFollowY(camera);
+		setZoom(1f/(camera.getCameraDef().Zoom*WORLD_SCALE));
+    }
+	
+	com.badlogic.gdx.utils.Array<Actor> orderedActors = new com.badlogic.gdx.utils.Array<>();
+    
+	private final java.util.IdentityHashMap<Actor,float[]> ySortInfo = new java.util.IdentityHashMap<>();
+	private final java.util.ArrayList<Actor> ySortTmp = new java.util.ArrayList<>();
+	
+	/** The y the element is "standing" on: the bottom of its collider, or the bottom of the picture when it has none. */
+	private static float standingY(Actor a){
+		if(a instanceof PlayerItem){
+			com.badlogic.gdx.physics.box2d.Body b = null;
+			try { b = ((PlayerItem)a).getBody(); } catch(Exception ignored){}
+			if(b != null && b.getFixtureList().size > 0){
+				float min = Float.MAX_VALUE;
+				com.badlogic.gdx.math.Vector2 p = new com.badlogic.gdx.math.Vector2();
+				for(com.badlogic.gdx.physics.box2d.Fixture f : b.getFixtureList()){
+					com.badlogic.gdx.physics.box2d.Shape sh = f.getShape();
+					if(sh instanceof com.badlogic.gdx.physics.box2d.PolygonShape){
+						com.badlogic.gdx.physics.box2d.PolygonShape ps = (com.badlogic.gdx.physics.box2d.PolygonShape) sh;
+						for(int i = 0; i < ps.getVertexCount(); i++){
+							ps.getVertex(i, p);
+							min = Math.min(min, b.getWorldPoint(p).y);
+						}
+					} else if(sh instanceof com.badlogic.gdx.physics.box2d.CircleShape){
+						com.badlogic.gdx.physics.box2d.CircleShape cs = (com.badlogic.gdx.physics.box2d.CircleShape) sh;
+						min = Math.min(min, b.getWorldPoint(cs.getPosition()).y - cs.getRadius());
+					}
+				}
+				if(min != Float.MAX_VALUE) return min;
+			}
+		}
+		return a.getY();
+	}
+    
+	public com.badlogic.gdx.utils.Array<Actor> orderBodies(){
+	    orderedActors.clear();
+	    if(GameStage!=null) orderedActors.addAll(GameStage.getActors());
+	    if(UiStage!=null) orderedActors.addAll(UiStage.getActors());
+	    
+	    // Y Sort: everything inside a Y-Sort group shares the layer (z) of the group and is drawn by height (lower on the screen = in front)
+	    ySortInfo.clear();
+	    for(int i = 0; i < orderedActors.size; i++){
+	        Actor a = orderedActors.get(i);
+	        if(a instanceof GroupItem && ((GroupItem)a).isYSort()){
+	            GroupItem g = (GroupItem) a;
+	            ySortTmp.clear();
+	            g.collectDescendants(ySortTmp);
+	            for(Actor d : ySortTmp)
+	                if(!(d instanceof GroupItem) && !ySortInfo.containsKey(d)) ySortInfo.put(d, new float[]{g.getSortZ(), standingY(d)});
+	        }
+	    }
+	    
+	    orderedActors.sort(new Comparator<Actor>(){
+	        @Override
+	        public int compare(Actor a1, Actor a2){
+	            float[] i1 = ySortInfo.isEmpty() ? null : ySortInfo.get(a1), i2 = ySortInfo.isEmpty() ? null : ySortInfo.get(a2);
+	            int z1 = i1 != null ? (int) i1[0] : getZ(a1);
+	            int z2 = i2 != null ? (int) i2[0] : getZ(a2);
+	            int c = Integer.compare(z1, z2);
+	            if(c != 0) return c;
+	            if(i1 == null) return i2 == null ? 0 : -1; // same layer: what is outside a Y-Sort group first (a consistent total order)
+	            if(i2 == null) return 1;
+	            return Float.compare(i2[1], i1[1]); // higher on the screen first = behind
+	        }
+	        
+	        private int getZ(Actor actor){
+	            if(actor instanceof PlayerItem){
+	                try {
+	                    com.lumina.engine.ElementDefs.ItemDef def = ((PlayerItem)actor).getProperties();
+	                    if(def!=null) return def.getZ();
+	                } catch(Exception e){}
+	            }
+	            return actor.getZIndex();
+	        }
+	    });
+	    return orderedActors;
+	}
+	
+	public void addLight(String name,Light light){
+		lights.add(new LightInfo(name,light));
+	}
+	
+	public Light findLight(String name){
+		for(LightInfo lightInfo:lights)
+			if(lightInfo.name.equals(name))
+				return lightInfo.light;
+		return null;
+	}
+	
+	public void toast(String message,int duration){
+		toastManager.toFront();
+		toastManager.show(message,duration);
+	}
+	
+	public void toast(String message){
+		toast(message,2);
+	}
+	
+	public Project getProject(){
+		return project;
+	}
+	
+	public void drawDebug(){
+	    try {
+	        debugRenderer.render(world, GameStage.getCamera().combined);
+	    } catch(Exception ex){}
+	}
+	
+	public int toInt(String string,int onError) {
+	     try {
+	        return Utils.getInt(string);
+	     } catch(Exception ex){
+	        return onError;
+	     }
+	}
+	
+	public float toFloat(String string,float onError) {
+	    try {
+	        return Utils.getFloat(string);
+	    } catch(Exception ex){
+	        return onError;
+	    }
+	}
+	
+	public int toInt(String string) {
+	     return toInt(string,0);
+	}
+	
+	public float toFloat(String string) {
+	    return toFloat(string,0);
+	}
+	
+	public int getRealNumber(String key){
+	    return toInt(getValue(key));
+	}
+	
+	public int getNumber(String key){
+	    return toInt(getValue(key));
+	}
+	
+	public StageImp setSpriteSheetLoader(SpriteSheetLoader spriteSheetLoader){
+		this.spriteSheetLoader = spriteSheetLoader;
+		return this;
+	}
+	
+	public SpriteSheetLoader getSpriteSheetLoader(){
+		return spriteSheetLoader;
+	}
+	
+	private boolean initDone=false;
+	public boolean initComplete(){
+	    return initDone;
+	}
+	
+	private int framesAfterReady = 0;
+	private GroupFollower groupFollower;
+	/** Makes the parent links real (children follow their parents). */
+	public GroupFollower groups(){
+		if(groupFollower == null) groupFollower = new GroupFollower(this);
+		return groupFollower;
+	}
+
+	/** True when the assets are loaded, the scene's OnCreate ran and a few frames of the real scene were drawn (no loading screen). */
+	public boolean isReady(){
+		StageImp a = activeStage();
+		if(a == this) return loadComplete && onCreateCalled && framesAfterReady >= 3;
+		return a.initComplete() && a.framesAfterReady >= 3;
+	}
+	
+	/** The scene that is really running right now (this, or the scene opened from it). */
+	public StageImp activeStage(){
+		return currentStage == null ? this : currentStage;
+	}
+	
+	public PlayerItem findItem(String name){
+	    //String names="";
+		try {
+			for(Actor actor:GameStage.getActors()){
+				if(actor==null) continue;
+				String actorName=(actor.getName()==null)?"":actor.getName();
+				//names+=", "+actorName;
+				if(actorName.equals(name)) {
+					if(actor instanceof PlayerItem)
+						return (PlayerItem)actor;
+				}
+			}
+			for(Actor actor:UiStage.getActors()){
+				//if(actor!=null&&(actor instanceof PlayerItem)&&actor.getName()!=null&&actor.getName().equals(name))
+					//return (PlayerItem)actor;
+				if(actor==null) continue;
+				String actorName=(actor.getName()==null)?"":actor.getName();
+				//names+=", "+actorName;
+				if(actorName.equals(name)) {
+					if(actor instanceof PlayerItem)
+						return (PlayerItem)actor;
+				}
+			}
+		} catch(Exception ex){
+		    //throw new RuntimeException(ex);
+		}
+		//throw new RuntimeException("All :\n"+names);
+		return null;
+	}
+	
+	@Override
+	public final void create() {
+		super.create();
+		debugRenderer = new Box2DDebugRenderer();
+		//try {
+		    init(viewport);
+		// } catch(Exception ex){
+		    // throw new RuntimeException("error : " + ex.toString()+"\n full:\n"
+		        // +Utils.getStackTraceString(ex));
+		// }
+	}
+	
+	@Override
+    public void resize(int width, int height) {
+        getGameStage().getViewport().update(width,height);
+        getUiStage().getViewport().update(width,height);
+        viewportWidth = width;
+        viewportHeight = height;
+        if(currentStage!=null){
+            currentStage.getGameStage().getViewport().update(width,height);
+            currentStage.getUiStage().getViewport().update(width,height);
+        }
+    }
+	
+	public void onCreate(){
+		
+	}
+	
+	public void setupLight(){
+		if(!(rayHandler==null||propertySet==null)){
+			rayHandler.setBlur(propertySet.getString("Enable Blur").toString().equals("true"));
+			rayHandler.setBlurNum(propertySet.getInt("Blur Number"));
+			rayHandler.setCulling(propertySet.getString("Enable Culling").toString().equals("true"));
+			RayHandler.setGammaCorrection(propertySet.getString("Gamma Correction").toString().equals("true"));
+			rayHandler.setShadows(propertySet.getString("Enable Shadows").toString().equals("true"));
+			RayHandler.useDiffuseLight(propertySet.getString("Use Diffuse Light").toString().equals("true"));
+			try {
+			    if(!propertySet.getString("Ambient Light").equals(""))
+			        rayHandler.setAmbientLight(Color.valueOf(propertySet.getString("Ambient Light")));
+			} catch(Exception ex){}
+		}
+	}
+	
+	@Override
+	public final void resume() {
+		super.resume();
+		com.lumina.engine.runtime.d3.Sounds3D.resumeAll(); // sounds of the 3D behaviors / B3 blocks paused with the scene
+		if(!loadComplete) return;
+		if(currentStage==null){
+			onResume();
+			if(sceneScript!=null)
+				sceneScript.onResume();
+		} else currentStage.onResume();
+	}
+
+	@Override
+	public final void pause() {
+		super.pause();
+		com.lumina.engine.runtime.d3.Sounds3D.pauseAll();
+		if(!loadComplete) return;
+		if(currentStage==null){
+			onPause();
+			if(sceneScript!=null)
+				sceneScript.onPause();
+		} else currentStage.onPause();
+	}
+	
+	public void Pause(){
+		playing = false;
+	}
+	
+	public void Resume(){
+		playing = true;
+	}
+    
+    //idk why this ... :)
+    public boolean onCreateCalled(){
+        return onCreateCalled;
+    }
+    
+    private int finishTime=0;
+	@Override
+	public final void render() {
+		super.render();
+		if(assetLoader!=null)
+			assetLoader.update();
+		if(needsUpdate) return;
+		syncScreenSize();
+		if(preferences==null)
+		    preferences = Gdx.app.getPreferences("prefs");
+		// PlayerItem item= findItem("Box1");
+		// if(item!=null){
+		    // GameStage.getCamera().position.x = item.getActorX();
+		    // GameStage.getCamera().position.y = item.getActorY();
+		// }
+		fPSCalc.update();
+		Color bg = (currentStage==null)?backgroundColorGdx:currentStage.getBackgroundColor();
+		Gdx.gl.glClearColor(bg.r,bg.g,bg.b,bg.a);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		if(loadComplete&&(!onCreateCalled)){
+			onCreate();
+			if(sceneScript!=null)
+				sceneScript.onCreate();
+			onCreateCalled = true;
+		}
+		
+		if(!loadComplete){
+			if(loadingStage!=null){
+			    loadingStage.setProgress(assetLoader.getProgress()*75);
+			    loadingStage.act();
+			    loadingStage.draw();
+			}
+		} else if(currentStage==null){
+			if(onCreateCalled && framesAfterReady < 1000) framesAfterReady++;
+			if(!finished){
+    			act();
+    			draw();
+			} else {
+			    finishTime++;
+			    if(finishTime > 10) Gdx.app.exit();
+			}
+		} else {
+		    if(!currentStage.initComplete())
+		        currentStage.init(null);
+			currentStage.act();
+			currentStage.draw();
+			if(currentStage.initComplete() && currentStage.framesAfterReady < 1000) currentStage.framesAfterReady++;
+			//if(!currentStage.draw())
+			    //throw new RuntimeException("game not drawn for unknown reason...");
+		}
+		
+	}
+	
+	/**
+	 * The viewports follow the real size of the screen every frame, so the picture and the touch mapping never disagree
+	 * (cutouts, navigation bars, rotation, split screen or a size that changes after the first frame).
+	 */
+	private void syncScreenSize(){
+		if(GameStage == null || UiStage == null || Gdx.graphics == null) return;
+		int w = Gdx.graphics.getWidth(), h = Gdx.graphics.getHeight();
+		if(w <= 0 || h <= 0) return;
+		if(w != viewportWidth || h != viewportHeight) resize(w, h);
+	}
+
+	public void onDraw(){
+		
+	}
+
+	public StagePair getPair(){
+		return stagePair;
+	}
+	
+	public Color getBackgroundColor(){
+		return backgroundColorGdx;
+	}
+	
+	public StageImp setBackgroundColor(String hex){
+		backgroundColorGdx = Color.valueOf(hex);
+		backgroundColor = Color.argb8888(backgroundColorGdx.a,backgroundColorGdx.r,backgroundColorGdx.g,backgroundColorGdx.b);
+		return this;
+	}
+	
+	public StageImp setBackgroundColor(int color){
+		//background.setColor(new Color(color));
+		backgroundColor = color;
+		backgroundColorGdx = new Color(color);
+		return this;
+	}
+	
+	public StageImp setProject(Project p){
+		project = p;
+		if(assetLoader==null&&p!=null) assetLoader = new ProjectAssetLoader(p);
+			else if(p!=null&&assetLoader!=null) assetLoader.setProject(p);
+		return this;
+	}
+	
+	public float getWidth(){
+		return GameStage.getWidth();
+	}
+	
+	public float getHeight(){
+		return GameStage.getHeight();
+	}
+	
+	public World getWorld(){
+		return world;
+	}
+	
+	private final com.badlogic.gdx.utils.Array<com.badlogic.gdx.physics.box2d.Body> speedBodies = new com.badlogic.gdx.utils.Array<>();
+
+	/** One physics step of the 2D world. Box2D moves a body at most 2 world units and turns it at most 90 degrees per step,
+	 *  so when a body is faster the step is split into smaller ones: high speeds (fast cars, bullets, big jumps) are not cut. */
+	private void stepPhysics(float dt){
+		int n = 1;
+		if(dt > 0 && world.getBodyCount() > 0){
+			world.getBodies(speedBodies);
+			float maxV2 = 0, maxW = 0;
+			for(int i=0;i<speedBodies.size;i++){
+				com.badlogic.gdx.physics.box2d.Body b = speedBodies.get(i);
+				if(b.getType() == com.badlogic.gdx.physics.box2d.BodyDef.BodyType.StaticBody) continue;
+				float v2 = b.getLinearVelocity().len2();
+				if(v2 > maxV2) maxV2 = v2;
+				float w = Math.abs(b.getAngularVelocity());
+				if(w > maxW) maxW = w;
+			}
+			speedBodies.clear();
+			float move = (float)Math.sqrt(maxV2) * dt / 1.8f, turn = maxW * dt / 1.4f;
+			float need = Math.max(move, turn);
+			if(need > 1 && need == need) n = Math.min(32, (int)Math.ceil(need));
+		}
+		if(n <= 1){
+			world.step(dt,8,3);
+			return;
+		}
+		boolean clear = world.getAutoClearForces();
+		world.setAutoClearForces(false); // forces applied this frame act on every part of the split step
+		for(int i=0;i<n;i++) world.step(dt / n,8,3);
+		if(clear){
+			world.clearForces();
+			world.setAutoClearForces(true);
+		}
+	}
+
+	/** Physics sub-steps per frame (6 by default, 1 after setWorldGravity). Velocities in px/s are divided by it so behaviors move at true speed. */
+	public int getSteps(){
+		return steps;
+	}
+	
+	public StageImp setSteps(int x){
+		steps = Math.max(x,1);
+		return this;
+	}
+	
+	public void cameraFollowX(PlayerItem playerItem){
+		followX = playerItem;
+		cameraItem = null;
+	}
+	
+	public void cameraFollowRotation(PlayerItem playerItem){
+		followRotation = playerItem;
+		cameraItem = null;
+	}
+	
+	public void cameraFollowY(PlayerItem playerItem){
+		followY = playerItem;
+		cameraItem = null;
+	}
+	
+	public void openUrl(String url){
+		Gdx.net.openURI(url);
+	}
+	
+	public boolean finished=false;
+	public void finish(){
+	    if(finished) {
+	        debug("already finished\n"+System.currentTimeMillis() + ", main finished : "+StageImp.this.finished +", size : "+previousStages.size()+"\n");
+	        return;
+	    }
+		if(finishFunc!=null){
+			finishFunc.onFinish(this);
+			finished=true;
+			if(world3d!=null) com.lumina.engine.runtime.d3.Sounds3D.stopAll(); // a closed 3D scene stays silent
+			GameStage.dispose();
+			UiStage.dispose();
+			return;
+		}
+		if(currentStage==null || currentStage.equals(this))
+			Gdx.app.exit();
+				else {
+					if(previousStages.contains(this))
+						previousStages.remove(this);
+				    finished=true;
+				    //GameStage.dispose();
+					//UiStage.dispose();
+				}
+	}
+	
+	public boolean setImage(PlayerItem playerItem,String image){
+	    String imgPath = (project.getImagesPath()+image).replace("//","/");
+		//if(!assetLoader.isFinished())
+			//assetLoader.finishLoading();
+		// name.9.png : drawn as a 9-patch (it is not loaded as a plain Texture by the asset loader)
+		if(com.lumina.engine.runtime.Utils.NinePatchLoader.is9(imgPath)){
+			try {
+				com.badlogic.gdx.files.FileHandle nine = Gdx.files.absolute(imgPath);
+				if(nine.exists() && !nine.isDirectory()){
+					com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable np = com.lumina.engine.runtime.Utils.NinePatchLoader.drawable(nine);
+					// world items are drawn at WORLD_SCALE (1 world unit = 4 px): scale the fixed corners the same way, UI items are 1:1
+					boolean ui = false;
+					try { ui = "UI".equals(playerItem.getProperties().getType()); } catch(Throwable ignored){}
+					if(!ui) np.getPatch().scale(WORLD_SCALE,WORLD_SCALE);
+					playerItem.setImage(np);
+					return true;
+				}
+			} catch(Throwable t){
+				Utils.Log("9-patch load error : "+imgPath,Utils.getStackTraceString(t));
+			}
+			return false;
+		}
+		if(!com.lumina.engine.runtime.Utils.AtlasIndex.isEmpty()){
+			com.badlogic.gdx.scenes.scene2d.utils.Drawable merged = com.lumina.engine.runtime.Utils.AtlasIndex.drawable(assetLoader,project,imgPath,null);
+			if(merged!=null){ playerItem.setImage(merged); return true; }
+		}
+		if(assetLoader.isLoaded(imgPath)){
+			playerItem.setImage(assetLoader.get(imgPath,Texture.class));
+			return true;
+		}
+		return false;
+	}
+	
+	public ProjectAssetLoader getAssets(){
+		return assetLoader;
+	}
+	
+	public StageImp setAssetsLoader(ProjectAssetLoader loader){
+		assetLoader = loader;
+		return this;
+	}
+	
+	public void setGravity(float x,float y){
+		world.setGravity(new Vector2(x,y));
+	}
+	
+	public Stage getGameStage(){
+		return GameStage;
+	}
+	
+	/** The stage of the UI elements. (It used to return GameStage, so resize() never updated this stage's viewport and touches on the UI were mapped with the screen size of the first frame.) */
+	public Stage getUiStage(){
+		return UiStage != null ? UiStage : GameStage;
+	}
+	
+	public StageImp setPropertySet(PropertySet<String,Object> set){
+		propertySet = set;
+		if(propertySet!=null) {
+			setBackgroundColor(propertySet.getString("sceneColor"));
+			float height = propertySet.getInt("logicHeight"),
+			width = propertySet.getInt("logicWidth");
+			if(viewport!=null) viewport.setWorldSize(width,height);
+		    //background.setSize(width,height);
+		    setupLight();
+		    if(needsUpdate && Gdx.app != null){
+		            init(null);
+		    }
+		}
+		return this;
+	}
+	
+	public float toStageY(float worldY){
+		if(GameStage==null) return worldY;
+		return GameStage.getViewport().getWorldHeight()-worldY;
+	}
+	
+	public Viewport getViewport(){
+		return (GameStage==null)?null:GameStage.getViewport();
+	}
+	
+	public Camera getCamera(){
+		return GameStage.getCamera();
+	}
+	
+	public boolean isPlaying(){
+		return playing;
+	}
+	
+	public boolean checkCollision(PlayerItem p1,PlayerItem p2){
+		return (collisionMap.containsKey(p1.getName()+","+p2.getName())&&collisionMap.get(p1.getName()+","+p2.getName()).equals("true"));
+	}
+	
+	public float getDelta(){
+		return Gdx.graphics.getDeltaTime();
+	}
+	
+	private void setupCollision(){
+		this.world.setContactFilter(new ContactFilter(){
+			@Override
+			public boolean shouldCollide(Fixture fixture1, Fixture fixture2) {
+				try {
+					PlayerItem body1 = (PlayerItem)fixture1.getUserData();
+					PlayerItem body2 = (PlayerItem)fixture2.getUserData();
+					boolean b1= body1.getProperties().getCollision().contains(body2.getParentName());
+					boolean b2= body2.getProperties().getCollision().contains(body1.getParentName());
+					return !(b1||b2);
+					/*
+					debug(
+					    "\n1 : "+body1.getProperties().getString("Collision")
+					    + "\np name : "+ body1.getParentName()
+					    +"\n contains: " + b1
+					    + "\n2 : "+body2.getProperties().getString("Collision")
+					    + "\np2 name : "+ body2.getParentName()
+					    +"\n contains: " + b2
+					    +"\n------------------------------------------"
+					    ,true
+					);
+					return true;
+					*/
+				} catch(Exception ex){}
+			    return false;
+			}
+			
+		});
+		this.world.setContactListener(new ContactListener(){
+			@Override
+			public void beginContact(Contact contact) {
+			    if(finished) return;
+			    PlayerItem body1 = null, body2 = null;
+				try {
+					body1 = (PlayerItem)contact.getFixtureA().getUserData();
+					body2 = (PlayerItem)contact.getFixtureB().getUserData();
+					collisionMap.put(body1.getName()+","+body2.getName(),"true");
+					collisionMap.put(body2.getName()+","+body1.getName(),"true");
+				} catch(Exception ex){
+					//Utils.showMessage(getContext(),ex.toString());
+					//Utils.Log("luminaXXX",ex.toString());
+				}
+				if(body1!=null && body2!=null){
+				    if(body1.getScript()!=null) body1.getScript().collisionBegin(body2);
+						else if(body1.getElementEvents()!=null) body1.getElementEvents().onCollisionBegin(body1,body2);
+
+					if(body2.getScript()!=null) body2.getScript().collisionBegin(body1);
+						else if(body2.getElementEvents()!=null) body2.getElementEvents().onCollisionBegin(body2,body1);
+				    onCollisionBegin(body1,body2);
+				}
+			}
+
+			@Override
+			public void endContact(Contact contact) {
+				PlayerItem body1=null, body2 = null;
+				try {
+					body1 = (PlayerItem)contact.getFixtureA().getUserData();
+					body2 = (PlayerItem)contact.getFixtureB().getUserData();
+					collisionMap.remove(body1.getName()+","+body2.getName());
+					collisionMap.remove(body2.getName()+","+body1.getName());
+				} catch(Exception ex){
+					//Utils.Log("luminaXXX",ex.toString());
+				}
+				if(body1!=null && body2!=null){
+				    if(body1.getScript()!=null) body1.getScript().collisionEnd(body2);
+						else if(body1.getElementEvents()!=null) body1.getElementEvents().onCollisionEnd(body1,body2);
+
+					if(body2.getScript()!=null) body2.getScript().collisionEnd(body1);
+						else if(body2.getElementEvents()!=null) body2.getElementEvents().onCollisionEnd(body2,body1);
+				    onCollisionEnd(body1,body2);
+				}
+			}
+			@Override
+			public void postSolve(Contact arg0, ContactImpulse arg1) {}
+			@Override
+			public void preSolve(Contact arg0, Manifold arg1) {}
+		});
+	}
+	
+	public void onCollisionBegin(PlayerItem body1,PlayerItem body2){}
+
+	// ------------------------------------------------------------------ 3D
+
+	/** Scene type 3D (configs/scene.json "sceneType")? */
+	public boolean is3D(){
+		return propertySet!=null && "3D".equalsIgnoreCase(String.valueOf(propertySet.get("sceneType")));
+	}
+
+	/** The 3D world of the scene (created on first use). */
+	public com.lumina.engine.runtime.d3.World3D world3d(){
+		if(world3d==null){
+			world3d = new com.lumina.engine.runtime.d3.World3D(this);
+			if(project!=null) com.lumina.engine.runtime.d3.Assets3D.projectPath = project.getPath();
+			world3d.configure(propertySet);
+			if(multiplexer!=null && !is3D()) multiplexer.addProcessor(world3d.input());
+		}
+		return world3d;
+	}
+
+	public boolean hasWorld3D(){
+		return world3d!=null;
+	}
+
+	/** Bullet contact between two 3D elements (begin / end): element + scene collision events, checkCollision. */
+	public void contact3D(PlayerItem a,PlayerItem b,boolean begin){
+		if(finished || a==null || b==null) return;
+		if(begin){
+			collisionMap.put(a.getName()+","+b.getName(),"true");
+			collisionMap.put(b.getName()+","+a.getName(),"true");
+			if(a.getScript()!=null) a.getScript().collisionBegin(b);
+			else if(a.getElementEvents()!=null) a.getElementEvents().onCollisionBegin(a,b);
+			if(b.getScript()!=null) b.getScript().collisionBegin(a);
+			else if(b.getElementEvents()!=null) b.getElementEvents().onCollisionBegin(b,a);
+			onCollisionBegin(a,b);
+		} else {
+			collisionMap.remove(a.getName()+","+b.getName());
+			collisionMap.remove(b.getName()+","+a.getName());
+			if(a.getScript()!=null) a.getScript().collisionEnd(b);
+			else if(a.getElementEvents()!=null) a.getElementEvents().onCollisionEnd(a,b);
+			if(b.getScript()!=null) b.getScript().collisionEnd(a);
+			else if(b.getElementEvents()!=null) b.getElementEvents().onCollisionEnd(b,a);
+			onCollisionEnd(a,b);
+		}
+	}
+	public void onCollisionEnd(PlayerItem body1,PlayerItem body2){}
+	
+	public static StageImp getFromDex(String path,String scene,ProjectAssetLoader projectAssetLoader,SpriteSheetLoader spriteSheetLoader){
+		try {
+			Project project = new Project(path);
+			String read = Utils.readFile(project.getConfig(scene));
+			PropertySet<String,Object> set = PropertySet.getFrom(read);
+			if(set == null){
+			    Gdx.files.external("logs/set.null.txt").writeString(String.format("path : %1$s, read : \n%2$s\n\n"),true);
+			}
+			String optimizedDir = null;// LuminaApp.getContext().getDir("odex", android.content.Context.MODE_PRIVATE).getAbsolutePath();
+			java.io.File file = new java.io.File(project.getDex());
+			Class<?> playerClass = null;
+			// an exported game has its scenes in the APK (classesN.dex): use them directly
+			try { playerClass = Class.forName("com.lumina.engine.Game."+scene.toLowerCase(), true, StageImp.class.getClassLoader()); } catch(Throwable ignored){}
+			if(playerClass == null){
+				file.setReadOnly();
+				dalvik.system.DexClassLoader dcl = new dalvik.system.DexClassLoader(project.getDex(), optimizedDir, null, StageImp.class.getClassLoader() );
+				playerClass = dcl.loadClass("com.lumina.engine.Game."+scene.toLowerCase());
+			}
+			java.lang.reflect.Constructor<?> constructor = playerClass.getConstructor();
+			StageImp imp = ((StageImp)constructor.newInstance()).setAssetsLoader(projectAssetLoader).setProject(project).setSpriteSheetLoader(spriteSheetLoader).setPropertySet(set);
+			file.setWritable(true);
+			return imp;
+		} catch(Throwable e){
+		String err = "path : "+path+"\n scene : "
+			+scene+"\n error : "+e.toString()+"\n"
+			+"cause : "+e.getCause()+"\n"+
+			Utils.getStackTraceString(e);
+		//Utils.Log(err);
+		throw new RuntimeException(err);
+		}
+		//return null;
+	}
+	
+	private Music getMusic(String sound){
+		return assetLoader.get((project.get("sounds")+sound).replace("//","/"),Music.class);
+	}
+	
+	public void loopSound(String sound,boolean loop){
+		getMusic(sound).setLooping(loop);
+	}
+	
+	public void releaseSound(String sound){
+		Music music = getMusic(sound);
+		if(music.isPlaying())
+			music.stop();
+	}
+	
+	public void pauseSound(String sound){
+		if(getMusic(sound).isPlaying())
+			getMusic(sound).pause();
+	}
+	
+	public void setAnimation(PlayerItem playerItem,String anim){
+		try {
+		    playerItem.setAnimation(spriteSheetLoader.getAnimation(anim));
+		} catch(Exception ex){
+		    //toast("animation : "+ anim + ", player : " + playerItem.getName() + ", error : "+ex.toString());
+		}
+	}
+	
+	public void createSound(String sound,String id){}
+	
+	public void startSound(String sound){
+		getMusic(sound).play();
+	}
+	
+	public void openScene(String scene){
+		if(openSceneFunc!=null){
+			openSceneFunc.openScene(scene,this);
+			return;
+		}
+		if(currentStage != null && currentStage != this)
+		    return;
+		StageImp newStage = getFromDex(project.getPath(),scene,assetLoader,spriteSheetLoader).setPrev(this);
+		if(newStage==null) {
+		    // TODO : show error when scene is null ...
+		    debug("scene is null!!\n"+System.currentTimeMillis()+" , scene not found!\nscene : "+scene+"\n",true);
+		    return;
+		}
+		
+		newStage.setOpenSceneFunc((sc,stageImp)->{
+		        //if the stage isn't the current, it means it's previous one or finished stage...
+				if(currentStage==stageImp){
+					previousStages.add(stageImp);
+				    currentStage = getFromDex(project.getPath(),sc,assetLoader,spriteSheetLoader).setOpenSceneFunc(newStage.openSceneFunc).setFinishFunc(newStage.finishFunc).setPrev(stageImp).updateViewport(viewportWidth,viewportHeight);
+				}
+			}).setFinishFunc((st)->{
+			    if(currentStage !=null && !st.equals(currentStage)) return;
+			    StageImp temp = st;
+			    // check the previous stage opened before this
+			    // if there previous is finished then check the previous of it
+			    while(temp.prevStage!=null){
+			        temp = temp.prevStage;
+			        if(temp == null){
+			            previousStages.clear();
+			            currentStage = null;
+			            //Gdx.app.exit();
+			            return;
+			        } else if(!temp.finished) {
+			            currentStage = temp;
+			            Gdx.input.setInputProcessor(currentStage.multiplexer);
+			            //debug("scene finished without any problem\n");
+			            return;
+			        } //if current != null && finished => check the previous stage
+			    }
+			    //debug("no scene opened, finish the game\n");
+			    currentStage = null;
+			    previousStages.clear();
+			    //Gdx.app.exit();
+			});
+		if(currentStage==null){
+			previousStages.add(this);
+		} else {
+			previousStages.add(currentStage);
+		}
+		currentStage = newStage;
+		if(currentStage!=null) Gdx.input.setInputProcessor(currentStage.multiplexer);
+	}
+	
+	public void setZoom(float zoom){
+		((OrthographicCamera)getCamera()).zoom = 1/zoom;
+		if(cameraItem !=null)
+		    cameraItem.getCameraDef().Zoom = 1f/zoom;
+		/*
+		for(Actor actor:GameStage.getActors()){
+				if(actor==null) continue;
+				String actorName=(actor.getName()==null)?"":actor.getName();
+				//names+=", "+actorName;
+					if(actor instanceof PlayerItem&&((PlayerItem)actor).getProperties()!=null&&((PlayerItem)actor).getProperties().containsKey("type")&&((PlayerItem)actor).getProperties().getString("type").equals("UI")){
+					    //keep the UI items in the same size....
+					    actor.setOrigin(actor.getWidth(),0);
+					    actor.setScale(1/zoom);
+					    //actor.setOrigin(actor.getWidth()*0.5f,actor.getHeight()*0.5f);
+					}
+		}
+		*/
+	}
+	
+	public Vector2 getTouch(){
+	    Vector2 touchPoint = new Vector2(Gdx.input.getX(),Gdx.input.getY());
+        return GameStage.screenToStageCoordinates(touchPoint);
+	}
+	
+	public void debug(String string){
+	    debug(string,true);
+	}
+	
+	public void debug(String string, boolean append){
+	    Gdx.files.external("game-logs/log.txt").writeString(string,append);
+	}
+	
+	public StageImp prevStage = null;
+	public StageImp setPrev(StageImp previous){
+	    this.prevStage = previous;
+	    return this;
+	}
+	
+	public float getZooming(){
+		return 1/((OrthographicCamera)getCamera()).zoom;
+	}
+	
+	public static String read(String file){
+		return Gdx.files.absolute(file).readString();
+	}
+	
+	public static void writeInternal(String file,String content){
+	    Gdx.files.internal("internal/"+file).writeString(content,false);
+	}
+	
+	public static void readInternal(String file,String content){
+	    Gdx.files.internal("internal/"+file).readString();
+	}
+	
+	public static void write(String file,String content){
+		Gdx.files.absolute(file).writeString(content,false);
+	}
+	
+	public void setCameraX(float x){
+		getCamera().position.x = x;
+		cameraItem = null;
+	}
+	
+	public void setCameraXY(float x,float y){
+		getCamera().position.x = x;
+		getCamera().position.y = y;
+		cameraItem = null;
+	}
+	
+	public void setCameraXY(PlayerItem playerItem){
+		getCamera().position.set(playerItem.getActorX()+playerItem.getActor().getWidth()*0.5f,playerItem.getActorY()+playerItem.getActor().getHeight()*0.5f,0);
+		cameraItem = null;
+	}
+	
+	public void setCameraY(float y){
+		getCamera().position.y = y;
+		cameraItem = null;
+	}
+	
+	public void setCameraX(PlayerItem playerItem){
+		getCamera().position.x = playerItem.getActorX()+playerItem.getActor().getWidth()*0.5f;
+		cameraItem = null;
+	}
+	
+	public void setCameraY(PlayerItem playerItem){
+		getCamera().position.y = playerItem.getActorY()+playerItem.getActor().getHeight()*0.5f;
+		cameraItem = null;
+	}
+	
+	// boolean isDrawingUi=false;
+	// public void ui(com.badlogic.gdx.graphics.g2d.Batch batch){
+	    // if(!isDrawingUi){
+	        // UiStage.getViewport().apply();
+	        // UiStage.getCamera().update();
+	        // batch.setProjectionMatrix(UiStage.getCamera().combined);
+	        // isDrawingUi = true;
+	    // }
+	// }
+	
+	// public void body(com.badlogic.gdx.graphics.g2d.Batch batch){
+	    // if(isDrawingUi){
+	        // GameStage.getViewport().apply();
+	        // GameStage.getCamera().update();
+	        // batch.setProjectionMatrix(GameStage.getCamera().combined);
+	        // isDrawingUi = false;
+	    // }
+	// }
+	
+	public boolean draw() {
+		if(preferences==null) return false;
+		if(followX!=null&&followY!=null){
+			getCamera().position.set(followX.getActorX()+followX.getActor().getWidth()*0.5f+cameraOffset[0],followY.getActorY()+followY.getActor().getHeight()*0.5f+cameraOffset[1],0);
+		} else if(followX!=null){
+			getCamera().position.x = followX.getActorX()+followX.getActor().getWidth()*0.5f+cameraOffset[0];
+		} else if(followY!=null){
+			getCamera().position.y = followY.getActorY()+followY.getActor().getWidth()*0.5f+cameraOffset[1];
+		}
+		if(followRotation!=null){
+		    ((OrthographicCamera)getCamera()).rotate(followRotation.getActor().getRotation());
+		}
+		if(cameraItem!=null)
+		    setZoom(cameraItem.getCameraDef().Zoom);
+		//GameStage.draw();
+		//UiStage.draw();
+		// TODO : This can cause bad performance, need to fix..
+		// suggestion : override setZIndex of the bodies...
+		if(world3d!=null){
+			world3d.update(getDelta(), playing);
+			world3d.render();
+			Gdx.gl.glEnable(GL20.GL_BLEND);
+			GameStage.getViewport().apply();
+		}
+		Stage current=null;
+		GameStage.getCamera().update();
+		UiStage.getCamera().update();
+		groups().placeUi();
+		
+		com.badlogic.gdx.utils.Array<Actor> bodies = orderBodies();
+		for(int i=0;i<bodies.size;i++){
+		    Actor actor = bodies.get(i);
+		    if(actor.getStage()==null || !actor.isVisible()) continue;
+		    Stage st = actor.getStage();
+		    
+		    // Only switch batch if necessary
+		    if(current != st){
+		        if(current != null && current.getBatch().isDrawing())
+		            current.getBatch().end();
+		        current = st;
+		        // always draw with the fit rectangle of the stage: anything that touches the GL viewport (the lights'
+		        // frame buffers reset it to the whole surface) would stretch the picture while touches are mapped by the viewport
+		        current.getViewport().apply();
+		        if(!current.getBatch().isDrawing()){
+		            current.getBatch().begin();
+		            current.getBatch().setProjectionMatrix(current.getCamera().combined);
+		        }
+		    }
+		    
+		    actor.draw(current.getBatch(), 1);
+		}
+		
+		if(current!=null && current.getBatch().isDrawing())
+		            current.getBatch().end();
+		if(debugBox2d)
+		    drawDebug();
+		groups().prepare();
+		if(playing) for(int x=0;x<steps;x++)
+						stepPhysics(getDelta());
+		if(!is3D()){
+		rayHandler.setCombinedMatrix(GameStage.getViewport().getCamera().combined);
+		GameStage.getViewport().apply();
+		rayHandler.updateAndRender();
+		}
+		GameStage.getViewport().apply(); // the lights' frame buffers leave the GL viewport on the whole surface: put the fit rectangle back
+		onDraw();
+		if(sceneScript!=null)
+			sceneScript.onDraw();
+		groups().follow();
+		return true;
+	}
+	
+	public void setCameraCenter(float x,float y){
+		getCamera().position.set(x,y,0);
+	}
+	
+	public void setValue(String name,String value){
+		preferences.putString(name,value). flush();
+	}
+	
+	public String getValue(String name){
+		return preferences.getString(name,"");
+	}
+	
+	public void setCameraCenterX(float x){
+		getCamera().position.x = x;
+		cameraItem = null;
+	}
+	
+	public void setCameraCenterY(float y){
+		getCamera().position.y = y;
+		cameraItem = null;
+	}
+	
+	public void setCameraOffset(float x,float y){
+		cameraOffset[0] = x;
+		cameraOffset[1] = y;
+	}
+	
+	public float getCameraX(){
+		return getCamera().position.x;
+	}
+	
+	public float getCameraY(){
+		return getCamera().position.y;
+	}
+	
+	public void act() {
+	    //if(finished) return;
+		if(preferences==null) {
+		    preferences = Gdx.app.getPreferences("prefs");
+		    if(preferences==null) return;
+		}
+		UiStage.act();
+		GameStage.act();
+	}
+	
+	private static final java.util.WeakHashMap<Actor,StageImp> OWNERS = new java.util.WeakHashMap<Actor,StageImp>();
+	
+	/** The scene an element belongs to (null when unknown): used by PlayerItem.addBehavior. */
+	public static StageImp of(PlayerItem item){
+		try {
+			synchronized(OWNERS){ return item==null?null:OWNERS.get(item.getActor()); }
+		} catch(Exception e){ return null; }
+	}
+	
+	public void addActor(Actor actor) {
+	    synchronized(OWNERS){ OWNERS.put(actor,this); }
+	    boolean isUi = false;
+		if(actor instanceof PlayerItem){
+		    try {
+		        com.lumina.engine.ElementDefs.ItemDef props = ((PlayerItem)actor).getProperties();
+		        if(props!=null && props.getType().equals("UI"))
+		            isUi = true;
+		    } catch(Exception e){}
+		}
+		
+		if(isUi) UiStage.addActor(actor);
+        else GameStage.addActor(actor);
+	}
+	
+	/** The game stops (scene closed, the editor leaves play mode): every sound of the scene stops (3D behaviors, B3 blocks,
+	 *  the 2D music) and the 3D world closes (its behaviors, physics and sounds), also in scenes opened from this one. */
+	public void stopScene(){
+	    stopScene(0);
+	}
+
+	private void stopScene(int depth){
+	    try { com.lumina.engine.runtime.d3.Sounds3D.stopAll(); } catch(Throwable ignored){}
+	    try {
+	        if(assetLoader!=null){
+	            Array<Music> musics = new Array<>();
+	            assetLoader.getAll(Music.class, musics);
+	            for(Music m : musics) try { m.stop(); } catch(Throwable ignored){}
+	        }
+	    } catch(Throwable ignored){}
+	    if(depth < 8){
+	        if(currentStage!=null && currentStage!=this) currentStage.stopScene(depth + 1);
+	        for(StageImp st : new ArrayList<>(previousStages)) if(st!=null && st!=this && st!=currentStage) st.stopScene(depth + 1);
+	    }
+	    try {
+	        if(world3d!=null) world3d.dispose();
+	    } catch(Throwable ignored){}
+	    world3d = null;
+	}
+
+	public void dispose(){
+	    stopScene();
+	    try {
+	        com.kotcrab.vis.ui.VisUI.dispose();
+		    UiStage.dispose();
+		    GameStage.dispose();
+		} catch(Exception e){}
+		assetLoader.dispose();
+	}
+	
+    public void onPause(){
+        
+    }
+
+    public void onResume(){
+        
+    }
+	
+	public boolean isMain(){
+		return openSceneFunc==null;
+	}
+	
+	FinishFunc finishFunc;
+	OpenSceneFunc openSceneFunc;
+	public StageImp setFinishFunc(FinishFunc func){
+		finishFunc = func;
+		return this;
+	}
+	
+	public StageImp setOpenSceneFunc(OpenSceneFunc func){
+		openSceneFunc = func;
+		return this;
+	}
+	
+	public interface FinishFunc {
+		public void onFinish(StageImp stageImp);
+	}
+	
+	public interface OpenSceneFunc {
+		public void openScene(String scene,StageImp stageImp);
+	}
+	
+	public class StagePair {
+		public Stage UiStage,GameStage;
+		public StagePair(Stage ui,Stage game){
+			UiStage = ui;
+			GameStage = game;
+		}
+	}
+	
+	public final int random(int min,int max){
+		return new java.util.Random().nextInt(max - min + 1) + min;
+	}
+	
+	public class LightInfo {
+		Light light;
+		String name;
+		public LightInfo(String name,Light light){
+			this.light = light;
+			this.name = name;
+		}
+	}
+	
+	// Input Handling
+	public com.badlogic.gdx.InputProcessor getInputProcessor(){
+	    return new ZOrderedInputProcessor();
+	}
+	
+    private class ZOrderedInputProcessor implements com.badlogic.gdx.InputProcessor {
+        private com.badlogic.gdx.math.Vector2 tempCoords = new com.badlogic.gdx.math.Vector2();
+
+        private Actor getHitActor(Stage stage, int screenX, int screenY) {
+            // Use a fresh vector to avoid sharing issues if any
+            com.badlogic.gdx.math.Vector2 v = new com.badlogic.gdx.math.Vector2(screenX, screenY);
+            stage.screenToStageCoordinates(v);
+            return stage.hit(v.x, v.y, true);
+        }
+
+        private int getEffectiveZ(Actor actor) {
+            if (actor == null) return Integer.MIN_VALUE;
+            Actor current = actor;
+            while(current!=null){
+                if(current instanceof PlayerItem){
+                    try {
+                        com.lumina.engine.ElementDefs.ItemDef props = ((PlayerItem)current).getProperties();
+                        if(props!=null) return props.getZ();
+                    } catch(Exception e){}
+                }
+                current = current.getParent();
+            }
+            return actor.getZIndex();
+        }
+
+        private Stage getTargetStage(int screenX, int screenY) {
+            Actor uiActor = getHitActor(UiStage, screenX, screenY);
+            Actor gameActor = getHitActor(GameStage, screenX, screenY);
+
+            // If nothing hit, default to UI then Game (standard order)
+            // But if checking for empty space click, we usually want GameStage to handle camera etc.
+            if (uiActor == null && gameActor == null) return UiStage; 
+            
+            if (uiActor == null) return GameStage;
+            if (gameActor == null) return UiStage;
+
+            int uiZ = getEffectiveZ(uiActor);
+            int gameZ = getEffectiveZ(gameActor);
+
+            return (uiZ >= gameZ) ? UiStage : GameStage;
+        }
+
+        @Override
+        public boolean keyDown(int keycode) {
+            if(keycode == 4) { // Back Key
+                // GameStage has the override for Back key, so prioritize it or ensure it gets it
+                if(GameStage.keyDown(keycode)) return true;
+                return UiStage.keyDown(keycode);
+            }
+            if(UiStage.keyDown(keycode)) return true;
+            return GameStage.keyDown(keycode);
+        }
+
+        @Override
+        public boolean keyUp(int keycode) {
+             if(UiStage.keyUp(keycode)) return true;
+             return GameStage.keyUp(keycode);
+        }
+
+        @Override
+        public boolean keyTyped(char character) {
+            if(UiStage.keyTyped(character)) return true;
+            return GameStage.keyTyped(character);
+        }
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            Stage target = getTargetStage(screenX, screenY);
+            // First try the target stage
+            if(target.touchDown(screenX, screenY, pointer, button)) return true;
+            
+            // If not handled, try the other stage (fallback)
+            Stage other = (target == UiStage) ? GameStage : UiStage;
+            return other.touchDown(screenX, screenY, pointer, button);
+        }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+             // Dispatch to both to ensure release events are caught by whoever has focus
+             boolean ui = UiStage.touchUp(screenX, screenY, pointer, button);
+             boolean game = GameStage.touchUp(screenX, screenY, pointer, button);
+             return ui || game;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) {
+            // Dispatch to both; Stage handles focus internally
+            boolean ui = UiStage.touchDragged(screenX, screenY, pointer);
+            boolean game = GameStage.touchDragged(screenX, screenY, pointer);
+            return ui || game;
+        }
+
+        @Override
+        public boolean mouseMoved(int screenX, int screenY) {
+            boolean ui = UiStage.mouseMoved(screenX, screenY);
+            boolean game = GameStage.mouseMoved(screenX, screenY);
+            return ui || game;
+        }
+
+        @Override
+        public boolean scrolled(float amountX, float amountY) {
+            if(UiStage.scrolled(amountX, amountY)) return true;
+            return GameStage.scrolled(amountX, amountY);
+        }
+        
+        @Override
+        public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+            boolean ui = UiStage.touchCancelled(screenX, screenY, pointer, button);
+            boolean game = GameStage.touchCancelled(screenX, screenY, pointer, button);
+            return ui || game;
+        }
+    }
+
+	/**
+	 * Hands every element (by name) to the Body Scripts and the Scene Script that extend a generated
+	 * {@code <scene>ItemRefs} / {@code <scene>SceneRefs} base, so they can write {@code player.getBody()} directly.
+	 * Called by the generated scene code once all elements exist; safe to call again.
+	 */
+	public void bindScriptRefs(){
+		try {
+			java.util.HashMap<String,PlayerItem> map = new java.util.HashMap<String,PlayerItem>();
+			ArrayList<PlayerItem> items = new ArrayList<PlayerItem>();
+			Stage[] stages = {GameStage, UiStage};
+			for(Stage st : stages){
+				if(st == null) continue;
+				for(Actor actor : st.getActors()){
+					if(!(actor instanceof PlayerItem)) continue;
+					PlayerItem item = (PlayerItem)actor;
+					items.add(item);
+					String n = actor.getName();
+					if(n != null && !map.containsKey(n)) map.put(n, item);
+				}
+			}
+			for(PlayerItem item : items)
+				if(item.getScript() != null) item.getScript().bindRefs(map);
+			if(sceneScript != null) sceneScript.bindRefs(map);
+		} catch(Exception ex){
+		}
+	}
+
+	public void notifyBodies(){
+		if(GameStage!=null)
+		for(Actor actor : GameStage.getActors()){
+		   if(actor instanceof PlayerItem){
+			   PlayerItem item = (PlayerItem)actor;
+			   if(item.getElementEvents()!=null) item.getElementEvents().onBodyCreated(item);
+			   if(item.getScript()!=null) item.getScript().bodyCreated();
+		   }
+		}
+		if(UiStage!=null)
+		for(Actor actor : UiStage.getActors()){
+		   if(actor instanceof PlayerItem){
+			   PlayerItem item = (PlayerItem)actor;
+				 if(item.getElementEvents()!=null) item.getElementEvents().onBodyCreated(item);
+			   if(item.getScript()!=null) item.getScript().bodyCreated();
+		   }
+		}
+	}
+}

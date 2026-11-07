@@ -1,0 +1,41 @@
+package com.lumina.engine.Game.SceneScript;
+import com.lumina.engine.runtime.Utils.SceneScript;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.Gdx;
+import com.lumina.engine.runtime.Items.*;
+import com.lumina.engine.runtime.Utils.PlayerItem;
+import box2dLight.Light;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+
+/*
+    Hi Coder :)
+    & Thanks for using Lumina Engine
+    example :
+    - Reverse body gravity on create:
+        getStage().findItem("body").getBody().setGavityScale(-1);
+    - Link to the other script:
+        linkTo(OtherScene.class);
+        //or
+        linkTo(new OtherScene());
+*/
+public class scene1Script extends SceneScript {
+    public void create(){
+        //getStage().debugBox2d = true;
+        PlayerItem car = getStage().findItem("Car"),
+            FW  = getStage().findItem("FW"),
+            BW = getStage().findItem("BW");
+        Actor fwA = FW.getActor(), bwA = BW.getActor();
+        fwA.setOrigin(fwA.getWidth()*0.5f,fwA.getHeight()*0.5f);
+        bwA.setOrigin(bwA.getWidth()*0.5f,bwA.getHeight()*0.5f);
+        
+    }
+	public void draw(){
+	    
+	}
+	public void pause(){
+	    
+	}
+	public void resume(){
+	    
+	}
+}

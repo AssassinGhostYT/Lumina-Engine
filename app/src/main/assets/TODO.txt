@@ -1,0 +1,13 @@
+[    ] Hearthvale RPG (web game by the user) -> rebuild as a Lumina Engine example, short version (5-7 scenes, under 1 MB)
+[    ] Hearthvale: only art with a license that allows it (Miku removed: protected character)
+[    ] Hearthvale: grid walk by tap (TapToWalk behavior with A*), chop / mine / farm / fish
+[    ] Hearthvale: dialogues with choices and conditions (.dlg.json + DialogueRunner + blocks)
+[    ] Hearthvale: flags, counters and quests saved with the game (Flags)
+[    ] Hearthvale: day / night cycle, shop, inventory (UIHolder), save slots
+[    ] Hearthvale: fix floating trees (pivot at the trunk base) and HUD overlap on phones
+[    ] Interactable behavior (area + prompt + event)
+[    ] Camera follow with scene bounds
+[    ] Tileset import (cell size, margin, spacing) + Tiled TSX
+[    ] Tilemap painter inside the editor
+[    ] Spritesheet: auto slice from transparent pixels (union-find, background thread)
+[    ] Dialogue editor (nodes, choices, conditions) inside the editor

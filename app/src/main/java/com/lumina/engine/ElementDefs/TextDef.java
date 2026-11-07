@@ -1,0 +1,52 @@
+package com.lumina.engine.ElementDefs;
+
+import com.lumina.engine.runtime.Items.StageImp;
+import com.lumina.engine.runtime.Items.TextItem;
+import java.lang.reflect.Field;
+
+public class TextDef extends ItemDef {
+	public ElementEvent elementEvents;
+	public static final String TYPE="TEXT";
+	public String name="",parentName ="",font="",Text="TextItem",Text_Color="#FFFFFF",Script="",type="UI";
+	public boolean Visible=true;
+	public float x=0,y=0,z=0,width=50,height=50,rotation=0,Font_Scale=1;
+	public boolean Auto_Size=true;
+	
+	public TextDef(){
+		
+	}
+	
+	public TextItem build(StageImp stageImp){
+		if(name.equals("")) throw new RuntimeException("set name to the item..!!");
+		if(Version.equals(""))
+		    throw new RuntimeException("Version of this scene is old, repoen the scene and click run to fix that");
+		if(parentName!=null && parentName.equals(""))
+		    parentName = name;
+		return TextItem.create(stageImp,this,elementEvents);
+	}
+	
+	public TextDef getClone(String newName) {
+        TextDef clone = new TextDef();
+		clone.Pivot = this.Pivot;
+		clone.Pivot_X = this.Pivot_X;
+		clone.Pivot_Y = this.Pivot_Y;
+        clone.elementEvents = this.elementEvents;
+        clone.type = this.type;
+        clone.name = newName;
+        clone.parentName = (parentName != null && parentName.equals("")) ? parentName : name;
+        clone.font = this.font;
+        clone.Text = this.Text;
+        clone.Text_Color = this.Text_Color;
+        clone.Script = this.Script;
+        clone.Visible = this.Visible;
+        clone.x = this.x;
+        clone.y = this.y;
+        clone.z = this.z;
+        clone.width = this.width;
+        clone.height = this.height;
+        clone.rotation = this.rotation;
+        clone.Font_Scale = this.Font_Scale;
+        clone.Auto_Size = this.Auto_Size;
+        return clone;
+    }
+}

@@ -1,0 +1,149 @@
+package com.lumina.engine.runtime.Items;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.lumina.engine.ElementDefs.CameraDef;
+import com.lumina.engine.ElementDefs.ElementEvent;
+import com.lumina.engine.runtime.Utils.ChildsHolder;
+import com.lumina.engine.runtime.Utils.ItemScript;
+import com.lumina.engine.runtime.Utils.PlayerItem;
+
+public class CameraItem extends Actor implements PlayerItem {
+	StageImp stage;
+	ElementEvent elementEvent;
+	CameraDef cameraDef;
+	ChildsHolder childsHolder = new ChildsHolder(this);
+	
+	public CameraItem(StageImp stageImp){
+		super();
+		//setWrap(true);
+		this.stage = stageImp;
+	}
+	
+	public static CameraItem create(StageImp stageImp,CameraDef camDef,ElementEvent elementEvent){
+		return new CameraItem(stageImp).setElementEvent(elementEvent).setDef(camDef);
+	}
+	
+	public CameraItem setDef(CameraDef camDef){
+	    this.cameraDef = camDef;
+	    setup();
+	    return this;
+	}
+	
+	public CameraDef getCameraDef(){
+	    return cameraDef;
+	}
+	
+	@Override
+	public void update() {
+		if(getScript()!=null)
+			getScript().bodyUpdate();
+		else if(elementEvent!=null) elementEvent.onBodyUpdate(this);
+	}
+	
+	@Override
+	public void setItemText(String text) {}
+	
+	@Override
+	public Body getBody() {
+	    return null;
+	}
+	
+	/*
+	@Override
+	public boolean setZIndex(int z){
+	    boolean b = true;
+	    try {
+	        b = super.setZIndex(z);
+	    } catch(Exception e){}
+	    if(stage!=null) stage.updateActors();
+	    return b;
+	}
+	*/
+
+	@Override
+	public ChildsHolder getChildsHolder() {
+		if(childsHolder!=null)
+			return childsHolder;
+		else {
+			childsHolder = new ChildsHolder(this);
+			return childsHolder;
+		}
+	}
+	
+	com.lumina.engine.runtime.Utils.ItemScript itemScript;
+	@Override
+	public void setScript(com.lumina.engine.runtime.Utils.ItemScript script){
+	    this.itemScript = script;
+	}
+	
+	@Override
+	public <T extends com.lumina.engine.runtime.Utils.ItemScript> T getScript(){
+	    return (T) itemScript;
+	}
+	
+	@Override
+	public PlayerItem getClone(String newName) {
+		CameraDef newDef = cameraDef.getClone(newName);
+	    PlayerItem item = create(stage,cameraDef,elementEvent);
+		if(getScript()!=null){
+			try {
+				ItemScript script = (ItemScript)(getScript().getClass().getConstructor(PlayerItem.class).newInstance(item));
+				script.setItem(item).setStage(stage);
+				item.setScript(script);
+				script.cloneBehaviorsFrom(getScript());
+			} catch(Exception ex){}
+		}
+		return item;
+	}
+	
+	public CameraItem setElementEvent(ElementEvent event){
+		elementEvent = event;
+		return this;
+	}
+	
+	private void setup(){
+		if(cameraDef==null) return;
+		setName(cameraDef.name);
+		float x = StageImp.WORLD_SCALE * cameraDef.x,
+    		 y = StageImp.WORLD_SCALE * cameraDef.y;
+		setPosition(x,y);
+		setZIndex((int) cameraDef.z);
+		setRotation(-cameraDef.rotation);
+		//setText(propertySet.get("Text").toString());
+		//Utils.showMessage(getContext(),propertySet.get("Text").toString());
+		if(stage!=null && stage.onCreateCalled){
+			if(elementEvent!=null)
+				elementEvent.onBodyCreated(this);
+			if(getScript()!=null)
+				getScript().bodyCreated();
+		}
+		if(cameraDef.Active){
+		    stage.setCamera(this);
+		}
+	}
+	
+	@Override
+	public void draw(Batch batch, float parentAlpha) {
+		super.draw(batch, parentAlpha);
+		if(!StageImp.secondaryPass) update();
+	}
+	
+	@Override
+	public com.lumina.engine.ElementDefs.ItemDef getProperties(){
+	    return cameraDef;
+	}
+	
+	@Override
+	public ElementEvent getElementEvents() {
+		return elementEvent;
+	}
+}

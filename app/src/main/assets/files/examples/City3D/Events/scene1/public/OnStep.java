@@ -1,0 +1,1 @@
+speedText.setItemText(String.valueOf((((com.lumina.engine.runtime.behaviors.lib.Car3D) com.lumina.engine.runtime.behaviors.BehaviorOps.of(playerCar, "Car3D")) != null ? ((com.lumina.engine.runtime.behaviors.lib.Car3D) com.lumina.engine.runtime.behaviors.BehaviorOps.of(playerCar, "Car3D")).getSpeedText() : "")));
