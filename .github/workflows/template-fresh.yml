@@ -31,9 +31,6 @@ jobs:
           java-version: "21"
           distribution: temurin
 
-      - name: Set up Android SDK (aapt2)
-        uses: android-actions/setup-android@v3
-
       - name: Is the template older than the sources?
         run: |
           if ! python3 tools/make_template.py check; then

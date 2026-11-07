@@ -57,9 +57,15 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Set up Android SDK
+      - name: Install Android SDK packages
         if: steps.fresh.outputs.fresh != 'true' || inputs.force
-        uses: android-actions/setup-android@v3
+        run: |
+          SDKM="$(command -v sdkmanager || true)"
+          if [ -z "$SDKM" ]; then
+            SDKM="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort | tail -1)"
+          fi
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" "platforms;android-36" "build-tools;37.0.0" "platform-tools"
 
       - name: Build the template APK
         if: steps.fresh.outputs.fresh != 'true' || inputs.force
