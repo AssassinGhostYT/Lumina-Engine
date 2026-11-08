@@ -43,8 +43,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-36" "build-tools;37.0.0" "platform-tools"
+        run: yes | sdkmanager "platforms;android-36" "build-tools;37.0.0" "platform-tools"
       # 🔐 Create keystore from secrets
       - name: Create keystore from secret
         run: |
