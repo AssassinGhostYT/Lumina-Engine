@@ -10,7 +10,7 @@ public final class CommunityLinks {
     /** {id, English title, English description, url, emoji}. */
     public static String[][] all() {
         java.util.ArrayList<String[]> l = new java.util.ArrayList<>();
-        l.add(new String[]{"github", "GitHub Repository", "Lumina Engine open source code and issue tracking", "https://github.com/lumina-engine/LuminaEngine/", "💻"});
+        l.add(new String[]{"github", "GitHub Repository", "Lumina Engine open source code and issue tracking", "https://github.com/AssassinGhostYT/Lumina-Engine", "💻"});
         return l.toArray(new String[0][]);
     }
 }
