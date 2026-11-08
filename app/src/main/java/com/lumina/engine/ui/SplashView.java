@@ -3,6 +3,7 @@ package com.lumina.engine.ui;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.util.AttributeSet;
@@ -17,7 +18,7 @@ import java.util.Random;
  * slowly floating dots, and ripples + sparks wherever the finger touches. Pure Canvas, no assets.
  */
 public class SplashView extends View {
-    private static final int BG = 0xFF17191D, ACCENT = 0xFF2196F3;
+    private static final int BG = 0xFF080B12, ACCENT = 0xFFC6FF00;
 
     private static final class Dot { float x, y, vy, r, a, ph; }
     private static final class Ripple { float x, y; float t; }
@@ -25,7 +26,7 @@ public class SplashView extends View {
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random rnd = new Random();
-    private final Dot[] dots = new Dot[36];
+    private final Dot[] dots = new Dot[90];
     private final ArrayList<Ripple> ripples = new ArrayList<>();
     private final ArrayList<Spark> sparks = new ArrayList<>();
     private final float density;
@@ -44,7 +45,7 @@ public class SplashView extends View {
 
     @Override
     protected void onSizeChanged(int w, int h, int ow, int oh) {
-        glow = new RadialGradient(w / 2f, h / 2f, Math.max(w, h) * 0.55f, new int[]{0x302196F3, 0x00000000}, null, Shader.TileMode.CLAMP);
+        glow = new RadialGradient(w / 2f, h / 2f, Math.max(w, h) * 0.55f, new int[]{0x30C6FF00, 0x00000000}, null, Shader.TileMode.CLAMP);
         for (Dot d : dots) reset(d, true, w, h);
     }
 
@@ -131,11 +132,23 @@ public class SplashView extends View {
             paint.setShader(null);
         }
 
+        // Rotating orbital lines create a subtle galaxy / cosmos effect behind the logo.
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(1.2f * density);
+        paint.setColor(0x3DC6FF00);
+        c.save();
+        c.rotate(time * 5f, w / 2f, h / 2f);
+        android.graphics.RectF orbit = new android.graphics.RectF(w * 0.18f, h * 0.23f, w * 0.82f, h * 0.77f);
+        c.drawOval(orbit, paint);
+        c.rotate(120f, w / 2f, h / 2f);
+        c.drawOval(orbit, paint);
+        c.restore();
+
         // grid, slowly drifting, shifting a little towards the finger
         float step = 24 * density;
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(Math.max(1f, density * 0.6f));
-        paint.setColor(0x16FFFFFF);
+        paint.setColor(0x183B4D20);
         float ox = (scroll + tilt * 10 * density) % step, oy = scroll % step;
         for (float x = -step + ox; x < w + step; x += step) c.drawLine(x, 0, x, h, paint);
         for (float y = -step + oy; y < h + step; y += step) c.drawLine(0, y, w, y, paint);
@@ -146,7 +159,7 @@ public class SplashView extends View {
             d.y -= d.vy * dt;
             if (d.y < -10 * density) reset(d, false, w, h);
             float tw = 0.6f + 0.4f * (float) Math.sin(time * 2f + d.ph);
-            paint.setColor(((int) (d.a * tw * 255) << 24) | 0x6EB9F7);
+            paint.setColor(((int) (d.a * tw * 255) << 24) | 0xB7FF22);
             c.drawCircle(d.x + tilt * 6 * density * (d.r / density), d.y, d.r, paint);
         }
 
@@ -162,7 +175,7 @@ public class SplashView extends View {
                 continue;
             }
             float ease = 1f - (1f - p) * (1f - p);
-            paint.setColor(((int) ((1f - p) * 0.8f * 255) << 24) | 0x2196F3);
+            paint.setColor(((int) ((1f - p) * 0.8f * 255) << 24) | 0xC6FF00);
             c.drawCircle(r.x, r.y, (12 + 110 * ease) * density, paint);
         }
 
@@ -179,9 +192,23 @@ public class SplashView extends View {
             s.y += s.vy * dt;
             s.vx *= 0.96f;
             s.vy *= 0.96f;
-            paint.setColor(((int) (s.life * 255) << 24) | 0x90CAF9);
+            paint.setColor(((int) (s.life * 255) << 24) | 0xD6FF72);
             c.drawCircle(s.x, s.y, 2.2f * density * s.life + density * 0.6f, paint);
         }
+        drawRetroShip(c, w, h);
         postInvalidateOnAnimation();
     }
+    private void drawRetroShip(Canvas c, int w, int h) {
+        float d = density;
+        float x = w * 0.78f, y = h * 0.78f, bob = (float)Math.sin(time * 3f) * 5f * d;
+        c.save(); c.translate(x, y + bob);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(0xFFE6FF9A);
+        Path ship = new Path(); ship.moveTo(0, -20*d); ship.lineTo(24*d, 13*d); ship.lineTo(0, 8*d); ship.lineTo(-24*d, 13*d); ship.close(); c.drawPath(ship, paint);
+        paint.setColor(ACCENT); c.drawCircle(0, -5*d, 6*d, paint);
+        paint.setColor(0xFFFF8A00); Path flame = new Path(); flame.moveTo(-9*d, 10*d); flame.lineTo(0, (30 + (float)Math.sin(time*12f)*5)*d); flame.lineTo(9*d, 10*d); flame.close(); c.drawPath(flame, paint);
+        paint.setColor(0xFFFFE082); c.drawCircle(-15*d, 15*d, 2*d, paint); c.drawCircle(15*d, 15*d, 2*d, paint);
+        c.restore();
+    }
+
 }

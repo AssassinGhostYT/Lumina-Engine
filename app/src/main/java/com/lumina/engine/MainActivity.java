@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
             android.graphics.drawable.GradientDrawable cardBg = new android.graphics.drawable.GradientDrawable();
             cardBg.setColor(0xFF202328);
             cardBg.setCornerRadius(24 * d);
-            cardBg.setStroke((int) Math.max(1, d), 0xFF3A4048);
+            cardBg.setStroke((int) Math.max(1, d), 0xFFC6FF00);
             card.setBackground(cardBg);
             card.setElevation(10 * d);
             android.graphics.drawable.GradientDrawable trackBg = new android.graphics.drawable.GradientDrawable();
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
             trackBg.setCornerRadius(2 * d);
             track.setBackground(trackBg);
             android.graphics.drawable.GradientDrawable fillBg = new android.graphics.drawable.GradientDrawable();
-            fillBg.setColor(0xFF2196F3);
+            fillBg.setColor(0xFFC6FF00);
             fillBg.setCornerRadius(2 * d);
             fill.setBackground(fillBg);
             fill.setPivotX(0);
