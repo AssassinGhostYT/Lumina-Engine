@@ -81,6 +81,13 @@ public class SectionItem extends VisTable {
 		return this;
 	}
 	
+	public boolean matches(String query){
+		if(query == null || query.isEmpty()) return true;
+		if(label.getText().toString().toLowerCase().contains(query)) return true;
+		for(EditorField field : inputFields) if(field.getInputField()!=null && field.getInputField().getFieldName().toLowerCase().contains(query)) return true;
+		return false;
+	}
+
 	public VisTable getContentTable(){
 		return content;
 	}
