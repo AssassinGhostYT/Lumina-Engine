@@ -33,23 +33,25 @@ jobs:
 
     steps:
       # 🔄 Checkout repository
-      - uses: actions/checkout@v3  
+      - uses: actions/checkout@v4
 
       # ☕ Set up JDK 21
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
 
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;37.0.0" "platform-tools"
       # 🔐 Create keystore from secrets
       - name: Create keystore from secret
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/LuminaEngine.jks
-          if [ -f app/LuminaEngine.jks ]; then
+          test -n "${{ secrets.KEYSTORE_BASE64 }}" || { echo "Missing KEYSTORE_BASE64"; exit 1; }; echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/LuminaEngine.jks"
+          if [ -f "$RUNNER_TEMP/LuminaEngine.jks" ]; then
             echo "Keystore file created successfully."
-            echo "KEYSTORE_FILE=$GITHUB_WORKSPACE/app/LuminaEngine.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/LuminaEngine.jks" >> $GITHUB_ENV
             echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
             echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
             echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
@@ -57,19 +59,7 @@ jobs:
             echo "Error: Keystore file was not created."
             exit 1
           fi
-          
-      # 🔥 Create google-services.json from secret
-      - name: Create google-services.json from secret
-        run: |
-          echo "${{ secrets.FIREBASE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
-          if [ -f app/google-services.json ]; then
-            echo "google-services.json file created successfully."
-          else
-            echo "Error: google-services.json file was not created."
-            exit 1
-          fi
 
-      # 🛠 Setup Android NDK
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1.5.0
         with:
@@ -80,12 +70,8 @@ jobs:
         run: chmod +x gradlew
 
       # ⚡ Build APK
-      - name: Build APK with Gradle
-        run: ./gradlew clean assembleRelease
-
-      # ⚡ Build AAB
-      - name: Build AAB with Gradle
-        run: ./gradlew bundleRelease
+      - name: Build APK and AAB with Gradle
+        run: ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon --stacktrace
 
       # 📦 Upload APK as artifact
       - name: Upload APK

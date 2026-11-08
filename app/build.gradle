@@ -40,8 +40,8 @@ android {
         applicationId "com.lumina.engine"
         minSdk 24
         targetSdk 36
-        versionCode 51
-        versionName "0.5.1Beta"
+        versionCode 100
+        versionName "1.0.0"
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
