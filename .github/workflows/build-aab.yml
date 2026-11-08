@@ -43,10 +43,13 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
       - name: Install Android SDK packages
-        run: yes | sdkmanager "platforms;android-36" "build-tools;37.0.0" "platform-tools"
+        run: |
+          SDKMANAGER="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/cmdline-tools" -name sdkmanager -type f | sort | tail -1)"
+          test -n "$SDKMANAGER" || { echo "sdkmanager not found"; exit 1; }
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>run: yes | sdkmanager "platforms;android-36" "build-tools;37.0.0" "platform-tools"1 || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;37.0.0" "platform-tools"
       # 🔐 Create keystore from secrets
       - name: Create keystore from secret
         run: |
