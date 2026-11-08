@@ -715,7 +715,7 @@ public class Utils {
 	
 	public static void setLanguage(Context context){
 		if(EngineSettings.get()==null) EngineSettings.init(context);
-		String lng=EngineSettings.get().getString("lang",""),
+		String lng=EngineSettings.get().getString("lang","es"),
 		local=EngineSettings.get().getString("local","");
 		if(!lng.equals("")){
 			java.util.Locale locale = new java.util.Locale(lng);

@@ -266,7 +266,7 @@ public class ProjectsHomeView extends FrameLayout {
         menu.getMenu().add(0, 5, 1, T("home_edit_project", "Edit project"));
         menu.getMenu().add(0, 6, 2, T("ui_duplicate", "Duplicate"));
         menu.getMenu().add(0, 2, 3, T("home_export", "Export APK"));
-        menu.getMenu().add(0, 3, 4, T("home_backup", "Backup"));
+        menu.getMenu().add(0, 3, 4, T("home_download_zip", "Download complete project (.zip)"));
         menu.getMenu().add(0, 4, 5, T("delete", "Delete"));
         menu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
@@ -428,11 +428,11 @@ public class ProjectsHomeView extends FrameLayout {
 
         Spinner language = findViewById(R.id.setting_language);
         language.setAdapter(spinnerAdapter(LANG_NAMES));
-        String currentLang = prefs.getString("lang", "en");
+        String currentLang = prefs.getString("lang", "es");
         language.setSelection(Math.max(0, Arrays.asList(LANG_CODES).indexOf(currentLang)));
         language.setOnItemSelectedListener(new SimpleSelection(position -> {
             String code = LANG_CODES[position];
-            if (code.equals(prefs().getString("lang", "en"))) return;
+            if (code.equals(prefs().getString("lang", "es"))) return;
             prefs().edit().putString("lang", code).putBoolean("langSelected", true).commit();
             askRestart();
         }));
@@ -546,7 +546,7 @@ public class ProjectsHomeView extends FrameLayout {
                 .setCancelable(false)
                 .setItems(LANG_NAMES, (d, which) -> {
                     String code = LANG_CODES[which];
-                    boolean changed = !code.equals(prefs().getString("lang", "en"));
+                    boolean changed = !code.equals(prefs().getString("lang", "es"));
                     // commit() (not apply): the process restarts right after
                     prefs().edit().putString("lang", code).putBoolean("langSelected", true).commit();
                     if (changed) restartApp();

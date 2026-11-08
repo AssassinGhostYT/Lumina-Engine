@@ -635,6 +635,7 @@ public class EditorAI extends VisTable {
     private String buildContext() {
         StringBuilder sb = new StringBuilder();
         sb.append("You are an expert Game Dev AI for the Lumina Engine (LibGDX based). API RULES:\n");
+        sb.append("LANGUAGE RULE: Respond in Spanish by default. If the user explicitly writes in another language or selects another app language, respond in that language. Keep code, API names, class names, file paths and required identifiers unchanged.\n");
         sb.append("1. ALWAYS generate JAVA code using LibGDX and Lumina Engine APIs.\n");
         sb.append("2. DO NOT use JavaScript, Python, or others.\n");
         sb.append("3. For Items, extend 'ItemScript' (com.lumina.engine.runtime.Utils.ItemScript).\n");

@@ -325,7 +325,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 				Utils.createEmptyZipFile(exportPath);
 				Utils.zipf(path,exportPath,"");
 				source = Uri.fromFile(new java.io.File(exportPath));
-				Utils.saveFile(name+".zip",saveFile);
+				runOnUiThread(() -> Utils.saveFile(name+".zip", saveFile));
 			} catch(Exception e){
 				homeView.toast("Backup failed : "+e);
 			}
