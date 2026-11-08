@@ -10,17 +10,17 @@ import com.lumina.engine.editor.utils.Lang;
 public class LanguageDialog extends VisDialog {
 	TestApp app;
 	public LanguageDialog(TestApp app){
-		super("Language");
+		super("Idioma");
 		this.app = app;
 		setMovable(false);
 		setResizable(false);
 		reset();
 		addLang("Español", "es");
-		addLang("English", "en");
-		addLang("العربية", "ar");
-		addLang("Français", "fr");
-		addLang("Português", "br");
-		addLang("Русский", "ru");
+		addLang("Inglés", "en");
+		addLang("Árabe", "ar");
+		addLang("Francés", "fr");
+		addLang("Portugués", "br");
+		addLang("Ruso", "ru");
 	}
 	
 	private void addLang(String name,String key){

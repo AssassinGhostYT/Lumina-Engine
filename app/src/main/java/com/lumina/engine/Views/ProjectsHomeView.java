@@ -63,8 +63,8 @@ public class ProjectsHomeView extends FrameLayout {
         void openDonate();
     }
 
-    private static final String[] LANG_NAMES = {"English", "العربيه", "Français", "Português", "Русский", "Español"};
-    private static final String[] LANG_CODES = {"en", "ar", "fr", "br", "ru", "es"};
+    private static final String[] LANG_NAMES = {"Español", "Inglés", "Francés", "Portugués", "Ruso", "Árabe"};
+    private static final String[] LANG_CODES = {"es", "en", "fr", "br", "ru", "ar"};
     private static final String[] COMPILERS = {"javac", "ecj"};
 
     private final Activity activity;
@@ -540,9 +540,9 @@ public class ProjectsHomeView extends FrameLayout {
     }
 
     private void askLanguageOnFirstRun() {
-        if (prefs().getBoolean("langSelected", false)) return;
+        if (prefs().getBoolean("langSelected", false) || "es".equals(prefs().getString("lang", "es"))) return;
         new AlertDialog.Builder(activity)
-                .setTitle("Language / اللغة")
+                .setTitle("Idioma")
                 .setCancelable(false)
                 .setItems(LANG_NAMES, (d, which) -> {
                     String code = LANG_CODES[which];
