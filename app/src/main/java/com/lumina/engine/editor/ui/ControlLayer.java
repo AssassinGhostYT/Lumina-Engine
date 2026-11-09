@@ -783,7 +783,7 @@ public class ControlLayer extends Table {
 		try {
 			com.lumina.engine.editor.LibgdxEditor ed = app.getEditor();
 			com.lumina.engine.editor.items.Editor3DItem item = new com.lumina.engine.editor.items.Editor3DItem(ed,kind);
-			String base = "OBJ3D".equals(kind) ? (preset == null ? "Cube" : preset.substring(0,1)+preset.substring(1).toLowerCase()) : ("LIGHT3D".equals(kind) ? "Light" : "Camera");
+			String base = "OBJ3D".equals(kind) ? ("CAPSULE".equals(preset) ? "Player" : (preset == null ? "Cube" : preset.substring(0,1)+preset.substring(1).toLowerCase())) : ("LIGHT3D".equals(kind) ? "Light" : "Camera");
 			if(model != null){
 				String fn = model.substring(model.lastIndexOf('/')+1);
 				int dot = fn.lastIndexOf('.');
@@ -810,6 +810,15 @@ public class ControlLayer extends Table {
 				else if("WATER".equals(preset)){ ps.put("Scale X","60"); ps.put("Scale Z","60"); ps.put("Cast Shadows","false"); y = 0; }
 				else if("MODEL".equals(preset)){ y = 0; if(model != null){ ps.put("Model",model); com.lumina.engine.runtime.d3.Assets3D.reload(model); } }
 				else if("QUAD".equals(preset) || "DISC".equals(preset)) y = 0.5f;
+				else if("CAPSULE".equals(preset)){
+					// Character starter: dynamic Bullet body with a stable upright capsule collider.
+					ps.put("Body","DYNAMIC");
+					ps.put("Collider","CAPSULE");
+					ps.put("Lock Rotation X","true");
+					ps.put("Lock Rotation Z","true");
+					ps.put("Color","#A6D928");
+					y = 1f;
+				}
 			} else if("LIGHT3D".equals(kind)){
 				ps.put("Light Kind",preset == null ? "POINT" : preset);
 				y = "DIRECTIONAL".equals(preset) ? 6 : 3;
@@ -1050,13 +1059,31 @@ public class ControlLayer extends Table {
 				    com.lumina.engine.editor.ProjectOrientation.seed(app.getEditor().getProject(),name,land);
 				    if("3D".equals(pendingSceneType)) seed3D(name);
 				}
+				final boolean newScene3D = "3D".equals(pendingSceneType);
 				app.openSceneInNewEditor(name);
-				if(sceneAction == SceneAction.CREATE && "3D".equals(pendingSceneType)){
+				if(sceneAction == SceneAction.CREATE){
 					final com.lumina.engine.editor.LibgdxEditor ne = app.getEditor();
 					ne.whenLoaded(()->{
-						actionAdd3D("OBJ3D","PLANE");
-						actionAdd3D("OBJ3D","CUBE");
-						actionAdd3D("CAMERA3D",null);
+						if(newScene3D){
+							actionAdd3D("OBJ3D","PLANE");
+							actionAdd3D("OBJ3D","CAPSULE");
+							actionAdd3D("CAMERA3D",null);
+						} else {
+							actionAddBody(0);
+						Actor player = ne.getSelectedActor();
+						if(player != null){
+							PropertySet<String,Object> ps = PropertySet.getPropertySet(player);
+							ps.put("name","Player");
+							ps.put("type","DYNAMIC");
+							ps.put("width","48");
+							ps.put("height","88");
+							ps.put("Collider Width","42");
+							ps.put("Collider Height","82");
+							ps.put("Tint","#A6D928");
+							player.setName("Player");
+							((com.lumina.engine.editor.items.EditorItem)player).update();
+						}
+						}
 						ne.selectActor(null);
 						ne.getSaveState();
 						try { ne.getProject().save(ne); } catch(Throwable ignored){}

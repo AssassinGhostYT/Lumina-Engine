@@ -122,6 +122,10 @@ public final class SmartEditor {
     /** Called by the language on Sora's completion thread. */
     public void requireAutoComplete(ContentReference content, CharPosition pos, CompletionPublisher publisher) {
         publisher.setUpdateThreshold(1);
+        if (isCppFile()) {
+            requireCppAutoComplete(content, pos, publisher);
+            return;
+        }
         long deadline = System.currentTimeMillis() + 5000;
         while (doc == null && System.currentTimeMillis() < deadline) {
             publisher.checkCancelled();
@@ -159,6 +163,23 @@ public final class SmartEditor {
                 return a.sortText.compareTo(b.sortText);
             }
         });
+        publisher.addItems(list);
+    }
+
+    private boolean isCppFile() {
+        String p = file == null ? "" : file.toLowerCase(java.util.Locale.ROOT);
+        return p.endsWith(".cpp") || p.endsWith(".cc") || p.endsWith(".cxx") || p.endsWith(".h") || p.endsWith(".hpp");
+    }
+
+    private void requireCppAutoComplete(ContentReference content, CharPosition pos, CompletionPublisher publisher) {
+        String text = content.getReference().toString();
+        int off = Math.min(pos.index, text.length());
+        CompletionResult result = CppCompletion.complete(text, off);
+        publisher.checkCancelled();
+        if (result.items.isEmpty()) return;
+        ArrayList<CompletionItem> list = new ArrayList<>(result.items.size());
+        int rank = 0;
+        for (Item item : result.items) list.add(new SmartCompletionItem(item, result.prefix.length(), false, rank++));
         publisher.addItems(list);
     }
 
