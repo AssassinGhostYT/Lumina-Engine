@@ -1397,7 +1397,7 @@ public class LibgdxEditor extends Stage {
 		if(SHOW_GRIDS){
 			//draw grids
 			shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-			shapeRenderer.setColor(Color.DARK_GRAY);
+            shapeRenderer.setColor(new Color(0.45f, 0.52f, 0.58f, 0.42f));
 			float h = getHeight(),
 				w = getWidth(),
 				zoom = camera.zoom,

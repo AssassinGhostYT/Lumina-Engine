@@ -45,6 +45,8 @@ public class Editor3D {
 	/** Touches go to the 2D layer (HUD / UI elements) instead of the 3D world. */
 	public boolean edit2D = false;
 	public boolean showGrid = true;
+	/** Gray editor floor under the 3D grid; editor-only visual aid. */
+	public boolean showPlatform = true;
 	/** While editing the 2D layer: draw the 3D picture behind it (off = a normal 2D canvas with grid and frame). */
 	public boolean show3DBehind = false;
 	/** Draw the collider of the selected element (saved for the editor). */
@@ -468,6 +470,13 @@ public class Editor3D {
 		float gy = Math.min(0.05f, 0.0015f * distance);
 		shapes.translate(0, gy, 0);
 		Gdx.gl.glDepthMask(false);
+		if (showPlatform) {
+			shapes.begin(ShapeRenderer.ShapeType.Filled);
+			shapes.setColor(0.12f, 0.15f, 0.18f, 0.92f);
+			float extent = n * step;
+			shapes.box(cx - extent, -0.08f, cz - extent, extent * 2f, 0.05f, extent * 2f);
+			shapes.end();
+		}
 		shapes.begin(ShapeRenderer.ShapeType.Line);
 		for (int i = -n; i <= n; i++) {
 			float a = i % 5 == 0 ? 0.35f : 0.16f;
