@@ -38,6 +38,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Set up Android NDK/Clang for C++ projects
+        uses: nttld/setup-ndk@v1.5.0
+        with:
+          ndk-version: r28c
       - run: pip install pyzipper
       - name: Check the compiled scenes
         run: test -f dex/scenes.dex || { echo "::error::dex/scenes.dex is missing. Run the game once in the Lumina Engine editor, then commit dex/scenes.dex"; exit 1; }

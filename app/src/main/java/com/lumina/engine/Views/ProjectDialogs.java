@@ -102,7 +102,7 @@ public final class ProjectDialogs {
             if ("cpp".equals(language)) {
                 File cpp = new File(project, "cpp");
                 cpp.mkdirs();
-                com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.cpp").getAbsolutePath(), "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
+                com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.cpp").getAbsolutePath(), "#include \"lumina_game.h\"\n\nnamespace lumina {\nvoid update(float deltaSeconds) {\n    (void)deltaSeconds;\n    // Escribe aquí la lógica de tu juego\n}\n}\n");
                 com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.h").getAbsolutePath(), "#pragma once\n\n// Declaraciones del juego\n");
             }
         } catch (Throwable ignored) {

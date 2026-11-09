@@ -567,6 +567,7 @@ public class StageImp extends ApplicationAdapter {
 		if(assetLoader!=null)
 			assetLoader.update();
 		if(needsUpdate) return;
+		if(playing) NativeUserGame.update(Math.min(Gdx.graphics.getDeltaTime(), 0.1f));
 		syncScreenSize();
 		if(preferences==null)
 		    preferences = Gdx.app.getPreferences("prefs");

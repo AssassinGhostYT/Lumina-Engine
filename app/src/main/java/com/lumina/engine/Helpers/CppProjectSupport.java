@@ -29,23 +29,22 @@ public final class CppProjectSupport {
         write(new File(cppDir, "lumina_project.json"), manifest.toString());
         write(new File(cppDir, "lumina_game.h"),
                 "#pragma once\n#include <cstdint>\nnamespace lumina {\nvoid update(float deltaSeconds);\nconst char* version();\nvoid log(const char* message);\n}\n");
+        write(new File(cppDir, "lumina_user_bridge.cpp"),
+                "#include <jni.h>\n#include \"lumina_game.h\"\n\nextern \"C\" JNIEXPORT void JNICALL Java_com_lumina_engine_runtime_NativeUserGame_nativeUpdate(JNIEnv*, jclass, jfloat deltaSeconds) {\n    lumina::update(deltaSeconds);\n}\n");
 
         StringBuilder cmake = new StringBuilder();
         cmake.append("cmake_minimum_required(VERSION 3.22)\n")
              .append("project(lumina_user_game LANGUAGES CXX)\n")
              .append("set(CMAKE_CXX_STANDARD 17)\n")
              .append("set(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n");
-        if (sources.isEmpty()) {
-            cmake.append("add_library(lumina_user_game SHARED lumina_placeholder.cpp)\n");
-            write(new File(cppDir, "lumina_placeholder.cpp"),
-                    "#include <jni.h>\nextern \"C\" JNIEXPORT void JNICALL lumina_project_placeholder() {}\n");
-        } else {
-            cmake.append("add_library(lumina_user_game SHARED\n");
-            for (String source : sources) cmake.append("    ").append(toCmakePath(source)).append("\n");
-            cmake.append(")\n");
-        }
-        cmake.append("target_include_directories(lumina_user_game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})\n")
-             .append("# Link this target with the Lumina native runtime in the host export.\n");
+        cmake.append("add_library(lumina_user_game SHARED\n");
+        for (String source : sources) cmake.append("    ").append(toCmakePath(source)).append("\n");
+        cmake.append("    lumina_user_bridge.cpp\n")
+             .append(")\n")
+             .append("find_library(log-lib log)\n")
+             .append("target_include_directories(lumina_user_game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})\n")
+             .append("target_compile_features(lumina_user_game PRIVATE cxx_std_17)\n")
+             .append("target_link_libraries(lumina_user_game ${log-lib})\n");
         write(new File(cppDir, "CMakeLists.txt"), cmake.toString());
     }
 
@@ -55,6 +54,7 @@ public final class CppProjectSupport {
         if (files == null) return result;
         for (File file : files) {
             String name = file.getName();
+            if (name.equals("lumina_user_bridge.cpp")) continue;
             if (file.isDirectory()) {
                 if (!name.equals(".git") && !name.equals("build") && !name.equals(".gradle"))
                     collect(file, base, headers, result);

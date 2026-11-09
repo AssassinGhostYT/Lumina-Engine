@@ -83,6 +83,65 @@ def add_scenes_dex(project, t):
     print("scenes added as classes%d.dex" % (last + 1))
 
 
+def cpp_source_files(project):
+    out = []
+    for base, dirs, files in os.walk(project):
+        dirs[:] = [d for d in dirs if d not in {".git", "build", ".gradle", ".github"}]
+        for name in files:
+            if name == "lumina_user_bridge.cpp":
+                continue
+            if name.lower().endswith((".cpp", ".cc", ".cxx")):
+                out.append(os.path.relpath(os.path.join(base, name), project).replace(os.sep, "/"))
+    return sorted(out)
+
+
+def compile_cpp(project, work):
+    """Compile the project's C++ module for every Android ABI used by the template."""
+    sources = cpp_source_files(project)
+    if not sources:
+        return {}
+    ndk = os.environ.get("ANDROID_NDK_ROOT") or os.environ.get("ANDROID_NDK_HOME") or os.environ.get("ANDROID_NDK")
+    if not ndk:
+        sys.exit("C++ sources found, but ANDROID_NDK_ROOT/ANDROID_NDK_HOME is not set")
+    cpp = os.path.join(project, "cpp")
+    os.makedirs(cpp, exist_ok=True)
+    header = os.path.join(cpp, "lumina_game.h")
+    if not os.path.isfile(header):
+        open(header, "w", encoding="utf-8").write("#pragma once\nnamespace lumina { void update(float deltaSeconds); }\n")
+    bridge = os.path.join(cpp, "lumina_user_bridge.cpp")
+    open(bridge, "w", encoding="utf-8").write(
+        '#include <jni.h>\n#include "lumina_game.h"\n'
+        'extern "C" JNIEXPORT void JNICALL Java_com_lumina_engine_runtime_NativeUserGame_nativeUpdate(JNIEnv*, jclass, jfloat deltaSeconds) {\n'
+        '    lumina::update(deltaSeconds);\n}\n')
+    cmake = os.path.join(cpp, "CMakeLists.txt")
+    entries = []
+    for rel in sources:
+        entries.append("    " + os.path.relpath(os.path.join(project, rel), cpp).replace(os.sep, "/"))
+    entries.append("    lumina_user_bridge.cpp")
+    open(cmake, "w", encoding="utf-8").write(
+        "cmake_minimum_required(VERSION 3.22)\nproject(lumina_user_game LANGUAGES CXX)\n"
+        "set(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n"
+        "add_library(lumina_user_game SHARED\n" + "\n".join(entries) +
+        "\n)\nfind_library(log-lib log)\n"
+        "target_include_directories(lumina_user_game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})\n"
+        "target_compile_features(lumina_user_game PRIVATE cxx_std_17)\n"
+        "target_link_libraries(lumina_user_game ${log-lib})\n")
+    toolchain = os.path.join(ndk, "build", "cmake", "android.toolchain.cmake")
+    if not os.path.isfile(toolchain):
+        sys.exit("Android NDK CMake toolchain not found: " + toolchain)
+    outputs = {}
+    for abi in ("armeabi-v7a", "arm64-v8a", "x86", "x86_64"):
+        b = os.path.join(work, "cpp-" + abi)
+        run("cmake", "-S", cpp, "-B", b, "-G", "Ninja",
+            "-DCMAKE_TOOLCHAIN_FILE=" + toolchain, "-DANDROID_ABI=" + abi,
+            "-DANDROID_PLATFORM=android-24", "-DCMAKE_BUILD_TYPE=Release")
+        run("cmake", "--build", b, "--config", "Release", "--parallel")
+        so = os.path.join(b, "liblumina_user_game.so")
+        if not os.path.isfile(so):
+            sys.exit("C++ build did not produce " + so)
+        outputs[abi] = so
+    return outputs
+
 def build_apk(a):
     project = os.path.abspath(a.project)
     work = tempfile.mkdtemp(prefix="s2game")
@@ -101,6 +160,12 @@ def build_apk(a):
     run("java", "-cp", os.path.join(ROOT, "app/libs/lib_7.jar") + os.pathsep + jar,
         os.path.join(ROOT, "tools/ci/EncodeManifest.java"), os.path.join(work, "manifest.xml"), os.path.join(t, "AndroidManifest.xml"))
     os.makedirs(os.path.join(t, "assets"), exist_ok=True)
+    user_libs = compile_cpp(project, work)
+    for abi, so in user_libs.items():
+        dest = os.path.join(t, "lib", abi)
+        os.makedirs(dest, exist_ok=True)
+        shutil.copy2(so, os.path.join(dest, "liblumina_user_game.so"))
+        print("C++ module added for", abi)
     project_zip(project, os.path.join(t, "assets/project.zip"))
     add_scenes_dex(project, t)
     open(os.path.join(t, "assets/version"), "w").write(str(abs(hash(pkg + str(os.times()))) % 9999999))
