@@ -1035,6 +1035,20 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
             return;
         }
         panels.hide();
+        Bridge.query(() -> RunValidator.validate(Bridge.editor()), findings -> {
+            if (findings == null || findings.isEmpty()) { startPlayDialog(); return; }
+            StringBuilder report = new StringBuilder();
+            for (String finding : findings) report.append("• ").append(finding).append("\n\n");
+            new AlertDialog.Builder(activity)
+                    .setTitle("Diagnóstico antes de ejecutar")
+                    .setMessage(report.toString().trim())
+                    .setNegativeButton("Cancelar", null)
+                    .setPositiveButton("Ejecutar de todos modos", (d, w) -> startPlayDialog())
+                    .show();
+        });
+    }
+
+    private void startPlayDialog() {
         Context c = activity;
         LinearLayout box = Ui.column(c);
         box.setPadding(Ui.dp(c, 20), Ui.dp(c, 16), Ui.dp(c, 20), Ui.dp(c, 8));
