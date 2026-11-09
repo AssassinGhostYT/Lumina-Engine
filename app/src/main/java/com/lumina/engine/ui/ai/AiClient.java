@@ -50,9 +50,6 @@ public class AiClient {
             new Provider("pollinations", "Pollinations (free, no key)", "https://text.pollinations.ai/openai", "pollinations_api_key", "", false,
                     "Free and keyless: no account, no card. Anonymous tier with rate limits. " +
                     "Good for quick help and code; for full project editing use OpenCode with the remote connector."),
-            new Provider("openai", "OpenAI · GPT-5.6 Luna (de pago)", "https://api.openai.com/v1", "openai_api_key",
-                    "https://platform.openai.com/api-keys", true,
-                    "GPT-5.6 Luna no tiene acceso gratuito en la API; requiere una clave y facturación de OpenAI."),
             new Provider("custom", "Custom (OpenAI compatible)", "", "custom_api_key", "", false,
                     "Any OpenAI-compatible server: OpenAI, DeepSeek, Groq, Ollama, LM Studio... Set the base URL ending in /v1."),
     };
@@ -85,7 +82,7 @@ public class AiClient {
     public String providerId() { return prefs.getString("ai_provider", "pollinations"); }
     public Provider provider() { return provider(providerId()); }
     public String key(Provider p) { return prefs.getString(p.keyPref, ""); }
-    public String model() { return prefs.getString("ai_model_" + providerId(), providerId().equals("pollinations") ? "openai" : (providerId().equals("openai") ? "gpt-5.6-luna" : "")); }
+    public String model() { return prefs.getString("ai_model_" + providerId(), providerId().equals("pollinations") ? "openai" : ""); }
 
     public String baseUrl(Provider p) {
         if (p.id.equals("custom")) {
