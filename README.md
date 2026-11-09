@@ -1,168 +1,123 @@
 <div align="center">
 
-<img src="./assets/icon.png" width="96" height="96" alt="Lumina Engine icon" />
+<img src="./assets/icon.png" width="96" height="96" alt="Icono de Lumina Engine" />
 
 # ⭐ Lumina Engine
 
-**A full 2D game studio that lives on your Android phone.**
-Visual blocks, a real code editor, an AI assistant and GitHub sync, powered by LibGDX + Box2D.
+**Un estudio completo de juegos 2D que vive en tu teléfono Android.**
+Bloques visuales, editor de código real, asistente de IA y sincronización con GitHub, impulsado por LibGDX + Box2D.
 
 <br>
 
 <a href="https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest">
-  <img src="https://img.shields.io/badge/⬇_Download_the_APK-Releases-2ea44f?style=for-the-badge" alt="Download from Releases" />
+  <img src="https://img.shields.io/badge/⬇_Descargar_el_APK-Releases-2ea44f?style=for-the-badge" alt="Descargar desde Releases" />
 </a>
 
 <br><br>
 
-[![Build APK](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml/badge.svg)](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)
-![License](https://img.shields.io/badge/license-Apache--2.0-blue)
-![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)
-![Engine](https://img.shields.io/badge/LibGDX-Box2D-red)
-![Release](https://img.shields.io/github/v/release/AssassinGhostYT/Lumina-Engine?include_prereleases)
-![Stars](https://img.shields.io/github/stars/AssassinGhostYT/Lumina-Engine?style=social)
+[![Construir APK](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml/badge.svg)](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)
+![Licencia](https://img.shields.io/badge/licencia-Apache--2.0-blue)
+![Plataforma](https://img.shields.io/badge/plataforma-Android-3DDC84?logo=android&logoColor=white)
+![Motor](https://img.shields.io/badge/LibGDX-Box2D-red)
+![Versión](https://img.shields.io/github/v/release/AssassinGhostYT/Lumina-Engine?include_prereleases)
+![Estrellas](https://img.shields.io/github/stars/AssassinGhostYT/Lumina-Engine?style=social)
 
 </div>
 
 ---
 
-## 📥 Where do I download the app?
+## 📥 ¿Dónde descargo la aplicación?
 
-> **Option 1 — direct download:** **[LuminaEngine-1.0.1.apk](https://github.com/AssassinGhostYT/Lumina-Engine/releases/download/v1.0.1/LuminaEngine-1.0.1.apk)** (97 MB, debug-signed, installs on any phone).
+> **Opción 1 — descarga directa:** **[LuminaEngine-1.0.1.apk](https://github.com/AssassinGhostYT/Lumina-Engine/releases/download/v1.0.1/LuminaEngine-1.0.1.apk)** (97 MB, firmado para pruebas e instalable en cualquier teléfono).
 >
-> **Option 2 — Releases page:** open the [latest release](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) and download the `.apk` from **Assets**.
+> **Opción 2 — página de versiones:** abre la [última versión](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) y descarga el `.apk` desde **Assets**.
 >
-> **Option 3 — the robot builds it:** every push to `main` runs **Actions → Build APK**. Open the latest green run, scroll to **Artifacts** and download **LuminaEngine-apk**.
+> **Opción 3 — GitHub lo construye:** cada push a `main` ejecuta **Actions → Build APK**. Abre la ejecución más reciente en verde, baja hasta **Artifacts** y descarga **LuminaEngine-apk**.
 >
-> On Android you will need to allow installation from your browser/file manager the first time.
+> En Android tendrás que permitir la instalación desde el navegador o administrador de archivos la primera vez.
 >
-> You do **not** need a computer to try the engine. The source in this page is for developers who want to read, build or contribute.
+> **No necesitas una computadora** para probar el motor. El código de esta página es para desarrolladores que quieran leerlo, construirlo o contribuir.
 
-**Checksum (SHA-256):** `1f2aa901fdcc6b0b786360e845bfc157483226fef7411a3a4d72178e771bf977`
+**Checksum SHA-256:** `1f2aa901fdcc6b0b786360e845bfc157483226fef7411a3a4d72178e771bf977`
 
-| I want to... | Go to |
+| Quiero... | Ir a |
 |---|---|
-| Install and use the engine | **[Latest APK from CI](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)** or [Releases](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) |
-| Build it myself | [Build from source](#-build-from-source) |
-| Use my own AI / OpenCode | [AI guide](docs/AI.md) |
-| Fix a bug or add a feature | [Contributing](#-contributing) |
+| Instalar y usar el motor | **[Último APK de CI](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)** o [Versiones](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) |
+| Construirlo yo mismo | [Construir desde el código](#-construir-desde-el-código) |
+| Usar mi propia IA / OpenCode | [Guía de IA](docs/AI.md) |
+| Corregir un error o añadir una función | [Contribuir](#-contribuir) |
 
 ---
 
-## ✨ What is Lumina Engine?
+## ✨ ¿Qué es Lumina Engine?
 
-Lumina Engine is an **open-source 2D game engine and editor that runs entirely on a phone**.
-You design scenes, wire up gameplay with blocks or Java, run the game, and export an APK, all without a computer.
+Lumina Engine es un **motor y editor de juegos 2D de código abierto que funciona completamente en un teléfono**.
+Diseñas escenas, conectas la jugabilidad con bloques, Java o C++, ejecutas el juego y exportas un APK, todo sin computadora.
 
-Under the hood it is **LibGDX** for rendering and **Box2D** for physics, with a native Android editor on top.
+Internamente usa **LibGDX** para los gráficos y **Box2D** para la física, con un editor Android nativo.
 
----
+## 🚀 Funciones principales
 
-## 🚀 Feature list
+- **Editor:** escenas 2D/3D, elementos, lista de cuerpos, administrador de archivos, deshacer/rehacer y diseños verticales y horizontales.
+- **Programación visual:** bloques basados en eventos, bloques anidados, búsqueda y bloques personalizados.
+- **Editor de código:** Java y C++ con resaltado de sintaxis, autocompletado, panel de errores y archivos JSON.
+- **Física:** cuerpos Box2D, uniones, sensores, colisiones personalizadas y luces.
+- **Comportamientos:** 56 integrados y configurables mediante variables de script.
+- **Herramientas de interfaz:** creador de interfaces, creador de botones, temas y contenedores de interfaz.
+- **Recursos:** navegador de 1.831 iconos, paquetes gratuitos, editor de animaciones y fuentes.
+- **Estructura:** grupos, prefabs, varias escenas y ordenamiento en eje Y.
+- **IA:** asistente integrado y conector remoto para Claude u OpenCode. Consulta [docs/AI.md](docs/AI.md).
+- **Git:** clonar, hacer commits, subir cambios y añadir workflows de GitHub Actions a tu juego.
+- **Exportación:** crear APK, AAB y ZIP desde el teléfono; exportación experimental para escritorio.
+- **Idiomas:** español, inglés, francés, portugués y ruso.
 
-- **Editor:** scenes, elements, Bodies list, files manager, undo/redo, safe-area aware layouts for portrait and landscape.
-- **Visual scripting:** event-driven blocks (touch, step, collisions...), nested blocks, search, custom blocks.
-- **Code editor:** Java with syntax highlighting, auto-complete, error panel, copy all errors.
-- **Physics:** Box2D bodies, joints, sensors, custom collider and road editor, lights (point / cone / directional).
-- **Behaviors:** 56 built-in, configurable through script variables.
-- **UI tools:** UI Maker, Button Maker, themes, UI holders.
-- **Assets:** 1,831-icon browser with search and color filter, free asset packs, animation editor, fonts.
-- **Structure:** Groups, Prefabs (edit one, apply to all), multiple scenes, Y-sort.
-- **AI:** built-in assistant (Pollinations keyless, OpenRouter, Gemini, OpenCode Zen) and a remote MCP connector for Claude or OpenCode. See [docs/AI.md](docs/AI.md) and [server/README.md](server/README.md).
-- **Git:** clone, commit, push, and GitHub Actions workflows added to your game project. See [docs/CI.md](docs/CI.md).
-- **Export:** produce an APK from the phone; experimental desktop export ([docs/DESKTOP.md](docs/DESKTOP.md)).
-- **Languages:** English, Arabic, French, Portuguese, Russian, Spanish.
+## 🧩 Estructura del proyecto
 
----
-
-## 🧩 Project layout
-
-| Path | What it is |
+| Ruta | Qué contiene |
 |---|---|
-| `app/` | The Android editor (this is the APK you install) |
-| `template/` | The game runtime used by exported games (generated template, see [docs/TEMPLATE.md](docs/TEMPLATE.md)) |
-| `desktop/` | Experimental desktop runtime |
-| `formatter/` | Code formatter used by the code editor |
-| `server/` | AI / Remote connector server ([README](server/README.md)) |
-| `tools/` | Build, template and i18n helper scripts |
-| `docs/` | Behaviors, UI, script variables, CI, AI and template docs |
+| `app/` | Editor Android, es el APK que instalas |
+| `template/` | Motor usado por los juegos exportados ([docs/TEMPLATE.md](docs/TEMPLATE.md)) |
+| `desktop/` | Motor experimental para escritorio |
+| `formatter/` | Formateador del editor de código |
+| `server/` | Servidor del conector de IA/remoto |
+| `tools/` | Scripts auxiliares de construcción, plantillas e idiomas |
+| `docs/` | Documentación del proyecto |
 
----
+## 🛠 Construir desde el código
 
-## 🛠 Build from source
-
-Requirements: **JDK 21** and the **Android SDK** (Android Studio works).
+Requisitos: **JDK 21** y el **SDK de Android**.
 
 ```bash
 git clone https://github.com/AssassinGhostYT/Lumina-Engine.git
 cd Lumina-Engine
 chmod +x gradlew
 ./gradlew :app:assembleDebug
-# APK: app/build/outputs/apk/debug/app-debug.apk
 ```
 
-This debug build installs on any phone and needs no signing setup. To build a **release-signed** APK you need your own keystore (or the `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` environment variables) and then run `./gradlew :app:assembleRelease`.
+Esta compilación de prueba se instala en cualquier teléfono. Para una compilación release necesitas tu propio keystore y ejecutar `./gradlew :app:assembleRelease`.
 
----
+## 🤖 Compilaciones automáticas
 
-## 🤖 Automated APK builds
+El workflow **Build APK** se ejecuta en cada push a `main`, en pull requests y manualmente:
 
-The **Build APK** workflow (`.github/workflows/android-build.yml`) runs on every push to `main`, on pull requests and manually:
+1. Abre **Actions → Build APK**.
+2. Pulsa la ejecución más reciente.
+3. Descarga **LuminaEngine-apk** desde **Artifacts**.
 
-1. Open **Actions → Build APK**.
-2. Click the latest run.
-3. Download **LuminaEngine-apk** from **Artifacts**.
+El workflow **Aab & Apk Build** genera el APK y el AAB release y puede publicar el APK en GitHub Releases.
 
-The CI APK is **debug-signed**: it installs normally, but it cannot update an APK signed with another key. For a release-signed APK, use the *Aab & Apk Build* workflow with these repository secrets:
+## 🤝 Contribuir
 
-| Secret | What it is |
-|---|---|
-| `KEYSTORE_BASE64` | your `.jks` file encoded with `base64 -w0` |
-| `KEYSTORE_PASSWORD` | keystore password |
-| `KEY_ALIAS` | key alias inside the keystore |
-| `KEY_PASSWORD` | key password (optional, defaults to the keystore password) |
+Todas las contribuciones son bienvenidas: corregir errores, mejorar el rendimiento, añadir comportamientos, estilos, ejemplos, traducciones, documentación y tutoriales.
 
-The *Aab & Apk Build* workflow can also upload to Google Play (production, beta, alpha or draft) and publish to GitHub Releases when those secrets plus `PLAY_STORE_JSON_KEY` are configured.
+## 💖 Apoyar el proyecto
 
-> If you change the game runtime, regenerate the template (`:template` module + the *Build game template* action) and never edit `template.zip` by hand.
+Lumina Engine es gratuito y de código abierto. Marca el repositorio con una estrella ⭐, compártelo o abre un issue para reportar errores y sugerir funciones.
 
----
+## 🌐 Comunidad
 
-## 🤝 Contributing
+[Repositorio de GitHub](https://github.com/AssassinGhostYT/Lumina-Engine) · [Issues](https://github.com/AssassinGhostYT/Lumina-Engine/issues) · [Versiones](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) · [Compilaciones](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)
 
-Contributions of every size are welcome:
+> Puedes usar y modificar este proyecto bajo la licencia Apache-2.0. Consulta [LICENSE](LICENSE) y [assets/note.txt](assets/note.txt).
 
-- Fix bugs or improve performance
-- Add behaviors, UI styles or sample games
-- Translate strings (`app/src/main/assets/i18n/`, check with `python3 tools/i18n/dump_keys.py --check`)
-- Write docs and tutorials
-
-Open an issue first for big changes. Pull requests should keep Android Java compatibility and run the i18n check.
-
----
-
-## 💖 Support the project
-
-Lumina Engine is free and open source. If it helps you, star ⭐ the repo, share it, or open an issue to report bugs and suggest features.
-
----
-
-## 🌐 Community
-
-[GitHub Repository](https://github.com/AssassinGhostYT/Lumina-Engine) · [Issues](https://github.com/AssassinGhostYT/Lumina-Engine/issues) · [Releases](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) · [CI builds](https://github.com/AssassinGhostYT/Lumina-Engine/actions/workflows/android-build.yml)
-
----
-
-## 🇸🇦 بالعربية
-
-**Lumina Engine** محرك ألعاب ثنائية الأبعاد مفتوح المصدر يعمل بالكامل على هاتف أندرويد: بلوكات، محرر أكواد، 56 سلوكًا جاهزًا، صانع واجهات وأزرار، 1,831 أيقونة، مساعد ذكاء اصطناعي، ومزامنة مع GitHub.
-
-> **تحميل التطبيق:** من [Releases](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest)، أو من **Actions ← Build APK ← آخر تشغيل ← Artifacts ← LuminaEngine-apk**.
-
----
-
-> [!NOTE]
-> You are free to use and modify this project under the Apache-2.0 license. See [LICENSE](LICENSE) and [assets/note.txt](assets/note.txt).
-
-> [!CAUTION]
-> Some bugs may still exist. Reports and fixes are highly appreciated. 🚒
+> Todavía pueden existir errores. Agradecemos mucho los reportes y las correcciones. 🚒
