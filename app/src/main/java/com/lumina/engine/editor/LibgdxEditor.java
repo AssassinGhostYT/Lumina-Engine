@@ -302,6 +302,13 @@ public class LibgdxEditor extends Stage {
 	public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
 		if(e3d!=null && !e3d.edit2D && !loadingScene) return e3d.touchDown(arg0,arg1,arg2);
 		if(loadingScene || com.lumina.engine.remote.RemoteSession.isLocked()) return true; // locked: an AI is editing, the camera can still be moved
+		// Tap-to-select for 2D transform tools.
+		if (e3d == null || e3d.edit2D) {
+			Vector2 touch = screenToStageCoordinates(new Vector2(arg0, arg1));
+			Actor picked = hit(touch.x, touch.y, true);
+			while (picked != null && !(picked instanceof EditorItem)) picked = picked.getParent();
+			if (picked instanceof EditorItem) selectActor(picked);
+		}
 		if(selectedActor == null){
 		    ArrayList<String> bodies = getBodiesList();
 		    if(bodies.size()>0)
