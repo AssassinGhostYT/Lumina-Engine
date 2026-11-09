@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-        <color name="seed">#B8FF2C</color>
+        <color name="seed">#A6D928</color>
     <color name="md_theme_light_primary">#4D6B00</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
     <color name="md_theme_light_primaryContainer">#FFDCC5</color>
@@ -32,10 +32,10 @@
     <color name="md_theme_light_surfaceTint">#934B00</color>
     <color name="md_theme_light_outlineVariant">#D6C3B7</color>
     <color name="md_theme_light_scrim">#000000</color>
-    <color name="md_theme_dark_primary">#B8FF2C</color>
+    <color name="md_theme_dark_primary">#A6D928</color>
     <color name="md_theme_dark_onPrimary">#172000</color>
     <color name="md_theme_dark_primaryContainer">#324700</color>
-    <color name="md_theme_dark_onPrimaryContainer">#D4FF83</color>
+    <color name="md_theme_dark_onPrimaryContainer">#C6EC72</color>
     <color name="md_theme_dark_secondary">#E4BFA7</color>
     <color name="md_theme_dark_onSecondary">#422B1A</color>
     <color name="md_theme_dark_secondaryContainer">#5B412F</color>
@@ -81,8 +81,8 @@
     <color name="home_border">#FF30423C</color>
     <color name="home_button">#FF16252B</color>
     <color name="home_tab_selected">#FF223529</color>
-    <color name="home_accent">#FFB8FF2C</color>
-    <color name="home_accent_dark">#FF7FAF00</color>
+    <color name="home_accent">#FFA6D928</color>
+    <color name="home_accent_dark">#FF719800</color>
     <color name="home_text">#FFFFFFFF</color>
     <color name="home_text_secondary">#FFA0A0A0</color>
     <color name="home_text_muted">#FF808080</color>
