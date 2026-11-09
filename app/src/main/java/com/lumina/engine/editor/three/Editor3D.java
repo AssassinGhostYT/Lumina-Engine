@@ -46,7 +46,7 @@ public class Editor3D {
 	public boolean edit2D = false;
 	public boolean showGrid = true;
 	/** Gray editor floor under the 3D grid; editor-only visual aid. */
-	public boolean showPlatform = true;
+	public boolean showPlatform = false;
 	/** While editing the 2D layer: draw the 3D picture behind it (off = a normal 2D canvas with grid and frame). */
 	public boolean show3DBehind = false;
 	/** Draw the collider of the selected element (saved for the editor). */

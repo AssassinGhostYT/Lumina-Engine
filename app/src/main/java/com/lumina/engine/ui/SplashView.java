@@ -23,12 +23,15 @@ public class SplashView extends View {
     private static final class Dot { float x, y, vy, r, a, ph; }
     private static final class Ripple { float x, y; float t; }
     private static final class Spark { float x, y, vx, vy, life; }
+    private static final class Laser { float x, y, life; }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random rnd = new Random();
     private final Dot[] dots = new Dot[90];
     private final ArrayList<Ripple> ripples = new ArrayList<>();
     private final ArrayList<Spark> sparks = new ArrayList<>();
+    private final ArrayList<Laser> lasers = new ArrayList<>();
+    private float nextLaser;
     private final float density;
     private float scroll, tilt, tiltTarget, time;
     private long last;
@@ -200,7 +203,19 @@ public class SplashView extends View {
     }
     private void drawRetroShip(Canvas c, int w, int h) {
         float d = density;
-        float x = w * 0.78f, y = h * 0.78f, bob = (float)Math.sin(time * 3f) * 5f * d;
+        // A small retro shooter ship patrols the lower part of the galaxy.
+        float x = w * 0.50f + (float)Math.sin(time * 0.85f) * w * 0.28f;
+        float y = h * 0.78f, bob = (float)Math.sin(time * 3f) * 5f * d;
+        if (time >= nextLaser) {
+            Laser l = new Laser(); l.x = x; l.y = y - 23 * d + bob; l.life = 1f; lasers.add(l); nextLaser = time + 0.42f;
+        }
+        for (int i = lasers.size() - 1; i >= 0; i--) {
+            Laser l = lasers.get(i); l.y -= 250f * d * 0.016f; l.life -= 0.016f;
+            if (l.life <= 0 || l.y < 0) { lasers.remove(i); continue; }
+            paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2f * d);
+            paint.setColor(((int)(l.life * 255) << 24) | 0xFFEA55);
+            c.drawLine(l.x, l.y, l.x, l.y - 15 * d, paint);
+        }
         c.save(); c.translate(x, y + bob);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(0xFFE6FF9A);

@@ -87,6 +87,10 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     private TextView titleView, indexingChip;
     private String tool = "grid", axis = "none";
     private boolean playing = false, projectOpen = false;
+    /** Optional Unity/Godot-style split workspace: canvas + project tree + inspector. */
+    private boolean splitMode = false;
+    private FrameLayout splitHost;
+    private ImageView splitBtn;
     /** A full-screen LibGDX tool (the font editor) is open: the whole shell is hidden meanwhile, closer = what the Back key calls. */
     private boolean toolOpen = false;
     private Runnable toolCloser;
@@ -217,7 +221,9 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
 
         // middle: canvas is visible through here; rails float on the sides
         FrameLayout middle = new FrameLayout(c);
+        splitHost = middle;
         root.addView(middle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        if (splitMode) buildSplitWorkspace(c, middle, land);
 
         LinearLayout rail = buildRail(c);
         FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -250,6 +256,50 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         updateRailSelection();
         refreshUndoRedo();
         applyRemoteLock();
+    }
+
+    /** Builds a touch-toggleable workspace: scene canvas remains visible while tree and inspector stay docked. */
+    private void buildSplitWorkspace(Context c, FrameLayout middle, boolean land) {
+        LinearLayout dock = Ui.column(c);
+        dock.setBackground(Ui.rounded(0xF0191C21, Ui.dp(c, 10), Ui.BORDER, 1));
+        dock.setPadding(Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 6));
+        TextView heading = Ui.text(c, "ÁRBOL · INSPECTOR", 11, Ui.ACCENT);
+        heading.setTypeface(Typeface.DEFAULT_BOLD);
+        heading.setPadding(Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 6));
+        dock.addView(heading, Ui.matchWrap());
+        LinearLayout tabs = Ui.row(c);
+        TextView treeTab = Ui.text(c, "Escena", 12, Ui.TEXT);
+        TextView inspectTab = Ui.text(c, "Inspector", 12, Ui.TEXT);
+        for (TextView t : new TextView[]{treeTab, inspectTab}) {
+            t.setGravity(Gravity.CENTER);
+            t.setPadding(Ui.dp(c, 8), Ui.dp(c, 7), Ui.dp(c, 8), Ui.dp(c, 7));
+            t.setBackground(Ui.toggleBg(c));
+            tabs.addView(t, Ui.weight(1));
+        }
+        dock.addView(tabs, Ui.matchWrap());
+        FrameLayout body = new FrameLayout(c);
+        dock.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        View tree = files.view(c);
+        View inspector = properties.view(c);
+        body.addView(tree, Ui.match());
+        inspector.setVisibility(GONE);
+        body.addView(inspector, Ui.match());
+        treeTab.setSelected(true);
+        treeTab.setOnClickListener(v -> { tree.setVisibility(VISIBLE); inspector.setVisibility(GONE); treeTab.setSelected(true); inspectTab.setSelected(false); });
+        inspectTab.setOnClickListener(v -> { tree.setVisibility(GONE); inspector.setVisibility(VISIBLE); treeTab.setSelected(false); inspectTab.setSelected(true); });
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams((int)(getResources().getDisplayMetrics().widthPixels * (land ? 0.34f : 0.94f)), ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.gravity = land ? (Ui.isRtl(c) ? Gravity.START : Gravity.END) : Gravity.BOTTOM;
+        lp.setMargins(Ui.dp(c, 5), Ui.dp(c, 5), Ui.dp(c, 5), Ui.dp(c, 5));
+        if (!land) lp.height = (int)(getResources().getDisplayMetrics().heightPixels * 0.48f);
+        middle.addView(dock, lp);
+        files.onShown();
+    }
+
+    private void toggleSplitWorkspace() {
+        splitMode = !splitMode;
+        if (!splitMode) { if (splitHost != null) splitHost.removeAllViews(); }
+        build();
+        Ui.toast(activity, splitMode ? "Vista dividida: árbol e inspector" : "Vista completa");
     }
 
     /** Opens the AI panel on its "API" tab (used when an error is sent to the in-editor assistant). */
@@ -399,6 +449,9 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         ImageView code = Ui.iconButton(c, R.drawable.ic_lumina_code, Tr.t("ui_code", "Código y archivos"), v -> panels.show(files));
         code.setImageTintList(ColorStateList.valueOf(0xFF64B5F6));
         into.addView(code);
+        splitBtn = Ui.iconButton(c, R.drawable.ic_lumina_fit, "Vista dividida: escena + árbol + inspector", v -> toggleSplitWorkspace());
+        splitBtn.setImageTintList(ColorStateList.valueOf(splitMode ? Ui.ACCENT : Ui.TEXT));
+        into.addView(splitBtn);
         into.addView(Ui.iconButton(c, R.drawable.ic_lumina_logs, Tr.t("ui_logs", "Logs"), v -> { files.openLogs(); panels.show(files); }));
         ImageView set = Ui.iconButton(c, R.drawable.ic_lumina_settings, Tr.t("settings", "Settings"), v -> panels.show(settings));
         Tut.tag(set, "tool:settings");

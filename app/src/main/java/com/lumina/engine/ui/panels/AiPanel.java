@@ -174,24 +174,17 @@ public class AiPanel implements PanelHost.Panel {
 
     private void renderWelcome() {
         Context c = messagesBox.getContext();
-        boolean ar = Ui.isRtl(c);
-        TextView t = Ui.title(c, ar ? "✨ مساعد Lumina Engine" : "✨ Lumina Engine Assistant");
+        boolean ar = false;
+        TextView t = Ui.title(c, "✨ Asistente de Lumina Engine");
         t.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 4));
         messagesBox.addView(t);
-        messagesBox.addView(Ui.text(c, ar
-                ? "أفهم مشروعك (العناصر، الأحداث، المتغيرات) وأستطيع إضافة عناصر وتعديل خصائص وكتابة الأحداث بعد موافقتك."
-                : "I understand your project (elements, events, variables) and can add elements, change properties and write events after you approve.", 13.5f, Ui.TEXT_2));
-        String[] ideas = ar ? new String[]{
-                "اجعل اللاعب يقفز عند الضغط على زر",
-                "أضف عملات تُجمع وعدّاد نقاط",
-                "اشرح لي مشهدي الحالي",
-                "حرّك اللاعب بعصا التحكم",
-                "اجعل العدو يطارد اللاعب"} : new String[]{
-                "Make the player jump when I tap a button",
-                "Add collectible coins and a score counter",
-                "Explain my current scene",
-                "Move the player with a joystick",
-                "Make the enemy chase the player"};
+        messagesBox.addView(Ui.text(c, "Entiendo tu proyecto (elementos, eventos y variables). Puedo añadir elementos, cambiar propiedades y escribir eventos después de que lo apruebes.", 13.5f, Ui.TEXT_2));
+        String[] ideas = new String[]{
+                "Haz que el jugador salte al tocar un botón",
+                "Añade monedas coleccionables y un contador de puntos",
+                "Explícame mi escena actual",
+                "Mueve al jugador con un joystick",
+                "Haz que el enemigo persiga al jugador"};
         for (String idea : ideas) {
             TextView chip = Ui.text(c, "💡 " + idea, 13.5f, Ui.TEXT);
             chip.setPadding(Ui.dp(c, 12), Ui.dp(c, 9), Ui.dp(c, 12), Ui.dp(c, 9));
@@ -352,10 +345,9 @@ public class AiPanel implements PanelHost.Panel {
         boolean withContext = prefs().getBoolean("ai_send_context", true);
         Bridge.query(() -> withContext ? AiContext.snapshot(true) : "", snapshot -> net.execute(() -> {
             List<AiClient.Msg> msgs = new ArrayList<>();
-            boolean ar = Ui.isRtl(c);
             msgs.add(new AiClient.Msg("system", AiContext.ENGINE_GUIDE
                     + (prefs().getBoolean(AiContext.PRO_PREF, true) ? "\n" + AiContext.proGuide() + "\n" : "")
-                    + (ar ? "\nThe user interface is in Arabic: reply in Arabic unless asked otherwise.\n" : "")
+                    + "\nResponde siempre en español por defecto. Solo cambia de idioma si la persona lo solicita explícitamente. No te quedes en silencio: si falta una clave, modelo o conexión, explica el error en español.\n"
                     + (snapshot.isEmpty() ? "" : "\n" + snapshot)));
             int from = Math.max(0, session.messages.size() - 24);
             for (int i = from; i < session.messages.size(); i++) {
@@ -380,7 +372,10 @@ public class AiPanel implements PanelHost.Panel {
                     Ui.ui(() -> {
                         messagesBox.removeView(bubble);
                         setBusy(false);
-                        if (full.trim().isEmpty()) return;
+                        if (full == null || full.trim().isEmpty()) {
+                            showError(c, "La IA terminó sin devolver texto. Revisa el modelo o la conexión e inténtalo otra vez.");
+                            return;
+                        }
                         Message am = new Message("assistant", full);
                         session.messages.add(am);
                         addBubble(am);
@@ -417,20 +412,21 @@ public class AiPanel implements PanelHost.Panel {
     }
 
     private void showError(Context c, String message) {
-        boolean ar = Ui.isRtl(c);
+        boolean ar = false;
         String friendly = message;
-        if (message.equals("NO_KEY")) friendly = ar ? "أضف مفتاح API من الإعدادات." : "Add your API key in settings.";
-        else if (message.equals("NO_MODEL")) friendly = ar ? "اختر موديلاً أولاً." : "Pick a model first.";
+        if ("NO_KEY".equals(message)) friendly = "Añade una clave API desde Ajustes de IA.";
+        else if ("NO_MODEL".equals(message)) friendly = "Selecciona un modelo en Ajustes de IA.";
+        else if (friendly == null || friendly.trim().isEmpty()) friendly = "La IA no devolvió una respuesta. Revisa la conexión y vuelve a intentarlo.";
         TextView t = Ui.text(c, "⚠ " + friendly, 13, 0xFFFF8A80);
         t.setPadding(Ui.dp(c, 10), Ui.dp(c, 8), Ui.dp(c, 10), Ui.dp(c, 8));
         t.setBackground(Ui.rounded(0x33EF5350, Ui.dp(c, 10)));
         t.setTextIsSelectable(true);
         messagesBox.addView(t, Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
         LinearLayout row = Ui.row(c);
-        row.addView(Ui.button(c, R.drawable.ic_lumina_key, ar ? "الإعدادات" : "Settings", false, v -> showSettings()));
+        row.addView(Ui.button(c, R.drawable.ic_lumina_key, "Ajustes", false, v -> showSettings()));
         View sp = new View(c);
         row.addView(sp, new LinearLayout.LayoutParams(Ui.dp(c, 8), 1));
-        row.addView(Ui.button(c, R.drawable.ic_lumina_ai, ar ? "موديل آخر" : "Other model", false, v -> pickModel(c, null)));
+        row.addView(Ui.button(c, R.drawable.ic_lumina_ai, "Otro modelo", false, v -> pickModel(c, null)));
         messagesBox.addView(row, Ui.margins(Ui.matchWrap(), c, 0, 6, 0, 0));
         scrollDown();
     }

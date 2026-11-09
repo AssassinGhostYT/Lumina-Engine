@@ -79,10 +79,10 @@ public class AiClient {
         this.prefs = prefs;
     }
 
-    public String providerId() { return prefs.getString("ai_provider", "openrouter"); }
+    public String providerId() { return prefs.getString("ai_provider", "pollinations"); }
     public Provider provider() { return provider(providerId()); }
     public String key(Provider p) { return prefs.getString(p.keyPref, ""); }
-    public String model() { return prefs.getString("ai_model_" + providerId(), ""); }
+    public String model() { return prefs.getString("ai_model_" + providerId(), providerId().equals("pollinations") ? "openai" : ""); }
 
     public String baseUrl(Provider p) {
         if (p.id.equals("custom")) {

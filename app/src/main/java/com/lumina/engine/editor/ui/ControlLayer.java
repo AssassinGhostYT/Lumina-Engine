@@ -1066,8 +1066,22 @@ public class ControlLayer extends Table {
 					ne.whenLoaded(()->{
 						if(newScene3D){
 							actionAdd3D("OBJ3D","PLANE");
-							actionAdd3D("OBJ3D","CAPSULE");
-							actionAdd3D("CAMERA3D",null);
+                            com.lumina.engine.editor.LibgdxEditor sceneEditor = app.getEditor();
+                            for (com.badlogic.gdx.scenes.scene2d.Actor a : sceneEditor.getActors()) {
+                                if (a instanceof com.lumina.engine.editor.items.Editor3DItem && "PLANE".equals(com.lumina.engine.Helpers.PropertySet.getPropertySet(a).getString("Mesh"))) {
+                                    com.lumina.engine.Helpers.PropertySet<String,Object> gp = com.lumina.engine.Helpers.PropertySet.getPropertySet(a);
+                                    gp.put("Color", "#70757D"); gp.put("Scale Y", "0.12"); gp.put("y", "-0.12"); gp.put("Mesh", "CUBE"); gp.put("Collider", "BOX"); ((com.lumina.engine.editor.items.Editor3DItem)a).update();
+                                }
+                            }
+                            actionAdd3D("OBJ3D","CAPSULE");
+                            com.lumina.engine.Helpers.PropertySet<String,Object> playerProps = com.lumina.engine.Helpers.PropertySet.getPropertySet(app.getEditor().getSelectedActor());
+                            playerProps.put("behaviors", "[{\"type\":\"ThirdPersonController3D\",\"params\":{\"joystick\":\"moveStick\",\"cameraMode\":\"ORBIT_TOUCH\"},\"enabled\":true}]");
+                            app.getEditor().getSelectedActor().setName("Player");
+                            actionAddBody(3);
+                            com.lumina.engine.Helpers.PropertySet<String,Object> stick = com.lumina.engine.Helpers.PropertySet.getPropertySet(app.getEditor().getSelectedActor());
+                            stick.put("name", "moveStick"); stick.put("x", "34"); stick.put("y", "34"); stick.put("width", "112"); stick.put("height", "112"); stick.put("z", "120");
+                            app.getEditor().getSelectedActor().setName("moveStick");
+                            actionAdd3D("CAMERA3D",null);
 						} else {
 							actionAddBody(0);
 						Actor player = ne.getSelectedActor();
