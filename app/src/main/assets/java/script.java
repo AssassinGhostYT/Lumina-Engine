@@ -14,7 +14,7 @@ import com.badlogic.gdx.math.Vector2;
 public class %1$s extends com.lumina.engine.Game.Refs.%3$sItemRefs {
 /*
     Hi coder... :)
-    the engine still in it's beta and you may face so many bugs,
+    this is Lumina Engine 1.0.1; report any problems so they can be improved,
     so please contact us without hesitation...
 
     Every element of the scene is a field here (generated base class):

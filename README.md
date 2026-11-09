@@ -28,7 +28,7 @@ Visual blocks, a real code editor, an AI assistant and GitHub sync, powered by L
 
 ## 📥 Where do I download the app?
 
-> **Option 1 — direct download:** **[LuminaEngine-0.5.1Beta.apk](https://github.com/AssassinGhostYT/Lumina-Engine/releases/download/v0.5.1Beta/LuminaEngine-0.5.1Beta.apk)** (97 MB, debug-signed, installs on any phone).
+> **Option 1 — direct download:** **[LuminaEngine-1.0.1.apk](https://github.com/AssassinGhostYT/Lumina-Engine/releases/download/v1.0.1/LuminaEngine-1.0.1.apk)** (97 MB, debug-signed, installs on any phone).
 >
 > **Option 2 — Releases page:** open the [latest release](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) and download the `.apk` from **Assets**.
 >

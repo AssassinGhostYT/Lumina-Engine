@@ -1,4 +1,4 @@
-## 🎉 Lumina Engine 0.5.1 Beta — 3D
+## 🎉 Lumina Engine 1.0.1 — 3D
 
 ### English
 **3D engine**
