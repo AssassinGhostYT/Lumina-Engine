@@ -345,7 +345,12 @@ public class AiPanel implements PanelHost.Panel {
         boolean withContext = prefs().getBoolean("ai_send_context", true);
         Bridge.query(() -> withContext ? AiContext.snapshot(true) : "", snapshot -> net.execute(() -> {
             List<AiClient.Msg> msgs = new ArrayList<>();
+            String projectLanguage = AiContext.projectLanguage();
+            String languageGuide = projectLanguage.equals("cpp")
+                    ? "\nEste proyecto seleccionó C++ (ndk-clang). No digas que el juego está hecho en Java. Usa archivos cpp/*.cpp y cpp/*.h para código nativo; para acciones visuales del editor explica si una parte todavía depende del puente del motor.\n"
+                    : "\nEste proyecto seleccionó Java. Usa el flujo Java del motor.\n";
             msgs.add(new AiClient.Msg("system", AiContext.ENGINE_GUIDE
+                    + languageGuide
                     + (prefs().getBoolean(AiContext.PRO_PREF, true) ? "\n" + AiContext.proGuide() + "\n" : "")
                     + "\nResponde siempre en español por defecto. Solo cambia de idioma si la persona lo solicita explícitamente. No te quedes en silencio: si falta una clave, modelo o conexión, explica el error en español.\n"
                     + (snapshot.isEmpty() ? "" : "\n" + snapshot)));

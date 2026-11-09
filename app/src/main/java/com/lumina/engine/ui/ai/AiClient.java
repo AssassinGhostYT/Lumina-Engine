@@ -179,7 +179,8 @@ public class AiClient {
             if (base.isEmpty()) throw new Exception("Set the base URL in AI settings");
             JsonObject body = new JsonObject();
             body.addProperty("model", model);
-            body.addProperty("stream", true);
+            boolean streaming = !p.id.equals("pollinations");
+            body.addProperty("stream", streaming);
             float temp = prefs.getFloat("ai_temperature", 0.4f);
             body.addProperty("temperature", temp);
             JsonArray arr = new JsonArray();
@@ -214,9 +215,8 @@ public class AiClient {
             if (!ctype.contains("event-stream")) {
                 // some servers ignore stream=true
                 String txt = readAll(c.getInputStream());
-                JsonObject o = JsonParser.parseString(txt).getAsJsonObject();
-                String content = o.getAsJsonArray("choices").get(0).getAsJsonObject().getAsJsonObject("message").get("content").getAsString();
-                cb.onToken(content);
+                String content = extractContent(txt);
+                if (!content.isEmpty()) cb.onToken(content);
                 cb.onDone(content);
                 return;
             }
@@ -253,6 +253,22 @@ public class AiClient {
         } finally {
             current = null;
         }
+    }
+
+    private static String extractContent(String txt) {
+        if (txt == null) return "";
+        try {
+            JsonElement parsed = JsonParser.parseString(txt);
+            if (parsed.isJsonPrimitive()) return parsed.getAsString();
+            JsonObject root = parsed.getAsJsonObject();
+            if (!root.has("choices") || root.getAsJsonArray("choices").size() == 0) return txt;
+            JsonObject choice = root.getAsJsonArray("choices").get(0).getAsJsonObject();
+            JsonObject message = choice.has("message") && choice.get("message").isJsonObject() ? choice.getAsJsonObject("message") : null;
+            if (message != null && message.has("content") && !message.get("content").isJsonNull()) return message.get("content").getAsString();
+            JsonObject delta = choice.has("delta") && choice.get("delta").isJsonObject() ? choice.getAsJsonObject("delta") : null;
+            if (delta != null && delta.has("content") && !delta.get("content").isJsonNull()) return delta.get("content").getAsString();
+        } catch (Exception ignored) {}
+        return txt;
     }
 
     static String errorMessage(int code, String body) {

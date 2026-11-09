@@ -106,6 +106,18 @@ public final class AiContext {
         return Math.max(50, Math.round(n / 50f) * 50);
     }
 
+    /** Tells the assistant which native language the project selected at creation time. */
+    public static String projectLanguage() {
+        try {
+            LibgdxEditor ed = Bridge.editor();
+            if (ed == null) return "java";
+            File f = new File(ed.getProject().getPath(), "configs/project.json");
+            if (!f.exists()) return "java";
+            String raw = Gdx.files.absolute(f.getAbsolutePath()).readString("UTF-8");
+            return raw.contains("cpp") ? "cpp" : "java";
+        } catch (Throwable ignored) { return "java"; }
+    }
+
     /** Live project snapshot (GL thread). */
     public static String snapshot(boolean includeFiles) {
         StringBuilder sb = new StringBuilder();
