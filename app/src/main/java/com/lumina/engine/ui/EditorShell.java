@@ -396,6 +396,9 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
                         Tr.t("editorRestartNote", "The scenes will be saved and reopened."), null,
                         () -> Bridge.gl(() -> Bridge.controls().actionToggleOrientation())));
         into.addView(rot);
+        ImageView code = Ui.iconButton(c, R.drawable.ic_lumina_code, Tr.t("ui_code", "Código y archivos"), v -> panels.show(files));
+        code.setImageTintList(ColorStateList.valueOf(0xFF64B5F6));
+        into.addView(code);
         into.addView(Ui.iconButton(c, R.drawable.ic_lumina_logs, Tr.t("ui_logs", "Logs"), v -> { files.openLogs(); panels.show(files); }));
         ImageView set = Ui.iconButton(c, R.drawable.ic_lumina_settings, Tr.t("settings", "Settings"), v -> panels.show(settings));
         Tut.tag(set, "tool:settings");

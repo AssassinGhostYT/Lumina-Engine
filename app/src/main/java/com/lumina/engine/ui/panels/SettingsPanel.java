@@ -94,10 +94,20 @@ public class SettingsPanel implements PanelHost.Panel {
         col.addView(sw(c, p, "SaveUndoRedo", Tr.t("saveUndoRedo", "Persist undo/redo history"), null));
         col.addView(sw(c, p, "Auto Completion", Tr.t("codeCompletion", "Script code completion"), null));
 
-        col.addView(Ui.text(c, Tr.t("ui_compiler", "Java compiler"), 13, Ui.TEXT_2));
-        TextView comp = chooser(c, p.getString("compiler", "javac"));
-        comp.setOnClickListener(v -> Dialogs.choose(c, "Compiler", new String[]{"javac", "ecj"}, i -> {
-            String s = i == 0 ? "javac" : "ecj";
+        col.addView(Ui.text(c, Tr.t("ui_compiler", "Compilador del proyecto"), 13, Ui.TEXT_2));
+        String compilerValue = p.getString("compiler", "javac");
+        try {
+            if (Bridge.ready()) {
+                String root = Bridge.editor().getProject().getPath();
+                java.io.File cfg = new java.io.File(root, "configs/project.json");
+                if (cfg.isFile() && cfg.getName().equals("project.json") && cfg.length() > 0
+                        && com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath()).contains("\"compiler\": \"ndk-clang\""))
+                    compilerValue = "ndk-clang";
+            }
+        } catch (Throwable ignored) {}
+        TextView comp = chooser(c, compilerValue);
+        comp.setOnClickListener(v -> Dialogs.choose(c, Tr.t("ui_compiler", "Compilador del proyecto"), new String[]{"javac (Java)", "ecj (Java)", "ndk-clang (C++)"}, i -> {
+            String s = i == 0 ? "javac" : (i == 1 ? "ecj" : "ndk-clang");
             p.edit().putString("compiler", s).apply();
             comp.setText(s);
         }));

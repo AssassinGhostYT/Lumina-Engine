@@ -93,6 +93,22 @@ public final class ProjectDialogs {
         return three;
     }
 
+    /** Stores the selected language and creates starter files visible in the Files panel. */
+    static void writeProjectLanguage(File project, String language) {
+        try {
+            File cfg = new File(project, "configs/project.json");
+            cfg.getParentFile().mkdirs();
+            com.lumina.engine.Helpers.FileUtil.writeFile(cfg.getAbsolutePath(), "{\n  \"language\": \"" + language + "\",\n  \"compiler\": \"" + ("cpp".equals(language) ? "ndk-clang" : "javac") + "\"\n}\n");
+            if ("cpp".equals(language)) {
+                File cpp = new File(project, "cpp");
+                cpp.mkdirs();
+                com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.cpp").getAbsolutePath(), "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
+                com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.h").getAbsolutePath(), "#pragma once\n\n// Declaraciones del juego\n");
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** First scene of a new 3D project: 3D settings + a ground, a cube, a sun-lit camera view. */
     static void write3D(Activity a, File project) {
         try {
@@ -141,6 +157,17 @@ public final class ProjectDialogs {
         col.addView(name, Ui.matchWrap());
         boolean[] land = orientationPicker(a, col, false);
         boolean[] three = typePicker(a, col);
+        final String[] projectLanguage = {"java"};
+        col.addView(Ui.sectionLabel(a, T("project_language", "Lenguaje del proyecto")));
+        TextView languageChoice = Ui.text(a, "Java", 14, Ui.TEXT);
+        languageChoice.setGravity(Gravity.CENTER_VERTICAL);
+        languageChoice.setPadding(Ui.dp(a, 14), Ui.dp(a, 12), Ui.dp(a, 14), Ui.dp(a, 12));
+        languageChoice.setBackground(Ui.toggleBg(a));
+        languageChoice.setOnClickListener(v -> Dialogs.choose(a, T("project_language", "Lenguaje del proyecto"), new String[]{"Java", "C++"}, i -> {
+            projectLanguage[0] = i == 0 ? "java" : "cpp";
+            languageChoice.setText(i == 0 ? "Java" : "C++");
+        }));
+        col.addView(languageChoice, Ui.matchWrap());
         TextView tip = Ui.text(a, T("home_orientation_tip", "You can change it later from Edit project."), 11.5f, Ui.TEXT_3);
         tip.setPadding(0, Ui.dp(a, 8), 0, 0);
         col.addView(tip);
@@ -180,6 +207,7 @@ public final class ProjectDialogs {
             }
             for (String p : new String[]{"sounds", "anims", "images", "files", "icon"}) new File(dir, p).mkdirs();
             writeOrientation(a, dir, land[0]);
+            writeProjectLanguage(dir, projectLanguage[0]);
             if (three[0]) write3D(a, dir);
             d.dismiss();
             if (!upload.enabled()) {

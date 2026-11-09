@@ -472,7 +472,7 @@ public class Editor3D {
 		Gdx.gl.glDepthMask(false);
 		if (showPlatform) {
 			shapes.begin(ShapeRenderer.ShapeType.Filled);
-			shapes.setColor(0.12f, 0.15f, 0.18f, 0.92f);
+			shapes.setColor(0.28f, 0.31f, 0.36f, 0.92f);
 			float extent = n * step;
 			shapes.box(cx - extent, -0.08f, cz - extent, extent * 2f, 0.05f, extent * 2f);
 			shapes.end();

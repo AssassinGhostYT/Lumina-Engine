@@ -307,7 +307,7 @@ public class FilesPanel implements PanelHost.Panel {
         if (f.isDirectory()) return R.drawable.ic_lumina_folder;
         if (n.endsWith(".prefab")) return com.lumina.engine.ui.PrefabUi.ICON;
         if (FilePickerDialog.isImage(n)) return R.drawable.ic_lumina_image;
-        if (n.endsWith(".java") || n.endsWith(".code") || n.endsWith(".json") || n.endsWith(".visual") || n.endsWith(".xml")) return R.drawable.ic_lumina_code;
+        if (n.endsWith(".java") || n.endsWith(".cpp") || n.endsWith(".cc") || n.endsWith(".cxx") || n.endsWith(".h") || n.endsWith(".hpp") || n.endsWith(".code") || n.endsWith(".json") || n.endsWith(".visual") || n.endsWith(".xml")) return R.drawable.ic_lumina_code;
         if (n.endsWith(".ui")) return R.drawable.ic_lumina_widgets;
         if (isSound(n)) return f.getAbsolutePath().equals(playingPath) ? R.drawable.ic_lumina_stop : R.drawable.ic_lumina_sound;
         if (n.endsWith(".ttf") || n.endsWith(".otf") || n.endsWith(".lmf") || n.endsWith(".fnt")) return R.drawable.ic_lumina_font;
@@ -495,7 +495,7 @@ public class FilesPanel implements PanelHost.Panel {
         } else if (n.endsWith(".lmf")) {
             shell.panels.hide();
             Bridge.gl(() -> Bridge.app().getFileBrowser().openFontEditor(Gdx.files.absolute(f.getParent()), Gdx.files.absolute(f.getAbsolutePath())));
-        } else if (n.endsWith(".java") && !logsMode) {
+        } else if ((n.endsWith(".java") || n.endsWith(".cpp") || n.endsWith(".cc") || n.endsWith(".cxx") || n.endsWith(".h") || n.endsWith(".hpp") || n.endsWith(".json")) && !logsMode) {
             shell.host().openJava(f.getAbsolutePath());
         } else if (FilePickerDialog.isImage(n)) {
             imagePreview(c, f);
@@ -716,6 +716,8 @@ public class FilesPanel implements PanelHost.Panel {
         m.getMenu().add(0, 7, 5, Tr.t("bm_menu", "Button Maker"));
         m.getMenu().add(0, 8, 6, Tr.t("icn_title", "Icons"));
         m.getMenu().add(0, 9, 7, Tr.t("uim_new", "New UI (UI Maker)"));
+        m.getMenu().add(0, 10, 8, "Nuevo archivo C++");
+        m.getMenu().add(0, 11, 9, "Nuevo encabezado C++");
         m.getMenu().add(0, 31, 90, Tr.t("bhv_new", "New behavior"));
         m.getMenu().add(0, 32, 91, Tr.t("bhv_import", "Import behavior (.lmb)"));
         m.getMenu().add(0, 33, 89, Tr.t("pbh_title", "Project behaviors"));
@@ -755,8 +757,9 @@ public class FilesPanel implements PanelHost.Panel {
                 Bridge.gl(() -> Bridge.app().getFileBrowser().openFontEditor(Gdx.files.absolute(d.getAbsolutePath()), null));
                 return true;
             }
-            File target = id == 3 ? new File(rootDir, "anims") : dir;
-            Dialogs.input(c, it.getTitle().toString(), Tr.t("name", "Name"), id == 1 ? "folder" : (id == 3 ? "walk" : "file.txt"), v -> {
+            File target = id == 3 ? new File(rootDir, "anims") : (id == 10 || id == 11 ? new File(rootDir, "cpp") : dir);
+            String defaultName = id == 10 ? "main.cpp" : (id == 11 ? "main.h" : (id == 1 ? "folder" : (id == 3 ? "walk" : "file.txt")));
+            Dialogs.input(c, it.getTitle().toString(), Tr.t("name", "Name"), defaultName, v -> {
                 if (v.trim().isEmpty() || v.contains("/")) return Tr.t("ui_bad_char", "Not allowed");
                 if (new File(target, v).exists()) return Tr.t("ui_name_used", "Name already used");
                 return null;
@@ -766,12 +769,13 @@ public class FilesPanel implements PanelHost.Panel {
                     if (id == 1) f.mkdirs();
                     else {
                         target.mkdirs();
-                        try (OutputStream o = new FileOutputStream(f)) { o.write(id == 3 ? "[]".getBytes() : new byte[0]); }
+                        String starter = id == 10 ? "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n" : (id == 11 ? "#pragma once\n\n// Declaraciones del juego\n" : (id == 3 ? "[]" : ""));
+                        try (OutputStream o = new FileOutputStream(f)) { o.write(starter.getBytes(StandardCharsets.UTF_8)); }
                     }
                 } catch (Exception e) {
                     Ui.toast(c, e.toString());
                 }
-                if (id == 3) {
+                if (id == 3 || id == 10 || id == 11) {
                     dir = target;
                     open(c, f);
                 }

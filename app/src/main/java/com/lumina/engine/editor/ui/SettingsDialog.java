@@ -70,8 +70,8 @@ public class SettingsDialog extends VisDialog {
 		table.add(autoSave).padTop(10).row();
 		
 		SpinnerInput compiler = new SpinnerInput();
-		compiler.setNameText("Compiler");
-		compiler.setData("javac","ecj");
+		compiler.setNameText("Compilador del proyecto");
+		compiler.setData("javac","ecj","ndk-clang");
 		compiler.setValue(preferences.getString("compiler","javac"));
 		table.add(compiler).padTop(10).row();
 		
