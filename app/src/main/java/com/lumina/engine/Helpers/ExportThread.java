@@ -85,15 +85,26 @@ public class ExportThread extends Thread {
 			
 			Utils.extractAssetFile(context,"files/empty.zip",export_temp+"/assets/project.zip");
 			String source = project;
-			if(mergeTilesets){
+			boolean hasCppSources = CppProjectSupport.hasSources(new java.io.File(project));
+			if(mergeTilesets || hasCppSources){
 				// work on a copy: the project itself is never changed
-				onProgress(com.lumina.engine.ui.Tr.t("export_p_merge","Merging images into tilesets..."));
+				if (mergeTilesets) onProgress(com.lumina.engine.ui.Tr.t("export_p_merge","Merging images into tilesets..."));
 				// the copy keeps the project's folder name: it is the root folder of the zip and the game looks for it
 				String copyRoot = dataDir+"/exportProject";
 				FileUtil.deleteFile(copyRoot);
 				String copy = copyRoot+"/"+new java.io.File(project).getName();
 				FileUtil.copyDir(project,copy);
-				try { TilesetPacker.pack(new java.io.File(copy),null); source = copy; } catch(Throwable t){ source = project; }
+				try {
+					if (mergeTilesets) TilesetPacker.pack(new java.io.File(copy),null);
+					if (hasCppSources) {
+						onProgress("Preparing C++ sources for the native export...");
+						CppProjectSupport.prepare(new java.io.File(copy));
+					}
+					source = copy;
+				} catch(Throwable t){
+					onProgress("C++ export preparation skipped: "+t.getMessage());
+					source = copy;
+				}
 			}
 			Utils.zipf(source,export_temp+"/assets/project.zip","tulsgskdiensl626__Xxmoishs");
 			if(!source.equals(project)) FileUtil.deleteFile(dataDir+"/exportProject");
