@@ -20,10 +20,20 @@ public final class NativeBridge {
         return LOADED && nativeIsAvailable();
     }
 
+    public static String runtimeVersion() {
+        return isLoaded() ? nativeRuntimeVersion() : "Runtime C++ no disponible";
+    }
+
+    public static void update(float deltaSeconds) {
+        if (isLoaded()) nativeUpdate(deltaSeconds);
+    }
+
     public static String status() {
         return isLoaded() ? nativeStatus() : "Puente NDK no disponible";
     }
 
     private static native String nativeStatus();
     private static native boolean nativeIsAvailable();
+    private static native String nativeRuntimeVersion();
+    private static native void nativeUpdate(float deltaSeconds);
 }

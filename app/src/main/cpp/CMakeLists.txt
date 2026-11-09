@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(lumina_native)
 
-add_library(lumina_native SHARED native_bridge.cpp)
+add_library(lumina_native SHARED native_bridge.cpp lumina_game.cpp)
 
 find_library(log-lib log)
 target_compile_features(lumina_native PRIVATE cxx_std_17)
