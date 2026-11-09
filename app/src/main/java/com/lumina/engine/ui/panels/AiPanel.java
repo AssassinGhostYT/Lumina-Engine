@@ -457,6 +457,8 @@ public class AiPanel implements PanelHost.Panel {
         Context c = shell.activity();
         Bridge.query(() -> {
             String scene = Bridge.editor().getScene();
+            if ("cpp".equals(AiContext.projectLanguage()) || "cpp".equalsIgnoreCase(lang) || "c++".equalsIgnoreCase(lang))
+                return "cpp/ai_" + scene.toLowerCase(Locale.ROOT) + (code.contains("#include") ? ".cpp" : ".h");
             String cls = null;
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("class\\s+(\\w+)").matcher(code);
             if (m.find()) cls = m.group(1);

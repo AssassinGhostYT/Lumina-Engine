@@ -7,5 +7,6 @@ void update(float deltaSeconds);
 
 /** Returns the native runtime version. */
 const char* version();
+void log(const char* message);
 
 }

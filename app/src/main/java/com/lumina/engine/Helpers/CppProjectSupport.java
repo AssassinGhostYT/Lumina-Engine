@@ -27,6 +27,8 @@ public final class CppProjectSupport {
         appendJsonArray(manifest, headers);
         manifest.append("]\n}\n");
         write(new File(cppDir, "lumina_project.json"), manifest.toString());
+        write(new File(cppDir, "lumina_game.h"),
+                "#pragma once\n#include <cstdint>\nnamespace lumina {\nvoid update(float deltaSeconds);\nconst char* version();\nvoid log(const char* message);\n}\n");
 
         StringBuilder cmake = new StringBuilder();
         cmake.append("cmake_minimum_required(VERSION 3.22)\n")
