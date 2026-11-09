@@ -37,11 +37,15 @@ public class EngineLanguage extends EmptyLanguage {
 	// للتحكم في سلوك الإكمال التلقائي
 	private boolean autoCompletionEnabled = true;
 	
-	public EngineLanguage(CodeEditor editor, SmartEditor smart) {
+	public EngineLanguage(CodeEditor editor, SmartEditor smart) { this(editor, smart, ""); }
+
+	public EngineLanguage(CodeEditor editor, SmartEditor smart, String filePath) {
 		mEditor = editor;
 		this.smart = smart;
 		
-		String scope = GrammarRegistry.getInstance().loadGrammars("editor/languages.json").get(0).getScopeName();
+		String lowerPath = filePath == null ? "" : filePath.toLowerCase();
+		String grammarPath = lowerPath.endsWith(".cpp") || lowerPath.endsWith(".cc") || lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp") ? "editor/syntaxes/cpp.tmLanguage.json" : (lowerPath.endsWith(".json") ? "editor/syntaxes/json.tmLanguage.json" : "editor/syntaxes/java.tmLanguage.json");
+		String scope = GrammarRegistry.getInstance().loadGrammars(grammarPath).get(0).getScopeName();
 		mTextMateLanguage = TextMateLanguage.create(scope, false);
 		mIndentationRules = GrammarRegistry.getInstance().findLanguageConfiguration(scope).getIndentationRules();
 		

@@ -1,9 +1,1 @@
-{
-  "languages": [
-    {
-      "grammar": "editor/syntaxes/java.tmLanguage.json",
-      "name": "Java",
-      "scopeName": "source.java",
-      "scope":"source.java",
-      "languageConfiguration": "editor/language-configuration.json"
-    }]}
+{"languages":[{"grammar":"editor/syntaxes/java.tmLanguage.json","name":"Java","scopeName":"source.java","scope":"source.java","languageConfiguration":"editor/language-configuration.json"},{"grammar":"editor/syntaxes/cpp.tmLanguage.json","name":"C++","scopeName":"source.cpp","scope":"source.cpp","languageConfiguration":"editor/language-configuration.json"},{"grammar":"editor/syntaxes/json.tmLanguage.json","name":"JSON","scopeName":"source.json","scope":"source.json","languageConfiguration":"editor/language-configuration.json"}]}

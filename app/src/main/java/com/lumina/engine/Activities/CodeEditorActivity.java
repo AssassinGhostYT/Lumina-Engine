@@ -168,6 +168,12 @@ public class CodeEditorActivity extends AppCompatActivity {
 				writeSceneRefs(sceneName);
 				FileUtil.writeFile(path,String.format(Utils.readAssetFile("java/script.java",this),getIntent().getStringExtra("name"),sceneName,sceneName.toLowerCase()));
 			}
+			if(!getIntent().hasExtra("body") && !getIntent().hasExtra("scene")){
+				String lowerPath = path == null ? "" : path.toLowerCase();
+				if(lowerPath.endsWith(".cpp")) FileUtil.writeFile(path, "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
+				else if(lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp")) FileUtil.writeFile(path, "#pragma once\n\n// Declaraciones de tu juego\n");
+				else if(lowerPath.endsWith(".json")) FileUtil.writeFile(path, "{\n  \"name\": \"Lumina Project\",\n  \"version\": 1\n}\n");
+			}
 			if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals("")){
 				String sceneName = getIntent().getStringExtra("scene");
 				writeSceneRefs(sceneName);
@@ -195,7 +201,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 		TextMateColorScheme scheme = TextMateColorScheme.create(ThemeRegistry.getInstance());
 		editor.setColorScheme(scheme);
 		smart = new SmartEditor(this, editor, path, (TextView) findViewById(R.id.hint_bar), (TextView) findViewById(R.id.error_badge));
-		EngineLanguage eng= new EngineLanguage(editor, smart);
+		EngineLanguage eng= new EngineLanguage(editor, smart, path);
 		eng.setAutoCompletionEnabled(TestApp.getCurrentApp().preferences.getBoolean("Auto Completion",true));
 		editor.setEditorLanguage(eng);
 		smart.setBusyView(findViewById(R.id.init_progress));
@@ -271,7 +277,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 		FileProviderRegistry.getInstance()
 		.addFileProvider(new AssetsFileResolver(context.getAssets()));
 		ThemeRegistry scheme = ThemeRegistry.getInstance();
-		String light = "editor/QuietLight.tmTheme";
+		String light = "editor/darcula.json";
 		for (String theme : new String[] { light}) {
 			String path =  theme;
 			try {

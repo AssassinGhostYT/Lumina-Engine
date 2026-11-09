@@ -9,13 +9,13 @@
 		android:id="@+id/linear1"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:background="#1A1A1A"
+		android:background="#080B10"
 		android:orientation="vertical">
 		<LinearLayout
 			android:id="@+id/linear2"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:background="#1B262C"
+			android:background="#101923"
 			android:orientation="horizontal">
 			<ImageView
 				android:id="@+id/imageview1"
@@ -93,7 +93,7 @@
 				android:id="@+id/linear6"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
-				android:background="#1E1E1E"
+				android:background="#080B10"
 				android:orientation="vertical">
 				<io.github.rosemoe.sora.widget.CodeEditor
 					android:id="@+id/editor"
@@ -112,7 +112,7 @@
 			android:id="@+id/hint_bar"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:background="#263238"
+			android:background="#0D151E"
 			android:paddingLeft="10dp"
 			android:paddingRight="10dp"
 			android:paddingTop="6dp"
@@ -144,7 +144,7 @@
 			android:id="@+id/linear3"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:background="#1B262C"
+			android:background="#101923"
 			android:gravity="right"
 			android:orientation="horizontal">
 			<ImageView
