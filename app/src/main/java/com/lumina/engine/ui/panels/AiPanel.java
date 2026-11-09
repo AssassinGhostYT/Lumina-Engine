@@ -570,7 +570,7 @@ public class AiPanel implements PanelHost.Panel {
         col.setPadding(Ui.dp(c, 18), Ui.dp(c, 4), Ui.dp(c, 18), Ui.dp(c, 6));
 
         col.addView(Ui.sectionLabel(c, ar ? "المزوّد" : "Provider"));
-        final String[] chosen = {p.getString("ai_provider", "openrouter")};
+        final String[] chosen = {client().providerId()};
         LinearLayout provBox = Ui.column(c);
         col.addView(provBox);
         TextView help = Ui.text(c, "", 12.5f, Ui.TEXT_3);

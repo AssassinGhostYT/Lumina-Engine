@@ -49,6 +49,9 @@ public class LuminaApp extends Application {
     		}
 		}).start();
 		mApplicationContext = this.getApplicationContext();
+		// Keep editor crashes available as a readable report too. The exported
+		// runtime installs its own CrashLog; the main app used to discard this report.
+		com.lumina.engine.runtime.CrashLog.install(this);
 		if(uncaughtExceptionHandler==null)
 			uncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler(){

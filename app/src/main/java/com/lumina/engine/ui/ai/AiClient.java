@@ -56,7 +56,9 @@ public class AiClient {
 
     public static Provider provider(String id) {
         for (Provider p : PROVIDERS) if (p.id.equals(id)) return p;
-        return PROVIDERS[0];
+        // Older releases stored providers that are no longer offered. Never
+        // silently fall back to a keyed provider; keep the app usable without a key.
+        return provider("pollinations");
     }
 
     public static class Model {
@@ -79,7 +81,13 @@ public class AiClient {
         this.prefs = prefs;
     }
 
-    public String providerId() { return prefs.getString("ai_provider", "pollinations"); }
+    public String providerId() {
+        String saved = prefs.getString("ai_provider", "pollinations");
+        for (Provider p : PROVIDERS) if (p.id.equals(saved)) return saved;
+        // Migrate stale values from previous releases to the safe free provider.
+        prefs.edit().putString("ai_provider", "pollinations").apply();
+        return "pollinations";
+    }
     public Provider provider() { return provider(providerId()); }
     public String key(Provider p) { return prefs.getString(p.keyPref, ""); }
     public String model() { return prefs.getString("ai_model_" + providerId(), providerId().equals("pollinations") ? "openai" : ""); }
