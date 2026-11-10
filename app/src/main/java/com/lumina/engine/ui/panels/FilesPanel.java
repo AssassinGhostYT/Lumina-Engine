@@ -219,6 +219,18 @@ public class FilesPanel implements PanelHost.Panel {
         reload();
     }
 
+    /** C++ projects still contain the engine's generated Java bridge internally,
+     * but keep that implementation detail out of the user's project tree. */
+    private boolean hideJavaBackend(File f) {
+        if (logsMode || projectPath == null) return false;
+        try {
+            File cfg = new File(projectPath, "configs/project.json");
+            if (!cfg.isFile() || !com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath()).contains("\"language\": \"cpp\"")) return false;
+            String rel = f.getAbsolutePath().substring(new File(projectPath).getAbsolutePath().length()).replace(File.separatorChar, '/');
+            return rel.equals("/java") || rel.startsWith("/java/") || f.getName().toLowerCase(Locale.ROOT).endsWith(".java");
+        } catch (Throwable ignored) { return false; }
+    }
+
     public void reload() {
         if (root == null || dir == null) return;
         Context c = root.getContext();
@@ -227,7 +239,7 @@ public class FilesPanel implements PanelHost.Panel {
         items.clear();
         if (q.isEmpty()) {
             File[] l = dir.listFiles();
-            if (l != null) items.addAll(Arrays.asList(l));
+            if (l != null) for (File f : l) if (!hideJavaBackend(f)) items.add(f);
         } else collect(dir, q, items, 0);
         java.util.Collections.sort(items, (a, b) -> a.isDirectory() != b.isDirectory() ? (a.isDirectory() ? -1 : 1) : a.getName().compareToIgnoreCase(b.getName()));
         adapter.notifyDataSetChanged();
@@ -255,7 +267,7 @@ public class FilesPanel implements PanelHost.Panel {
         File[] l = d.listFiles();
         if (l == null || depth > 6 || out.size() > 300) return;
         for (File f : l) {
-            if (f.getName().toLowerCase(Locale.ROOT).contains(q)) out.add(f);
+            if (!hideJavaBackend(f) && f.getName().toLowerCase(Locale.ROOT).contains(q)) out.add(f);
             if (f.isDirectory()) collect(f, q, out, depth + 1);
         }
     }
@@ -280,7 +292,7 @@ public class FilesPanel implements PanelHost.Panel {
         r.setOnClickListener(v -> { dir = f; reload(); });
         tree.addView(r, Ui.matchWrap());
         if (!open && depth > 0) return;
-        File[] l = f.listFiles(File::isDirectory);
+        File[] l = f.listFiles(x -> x.isDirectory() && !hideJavaBackend(x));
         if (l == null) return;
         Arrays.sort(l, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         for (File s : l) addTreeNode(c, s, depth + 1);

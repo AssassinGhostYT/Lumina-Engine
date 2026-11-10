@@ -18,7 +18,7 @@ public final class AiContext {
 
     public static final String ENGINE_GUIDE =
             "You are Lumina Engine Assistant, an expert game developer inside the Lumina Engine engine editor (Android, LibGDX + Box2D).\n" +
-            "Help beginners and pros build 2D games. Be concise and practical. Answer in the user's language (Arabic or English).\n" +
+            "Help beginners and pros build 2D games. Be concise and practical. Answer in Spanish by default; only change language when the user explicitly asks.\n" +
             "Prefer giving ready-to-use results: blocks/event code, property changes, and short step-by-step instructions using the editor UI.\n\n" +
             "## How a Lumina Engine project works\n" +
             "- Scenes: scenes/<scene> (JSON list of elements). Each scene compiles to class com.lumina.engine.Game.<scene lowercase> extends StageImp.\n" +

@@ -146,7 +146,7 @@ final class TemplateTopDown extends Tpl {
         // ---------------------------------------------------------------- HUD, joystick, end panel
         hud(p, "GemText", "Gems: 0/" + nGems, "Gems: 00/00", true, 0, 2.5, hud);
         hud(p, "LivesText", "Lives: " + lives, "Lives: 0", false, 0, 2.5, hud);
-        p.add(new El("JOYSTICK", "joy").at(36, 36).size(JOY, JOY).z(Z_JOY).role("joystick"));
+        p.add(new El("JOYSTICK", "joy").at(96, 36).size(JOY, JOY).z(Z_JOY).role("joystick"));
         endOverlay(p, scene, win.length() > 9 ? win : "GAME OVER", "Gems: 00/00");
 
         // ---------------------------------------------------------------- variables
@@ -193,7 +193,7 @@ final class TemplateTopDown extends Tpl {
 
         p.tweak("variables: heroSpeed (220), foeSpeed (110), lives (" + lives + "), spawnX/spawnY");
         p.tweak("gravity is 0 (first block of OnCreate); the chasers wait 2 s at the start and 1.5 s after each hit");
-        p.info(nGems + " gems, " + foes.size() + " enemies, " + crates.size() + " crates, joystick bottom-left");
+        p.info(nGems + " gems, " + foes.size() + " enemies, " + crates.size() + " crates, joystick lower-left with a comfortable inset");
         p.meta.put("kind", "top_down");
         p.meta.put("scrolls", false);
         p.meta.put("heroSize", HERO);

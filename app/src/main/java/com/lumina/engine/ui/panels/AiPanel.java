@@ -347,7 +347,7 @@ public class AiPanel implements PanelHost.Panel {
             List<AiClient.Msg> msgs = new ArrayList<>();
             String projectLanguage = AiContext.projectLanguage();
             String languageGuide = projectLanguage.equals("cpp")
-                    ? "\nEste proyecto seleccionó C++ (ndk-clang). No digas que el juego está hecho en Java. Usa archivos cpp/*.cpp y cpp/*.h para código nativo; para acciones visuales del editor explica si una parte todavía depende del puente del motor.\n"
+                    ? "\nMODO C++ OBLIGATORIO (ndk-clang): este proyecto eligió C++. Para lógica del juego escribe únicamente en cpp/*.cpp y cpp/*.h, usando namespace lumina y void update(float deltaSeconds). Nunca generes, guardes ni propongas archivos .java, scripts Java o rutas java/ para la lógica del usuario. No afirmes que el juego está hecho en Java. Las acciones visuales (escenas, elementos, propiedades, UI y comportamientos) siguen usando el puente interno del motor; si el usuario pide lógica nativa, crea un archivo C++ y explica que se compilará en GitHub Actions. Si la petición no puede hacerse todavía desde C++, dilo claramente.\n"
                     : "\nEste proyecto seleccionó Java. Usa el flujo Java del motor.\n";
             msgs.add(new AiClient.Msg("system", AiContext.ENGINE_GUIDE
                     + languageGuide

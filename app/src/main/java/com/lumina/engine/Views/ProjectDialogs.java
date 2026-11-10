@@ -122,7 +122,7 @@ public final class ProjectDialogs {
             arr.add(item(def, asset(a, "items/obj3d.json"), "ground", new String[]{"Mesh", "CUBE", "x", "0", "y", "-0.12", "Scale X", "20", "Scale Y", "0.12", "Scale Z", "20", "Color", "#70757D", "Body", "STATIC", "Collider", "BOX"}));
             arr.add(item(def, asset(a, "items/obj3d.json"), "player", new String[]{"Mesh", "CAPSULE", "y", "1", "Color", "#A6D928", "Body", "DYNAMIC", "Collider", "CAPSULE", "Lock Rotation X", "true", "Lock Rotation Z", "true", "behaviors", "[{\"type\":\"ThirdPersonController3D\",\"params\":{\"joystick\":\"moveStick\",\"cameraMode\":\"ORBIT_TOUCH\"},\"enabled\":true}]"}));
             arr.add(item(def, asset(a, "items/camera3d.json"), "camera", new String[]{"y", "4", "z", "9", "Rotation X", "-20", "Active", "true"}));
-            arr.add(item(def, asset(a, "items/joystick.json"), "moveStick", new String[]{"x", "34", "y", "34", "width", "112", "height", "112", "z", "120", "type", "UI"}));
+            arr.add(item(def, asset(a, "items/joystick.json"), "moveStick", new String[]{"x", "96", "y", "36", "width", "160", "height", "160", "z", "120", "type", "UI"}));
             File scene = new File(project, "scenes/scene1");
             scene.getParentFile().mkdirs();
             BlockModel.write(scene, arr.toString());

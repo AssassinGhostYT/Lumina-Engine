@@ -1079,7 +1079,7 @@ public class ControlLayer extends Table {
                             app.getEditor().getSelectedActor().setName("Player");
                             actionAddBody(3);
                             com.lumina.engine.Helpers.PropertySet<String,Object> stick = com.lumina.engine.Helpers.PropertySet.getPropertySet(app.getEditor().getSelectedActor());
-                            stick.put("name", "moveStick"); stick.put("x", "34"); stick.put("y", "34"); stick.put("width", "112"); stick.put("height", "112"); stick.put("z", "120");
+                            stick.put("name", "moveStick"); stick.put("x", "96"); stick.put("y", "36"); stick.put("width", "160"); stick.put("height", "160"); stick.put("z", "120");
                             app.getEditor().getSelectedActor().setName("moveStick");
                             actionAdd3D("CAMERA3D",null);
 						} else {
