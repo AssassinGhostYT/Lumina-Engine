@@ -68,6 +68,18 @@ public final class RemoteCommands {
                 + "}";
     }
 
+    /** Copyable instructions for an agent running in a terminal beside Lumina. */
+    public static String terminalGuide(Context c) {
+        return "LUMINA ENGINE + IA DE TERMINAL\n\n"
+                + "1. Mantén Lumina Engine abierto y activa IA remota.\n"
+                + "2. Copia la configuración MCP de OpenCode desde esta pantalla y guárdala en opencode.json.\n"
+                + "3. En otra ventana ejecuta: opencode\n"
+                + "4. Dentro de OpenCode usa /connect y luego /models; elige un modelo gratuito.\n"
+                + "5. Escribe tu petición en la terminal. La IA usará las herramientas de Lumina y los cambios aparecerán en el editor.\n\n"
+                + "Conector privado: " + RemoteSettings.connectorUrl(c) + "\n"
+                + "También funciona con cualquier cliente MCP compatible. No cierres Lumina mientras trabaja.";
+    }
+
     /** The short one for any other AI. */
     public static String otherAiCommand(Context c) {
         return Tr.t("rc_other_link", "Use this link to understand my project:") + " " + RemoteSettings.guideUrl(c) + "\n"

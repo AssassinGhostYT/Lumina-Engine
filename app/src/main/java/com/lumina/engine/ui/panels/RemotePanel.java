@@ -121,9 +121,15 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
         LinearLayout b2 = Ui.button(c, R.drawable.ic_lumina_copy, Tr.t("rc_copy_ai", "Copy command for another AI"), false, v -> copyOther(c));
         b2.setLayoutParams(Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
         cc.addView(b2);
-        LinearLayout b3 = Ui.button(c, R.drawable.ic_lumina_copy, Tr.t("rc_copy_opencode", "Copy OpenCode MCP config (free models)"), false, v -> copyOpenCode(c));
+        LinearLayout b3 = Ui.button(c, R.drawable.ic_lumina_copy, Tr.t("rc_copy_opencode", "Copiar configuración MCP de OpenCode (modelos gratis)"), false, v -> copyOpenCode(c));
         b3.setLayoutParams(Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
         cc.addView(b3);
+        TextView terminalHint = Ui.text(c, "Sí: puedes tener Lumina abierto y la IA de terminal abierta al mismo tiempo. La terminal controla Lumina mediante MCP; no necesitas poner una API key dentro de Lumina.", 12.5f, Ui.TEXT_2);
+        terminalHint.setPadding(0, Ui.dp(c, 4), 0, Ui.dp(c, 8));
+        cc.addView(terminalHint, Ui.matchWrap());
+        LinearLayout bt = Ui.button(c, R.drawable.ic_lumina_terminal, "Copiar guía para IA de terminal", false, v -> copyTerminal(c));
+        bt.setLayoutParams(Ui.matchWrap());
+        cc.addView(bt);
 
         // ---- private link
         col.addView(Ui.sectionLabel(c, Tr.t("rc_connector", "Connector link (private)")));
@@ -220,6 +226,15 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
             return;
         }
         Dialogs.copy(c, RemoteCommands.otherAiCommand(c));
+    }
+
+    private void copyTerminal(Context c) {
+        if (!RemoteSettings.hasServer(c)) {
+            Ui.toast(c, Tr.t("rc_no_server", "Escribe primero el enlace del servidor"));
+            return;
+        }
+        Dialogs.copy(c, RemoteCommands.terminalGuide(c));
+        Ui.toast(c, "Guía copiada: mantén Lumina y la terminal abiertas");
     }
 
     /** opencode.json block: OpenCode can then use its free Zen models to drive this editor. */
