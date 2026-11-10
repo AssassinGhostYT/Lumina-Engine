@@ -91,6 +91,24 @@ public class SettingsPanel implements PanelHost.Panel {
         // ---- editor
         col.addView(Ui.sectionLabel(c, Tr.t("ui_editor", "Editor")));
         col.addView(sw(c, p, "AutoSave", Tr.t("autoSave", "Automatic scene saving"), v -> Bridge.gl(() -> Bridge.editor().enableAutoSave(v))));
+        col.addView(Ui.button(c, R.drawable.ic_lumina_undo, "Recuperar última copia de escena", false, v -> Bridge.query(() -> {
+            com.lumina.engine.editor.LibgdxEditor ed = Bridge.editor();
+            java.io.File project = new java.io.File(ed.getProject().getPath());
+            String scene = ed.getScene();
+            return new Object[]{project, scene, com.lumina.engine.Helpers.RecoveryStore.hasBackup(project, scene)};
+        }, info -> {
+            if (info == null || !(Boolean) info[2]) {
+                Ui.toast(c, "No hay una copia de recuperación para esta escena");
+                return;
+            }
+            Dialogs.confirm(c, "Recuperar escena", "Se reemplazará la escena actual por la última copia guardada antes del cambio.", "Recuperar", () -> Bridge.gl(() -> {
+                boolean ok = com.lumina.engine.Helpers.RecoveryStore.restore((java.io.File) info[0], (String) info[1]);
+                if (ok) {
+                    Bridge.app().openSceneInNewEditor((String) info[1]);
+                    Ui.toast(c, "Escena recuperada");
+                } else Ui.toast(c, "No se pudo recuperar la escena");
+            }));
+        })));
         col.addView(sw(c, p, "SaveUndoRedo", Tr.t("saveUndoRedo", "Persist undo/redo history"), null));
         col.addView(sw(c, p, "Auto Completion", Tr.t("codeCompletion", "Script code completion"), null));
 

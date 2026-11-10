@@ -453,6 +453,9 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         splitBtn.setImageTintList(ColorStateList.valueOf(splitMode ? Ui.ACCENT : Ui.TEXT));
         into.addView(splitBtn);
         into.addView(Ui.iconButton(c, R.drawable.ic_lumina_logs, Tr.t("ui_logs", "Logs"), v -> { files.openLogs(); panels.show(files); }));
+        ImageView profiler = Ui.iconButton(c, R.drawable.ic_lumina_bug, "Profiler", v -> Bridge.query(() -> EditorProfiler.snapshot(Bridge.editor()), text -> Dialogs.longText(activity, "Profiler Lumina", text)));
+        profiler.setImageTintList(ColorStateList.valueOf(0xFFFFB74D));
+        into.addView(profiler);
         ImageView set = Ui.iconButton(c, R.drawable.ic_lumina_settings, Tr.t("settings", "Settings"), v -> panels.show(settings));
         Tut.tag(set, "tool:settings");
         into.addView(set);
