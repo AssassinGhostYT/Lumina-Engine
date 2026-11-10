@@ -1,5 +1,7 @@
 package com.lumina.engine.runtime.Items;
 
+import com.lumina.engine.runtime.NativeUserGame;
+
 import box2dLight.Light;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
