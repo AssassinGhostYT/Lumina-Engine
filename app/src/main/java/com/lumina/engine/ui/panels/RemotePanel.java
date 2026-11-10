@@ -75,7 +75,7 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
         enable.setOnCheckedChangeListener((b, on) -> {
             if (updating) return;
             if (on && !RemoteSettings.hasServer(c)) {
-                Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+                missingServer(c);
                 updating = true;
                 enable.setChecked(false);
                 updating = false;
@@ -143,10 +143,10 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
         LinearLayout lrow = Ui.row(c);
         LinearLayout copy = Ui.button(c, R.drawable.ic_lumina_copy, Tr.t("rc_copy_link", "Copy link"), false, v -> {
             if (!RemoteSettings.hasServer(c)) {
-                Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+                missingServer(c);
                 return;
             }
-            Dialogs.copy(c, RemoteSettings.connectorUrl(c));
+            showCopy(c, Tr.t("rc_copy_link", "Copy link"), RemoteSettings.connectorUrl(c));
         });
         lrow.addView(copy);
         LinearLayout regen = Ui.button(c, R.drawable.ic_lumina_refresh, Tr.t("rc_regen", "New link"), false, v ->
@@ -198,52 +198,63 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
 
     private void copyWork(Context c) {
         if (!RemoteSettings.hasServer(c)) {
-            Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+            missingServer(c);
             return;
         }
         if (!Bridge.ready()) {
-            Dialogs.copy(c, RemoteCommands.workCommand(c, ""));
+            showCopy(c, Tr.t("rc_copy_work", "Copy work command (AI chat)"), RemoteCommands.workCommand(c, ""));
             return;
         }
         Bridge.query(() -> Bridge.editor().getProject().getPath(), path -> {
             String repo = RemoteCommands.repoUrl(new File(path));
-            Dialogs.copy(c, RemoteCommands.workCommand(c, repo));
+            showCopy(c, Tr.t("rc_copy_work", "Copy work command (AI chat)"), RemoteCommands.workCommand(c, repo));
         });
     }
 
     /** Old behaviour: the work command with the guide link, for chats where the connector is not attached. */
     private void copyWorkWithLink(Context c) {
         if (!RemoteSettings.hasServer(c)) {
-            Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+            missingServer(c);
             return;
         }
-        Dialogs.copy(c, RemoteCommands.workCommandWithLink(c, ""));
+        showCopy(c, Tr.t("rc_copy_work_link", "Copy with guide link"), RemoteCommands.workCommandWithLink(c, ""));
     }
 
     private void copyOther(Context c) {
         if (!RemoteSettings.hasServer(c)) {
-            Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+            missingServer(c);
             return;
         }
-        Dialogs.copy(c, RemoteCommands.otherAiCommand(c));
+        showCopy(c, Tr.t("rc_copy_ai", "Copy command for another AI"), RemoteCommands.otherAiCommand(c));
     }
 
     private void copyTerminal(Context c) {
         if (!RemoteSettings.hasServer(c)) {
-            Ui.toast(c, Tr.t("rc_no_server", "Escribe primero el enlace del servidor"));
+            missingServer(c);
             return;
         }
-        Dialogs.copy(c, RemoteCommands.terminalGuide(c));
-        Ui.toast(c, "Guía copiada: mantén Lumina y la terminal abiertas");
+        showCopy(c, "Guía para IA de terminal", RemoteCommands.terminalGuide(c));
     }
 
     /** opencode.json block: OpenCode can then use its free Zen models to drive this editor. */
     private void copyOpenCode(Context c) {
         if (!RemoteSettings.hasServer(c)) {
-            Ui.toast(c, Tr.t("rc_no_server", "Type the server link first"));
+            missingServer(c);
             return;
         }
-        Dialogs.copy(c, RemoteCommands.openCodeConfig(c));
+        showCopy(c, Tr.t("rc_copy_opencode", "Copiar configuración MCP de OpenCode (modelos gratis)"), RemoteCommands.openCodeConfig(c));
+    }
+
+    /** Always gives the user a visible, selectable copy surface instead of a silent clipboard action. */
+    private void showCopy(Context c, String title, String text) {
+        Dialogs.longText(c, title, text == null ? "" : text);
+    }
+
+    private void missingServer(Context c) {
+        Dialogs.longText(c, "Configurar IA remota",
+                "Primero pega la URL de tu Worker en el campo Server URL y pulsa Guardar.\n\n"
+                        + "Ejemplo: https://tu-worker.tu-cuenta.workers.dev\n\n"
+                        + "Después vuelve a tocar el botón de copiar. La configuración MCP necesita esa URL para generar un enlace válido.");
     }
 
     @Override
