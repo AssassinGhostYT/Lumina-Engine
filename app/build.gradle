@@ -43,6 +43,9 @@ android {
         targetSdk 36
         versionCode 101
         versionName "1.0.1"
+        // AdMob: the app id must be declared before the Mobile Ads SDK is initialized.
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-5858301436237272~5737636624"
+        buildConfigField "String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-5858301436237272/3433751966\""
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
@@ -101,6 +104,8 @@ dependencies {
     implementation("com.google.android.material:material:1.14.0")
     implementation(projects.formatter)
     implementation("com.android.billingclient:billing:9.1.0")
+    // AdMob banner shown only on the projects home screen.
+    implementation("com.google.android.gms:play-services-ads:25.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation(fileTree(dir: "libs", include: ["*.jar","*.aar"]))

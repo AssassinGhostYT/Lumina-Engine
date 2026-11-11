@@ -27,6 +27,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.lumina.engine.BuildConfig;
 import com.lumina.engine.Helpers.EngineSettings;
 import com.lumina.engine.MainActivity;
 import com.lumina.engine.editor.ui.sub.EditorField;
@@ -66,6 +73,7 @@ public class ProjectsHomeView extends FrameLayout {
     private static final String[] LANG_NAMES = {"Español", "Inglés", "Francés", "Portugués", "Ruso", "Árabe"};
     private static final String[] LANG_CODES = {"es", "en", "fr", "br", "ru", "ar"};
     private static final String[] COMPILERS = {"javac", "ecj"};
+    private static final String PREF_SHOW_ADS = "showAds";
 
     private final Activity activity;
     private final Host host;
@@ -78,6 +86,10 @@ public class ProjectsHomeView extends FrameLayout {
     private LinearLayout projectsList;
     private TextView projectsCount, projectsEmpty;
     private EditText search;
+    private AdView adView;
+    private View adContainer;
+    private SwitchCompat adsSwitch;
+    private boolean adLoading, adLoaded;
 
     public ProjectsHomeView(Activity activity, Host host) {
         super(activity);
@@ -94,6 +106,7 @@ public class ProjectsHomeView extends FrameLayout {
         setupTemplates();
         setupCommunity();
         setupSettings();
+        setupAds();
         findViewById(R.id.home_gear).setOnClickListener(v -> selectTab(4));
         View blocksBtn = findViewById(R.id.home_blocks);
         blocksBtn.setContentDescription(T("home_block_creator", "Block creator"));
@@ -129,6 +142,7 @@ public class ProjectsHomeView extends FrameLayout {
             {"Donate", "home_donate"}, {"Engine Settings", "home_settings_title"}, {"Configure editor behaviors, code generation, and preferences", "home_settings_sub"},
             {"EDITOR & COMPILER", "home_editor_compiler"}, {"Interface Language", "home_language"}, {"Java Compiler Backend", "home_compiler"},
             {"Script Code Completion", "codeCompletion"}, {"Automatic Scene Saving", "autoSave"}, {"Persist Undo/Redo History", "saveUndoRedo"},
+            {"Show ads", "home_show_ads"}, {"Ad", "home_ad_label"}, {"Hide ad", "home_ad_hide"},
             {"+ Use Template", "home_use_template"}, {"Join", "home_join"},
     };
 
@@ -447,6 +461,14 @@ public class ProjectsHomeView extends FrameLayout {
         bindSwitch(R.id.setting_autosave, "AutoSave");
         bindSwitch(R.id.setting_undo, "SaveUndoRedo");
 
+        adsSwitch = findViewById(R.id.setting_ads);
+        styleSwitch(adsSwitch);
+        adsSwitch.setChecked(prefs().getBoolean(PREF_SHOW_ADS, true));
+        adsSwitch.setOnCheckedChangeListener((b, checked) -> {
+            prefs().edit().putBoolean(PREF_SHOW_ADS, checked).apply();
+            applyAdsPreference();
+        });
+
         // icon size (small / medium / large) used by the editor toolbars
         LinearLayout card = (LinearLayout) findViewById(R.id.setting_undo).getParent();
         addGitHubCard((LinearLayout) card.getParent(), card);
@@ -517,11 +539,94 @@ public class ProjectsHomeView extends FrameLayout {
 
     private void bindSwitch(int id, String key) {
         SwitchCompat s = findViewById(id);
+        styleSwitch(s);
+        s.setChecked(prefs().getBoolean(key, true));
+        s.setOnCheckedChangeListener((b, checked) -> prefs().edit().putBoolean(key, checked).apply());
+    }
+
+    private void styleSwitch(SwitchCompat s) {
         int[][] states = {{android.R.attr.state_checked}, {}};
         s.setThumbTintList(new ColorStateList(states, new int[]{0xFFFFFFFF, 0xFFBDBDBD}));
         s.setTrackTintList(new ColorStateList(states, new int[]{color(R.color.home_accent), 0xFF555555}));
-        s.setChecked(prefs().getBoolean(key, true));
-        s.setOnCheckedChangeListener((b, checked) -> prefs().edit().putBoolean(key, checked).apply());
+    }
+
+    // --------------------------------------------------------------- ads
+
+    /** Sets up the small bottom banner. Ads are only ever shown on the projects home screen. */
+    private void setupAds() {
+        adContainer = findViewById(R.id.home_ad_container);
+        adView = findViewById(R.id.home_ad_banner);
+        findViewById(R.id.home_ad_hide).setOnClickListener(v -> {
+            prefs().edit().putBoolean(PREF_SHOW_ADS, false).apply();
+            applyAdsPreference();
+            toast(T("home_ads_hidden", "Ad hidden. You can enable it again in Settings."));
+        });
+        applyAdsPreference();
+    }
+
+    private void applyAdsPreference() {
+        if (adContainer == null || adView == null) return;
+        boolean show = prefs().getBoolean(PREF_SHOW_ADS, true);
+        if (adsSwitch != null && adsSwitch.isChecked() != show) adsSwitch.setChecked(show);
+        if (!show) {
+            adContainer.setVisibility(GONE);
+            adView.pause();
+            return;
+        }
+        loadBanner();
+        updateAdVisibility();
+    }
+
+    private void loadBanner() {
+        if (adView == null || adLoaded || adLoading) return;
+        adLoading = true;
+        MobileAds.initialize(activity, status -> activity.runOnUiThread(() -> {
+            if (adView == null) return;
+            adView.setAdUnitId(BuildConfig.ADMOB_BANNER_UNIT_ID);
+            adView.setAdSize(AdSize.BANNER);
+            adView.setAdListener(new AdListener() {
+                @Override public void onAdLoaded() {
+                    adLoading = false;
+                    adLoaded = true;
+                    updateAdVisibility();
+                }
+                @Override public void onAdFailedToLoad(LoadAdError error) {
+                    adLoading = false;
+                    adLoaded = false;
+                    updateAdVisibility();
+                }
+            });
+            adView.loadAd(new AdRequest.Builder().build());
+        }));
+    }
+
+    /** Shows the banner only when it has fill, the user allows ads and the home is on screen. */
+    private void updateAdVisibility() {
+        if (adContainer == null || adView == null) return;
+        boolean show = adLoaded && prefs().getBoolean(PREF_SHOW_ADS, true) && isShown();
+        adContainer.setVisibility(show ? VISIBLE : GONE);
+        if (show) adView.resume(); else adView.pause();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (prefs().getBoolean(PREF_SHOW_ADS, true)) loadBanner();
+        updateAdVisibility();
+    }
+
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (adView == null) return;
+        if (visibility == VISIBLE && prefs().getBoolean(PREF_SHOW_ADS, true)) loadBanner();
+        updateAdVisibility();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (adView != null) adView.destroy();
+        super.onDetachedFromWindow();
     }
 
     private ArrayAdapter<String> spinnerAdapter(String[] items) {
