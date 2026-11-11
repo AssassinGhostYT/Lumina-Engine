@@ -58,6 +58,8 @@ No creamos perfiles centrales de usuarios, no vendemos datos personales, no most
 
 La información local permanece en tu dispositivo hasta que borres los proyectos, borres los datos de la app o la desinstales. Los respaldos, ZIP y APK exportados quedan bajo tu control. Los datos enviados a GitHub, a tu proveedor de IA o a Google se conservan según las políticas de esos servicios.
 
+Consulta los pasos detallados en la página de [eliminación de cuenta y datos](https://assassinghostyt.github.io/Lumina-Engine/account-deletion.html).
+
 ## 7. Seguridad
 
 Las claves y tokens se guardan en el almacenamiento privado de la app y las comunicaciones con servicios externos usan HTTPS. Ningún método de almacenamiento o transmisión es completamente seguro, por lo que debes proteger el acceso a tu dispositivo.
