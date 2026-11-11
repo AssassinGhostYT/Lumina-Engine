@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Native Android projects home screen (replaces the LibGDX ProjectsListStage UI). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/home_bg"
@@ -464,6 +465,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:background="@android:color/transparent" />
+            android:background="@android:color/transparent"
+            ads:adSize="BANNER"
+            ads:adUnitId="ca-app-pub-5858301436237272/3433751966" />
     </LinearLayout>
 </LinearLayout>
