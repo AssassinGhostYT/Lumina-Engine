@@ -29,11 +29,9 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
-import com.lumina.engine.BuildConfig;
 import com.lumina.engine.Helpers.EngineSettings;
 import com.lumina.engine.MainActivity;
 import com.lumina.engine.editor.ui.sub.EditorField;
@@ -582,8 +580,6 @@ public class ProjectsHomeView extends FrameLayout {
         adLoading = true;
         MobileAds.initialize(activity, status -> activity.runOnUiThread(() -> {
             if (adView == null) return;
-            adView.setAdUnitId(BuildConfig.ADMOB_BANNER_UNIT_ID);
-            adView.setAdSize(AdSize.BANNER);
             adView.setAdListener(new AdListener() {
                 @Override public void onAdLoaded() {
                     adLoading = false;
