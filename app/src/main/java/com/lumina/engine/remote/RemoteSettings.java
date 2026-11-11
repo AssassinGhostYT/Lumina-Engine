@@ -15,10 +15,10 @@ public final class RemoteSettings {
     private RemoteSettings() {}
 
     /**
-     * Server used when the user did not type one. Empty on purpose: every user deploys their own copy of
-     * the `server/` folder (Cloudflare Workers, free) and pastes its URL in Remote control settings.
+     * Lumina's public relay. The private editor secret is generated per phone and is never stored here.
+     * Users can replace this URL with their own Worker in Remote control settings.
      */
-    public static final String DEFAULT_SERVER = "";
+    public static final String DEFAULT_SERVER = "https://lumina.brayanhernandez385.workers.dev";
 
     private static final String PREFS = "lumina_remote";
 
