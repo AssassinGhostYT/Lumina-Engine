@@ -186,6 +186,9 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 				}
 			}
 		});
+		ExportDialog.setGalleryLauncher(registerForActivityResult(
+			new ActivityResultContracts.GetContent(),
+			uri -> { if(uri != null) ExportDialog.onGalleryResult(EditorActivity.this,uri); }));
 		/*
 		new ANRWatchDog().setANRListener(new ANRWatchDog.ANRListener() {
     		@Override

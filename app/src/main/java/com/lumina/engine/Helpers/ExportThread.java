@@ -26,6 +26,7 @@ public class ExportThread extends Thread {
 	AlertDialog dialog;
 	String img;
 	String state_prefix="";
+	String scenesDexInfo="missing";
 	/** Export option: pack the small images into a few tileset pages (see TilesetPacker). */
 	public static boolean mergeTilesets=false;
 	/** Leave out the x86 / x86_64 libraries (phones are ARM): a smaller APK. */
@@ -72,7 +73,10 @@ public class ExportThread extends Thread {
 			}
             */
 			onProgress(com.lumina.engine.ui.Tr.t("export_p_prepare","Preparing the project..."));
-			
+			// never reuse files from a previous export: an old manifest/icon/dex would silently win
+			FileUtil.deleteFile(export_temp);
+			new java.io.File(export_temp).mkdirs();
+			if(!ensureScenesDex()) return;
 			FileUtil.deleteFile(export_temp+"/assets");
 			onProgress(com.lumina.engine.ui.Tr.t("export_p_extract","Extracting the template files..."));
 			//if(!FileUtil.isExistFile(dataDir+"/export.apk")) {
@@ -149,12 +153,49 @@ public class ExportThread extends Thread {
 			UriUtils.copyUriToUriChecked(context,Uri.fromFile(new java.io.File(dataDir+"/export.sign.apk")),export_path);
 			//FileUtil.deleteFile(dataDir+"/export.apk");
 			FileUtil.deleteFile(dataDir+"/export.sign.apk");
-			onSuccess(com.lumina.engine.ui.Tr.t("export_p_done","Done")+"\n"+com.lumina.engine.ui.Tr.t("export_p_path","Path")+" : "+FileUtil.convertUriToFilePath(context,export_path));
+			onSuccess(com.lumina.engine.ui.Tr.t("export_p_done","Done")
+				+"\n"+com.lumina.engine.ui.Tr.t("export_p_path","Path")+" : "+FileUtil.convertUriToFilePath(context,export_path)
+				+"\nPackage : "+(manifest_values.length>2?manifest_values[2]:"?")
+				+"\nName : "+(manifest_values.length>3?manifest_values[3]:"?")
+				+"\nScenes dex : "+scenesDexInfo);
 		} catch(Exception ex){
 			onError(Log.getStackTraceString(ex));
 		}
 	}
 	
+	/** True when the project has Java scene code; those projects need a compiled dex/scenes.dex. */
+	private boolean hasJavaSources(java.io.File dir){
+		java.io.File[] files = dir.listFiles();
+		if(files == null) return false;
+		for(java.io.File f : files){
+			if(f.isDirectory()){ if(hasJavaSources(f)) return true; }
+			else if(f.getName().endsWith(".java")) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Compiling in the editor moves java/classes.dex to dex/scenes.dex. If the user exported without a successful build,
+	 * stop here instead of writing an APK that will crash with ClassNotFoundException.
+	 */
+	private boolean ensureScenesDex(){
+		try {
+			java.io.File dex = new java.io.File(project+"/dex/scenes.dex");
+			if(dex.isFile() && dex.length() > 0) return true;
+			java.io.File built = new java.io.File(project+"/java/classes.dex");
+			if(built.isFile() && built.length() > 0){
+				FileUtil.copyFile(built.getAbsolutePath(),dex.getAbsolutePath());
+				if(dex.isFile() && dex.length() > 0) return true;
+			}
+			if(!hasJavaSources(new java.io.File(project+"/java"))) return true;
+			onError("Falta el dex de las escenas (dex/scenes.dex).\nAbre el proyecto y pulsa Play/Compilar hasta que termine bien; luego exporta otra vez.");
+			return false;
+		} catch(Throwable t){
+			onError("No se pudo preparar el dex de las escenas:\n"+t);
+			return false;
+		}
+	}
+
 	/**
 	 * Puts the compiled scenes (dex/scenes.dex) in the APK as classes(N+1).dex, N = the last classes*.dex of the template, so the game
 	 * loads its scene classes straight from the APK. Without a dex the game keeps using the one inside project.zip.
@@ -165,6 +206,7 @@ public class ExportThread extends Thread {
 			java.io.File[] old = new java.io.File(export_temp).listFiles();
 			if(old != null) for(java.io.File f : old) if(f.getName().matches("classes\\d*\\.dex")) f.delete();
 			if(!dex.isFile() || dex.length() == 0) return;
+			scenesDexInfo = "OK ("+dex.length()+" bytes)";
 			int last = 1;
 			java.util.regex.Pattern pat = java.util.regex.Pattern.compile("classes(\\d*)\\.dex");
 			for(Object h : new ZipFile(dataDir+"/export.apk").getFileHeaders()){

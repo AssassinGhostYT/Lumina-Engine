@@ -65,6 +65,9 @@ public class ProjectsListAdapter extends BaseAdapter {
 				}
 			}
 		});
+		ExportDialog.setGalleryLauncher(ctx.registerForActivityResult(
+			new ActivityResultContracts.GetContent(),
+			uri -> { if(uri != null) ExportDialog.onGalleryResult(ctx,uri); }));
 	}
 	
 	@Override

@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import com.lumina.engine.Helpers.ExportThread;
@@ -25,12 +26,53 @@ import com.lumina.engine.ui.FilePickerDialog;
 import com.lumina.engine.ui.Tr;
 import com.lumina.engine.ui.Ui;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 /** Export dialog: game icon, identity fields, orientation and options. Built in code, portrait and landscape. */
 public class ExportDialog {
 	public static ImageView icon;
 	public static int RECIEVE_ICON=109;
 	public static String imgPath="";
+	private static String iconProject="";
+	private static ActivityResultLauncher<String> galleryLauncher;
+
+	/** Registered by the activity so the icon card can open the system gallery. */
+	public static void setGalleryLauncher(ActivityResultLauncher<String> launcher){ galleryLauncher = launcher; }
+
+	/** Copies the image returned by the gallery into project/icon and refreshes the preview. */
+	public static void onGalleryResult(Context context,Uri uri){
+		if(uri == null || iconProject == null || iconProject.isEmpty()) return;
+		InputStream in = null;
+		FileOutputStream out = null;
+		try {
+			String mime = context.getContentResolver().getType(uri);
+			String ext = ".png";
+			if(mime != null){
+				if(mime.contains("jpeg")) ext = ".jpg";
+				else if(mime.contains("webp")) ext = ".webp";
+			}
+			File dir = new File(iconProject+"/icon");
+			dir.mkdirs();
+			File[] old = dir.listFiles();
+			if(old != null) for(File f : old) f.delete();
+			File target = new File(dir,"icon"+ext);
+			in = context.getContentResolver().openInputStream(uri);
+			if(in == null) return;
+			out = new FileOutputStream(target);
+			byte[] buf = new byte[8192];
+			int n;
+			while((n = in.read(buf)) > 0) out.write(buf,0,n);
+			out.flush();
+			imgPath = target.getAbsolutePath();
+			showIcon(iconProject);
+		} catch(Throwable t){
+			Ui.toast(context,"No se pudo leer la imagen: "+t.getMessage());
+		} finally {
+			try { if(in != null) in.close(); } catch(Throwable ignored){}
+			try { if(out != null) out.close(); } catch(Throwable ignored){}
+		}
+	}
 
 	private static String t(String k, String d){ return Tr.t(k, d); }
 
@@ -39,6 +81,7 @@ public class ExportDialog {
 		final SharedPreferences sh = context.getSharedPreferences("export",Context.MODE_PRIVATE);
 		final AlertDialog dialog = new AlertDialog.Builder(context).create();
 		final boolean land = Ui.isLandscape(context);
+		iconProject = project;
 		imgPath = currentIcon(project);
 
 		// ---- header
@@ -93,19 +136,15 @@ public class ExportDialog {
 		iconHint.setGravity(Gravity.CENTER);
 		iconCard.addView(iconHint);
 		showIcon(project);
-		iconCard.setOnClickListener(v->FilePickerDialog.show(context,t("export_icon_pick","Choose the icon"),project+"/images",new String[]{"jpg","png","jpeg"},true,(file,rel)->{
-			try {
-				File dir = new File(project+"/icon");
-				dir.mkdirs();
-				File[] old = dir.listFiles();
-				if(old!=null) for(File o:old) o.delete();
-				String n = file.getName().toLowerCase();
-				String ext = n.endsWith(".jpg")||n.endsWith(".jpeg") ? ".jpg" : ".png";
-				FileUtil.copyFile(file.getAbsolutePath(),dir.getAbsolutePath()+"/icon"+ext);
-				imgPath = dir.getAbsolutePath()+"/icon"+ext;
-				showIcon(project);
-			} catch(Throwable ignored){}
-		}));
+		iconCard.setOnClickListener(v->new AlertDialog.Builder(context)
+			.setTitle(t("export_icon_pick","Choose the icon"))
+			.setItems(new String[]{t("export_icon_project","Project images"),t("export_icon_gallery","Gallery")},(dl,which)->{
+				if(which == 1){
+					if(galleryLauncher != null) galleryLauncher.launch("image/*");
+					else Ui.toast(context,t("export_icon_gallery_missing","Gallery is not available"));
+				} else pickProjectIcon(context,project);
+			})
+			.show());
 
 		// ---- orientation (two choices)
 		boolean portraitSaved = sh.getBoolean(project+"or",false);
@@ -211,6 +250,22 @@ public class ExportDialog {
 		}
 	}
 
+	private static void pickProjectIcon(Context context,String project){
+		FilePickerDialog.show(context,t("export_icon_pick","Choose the icon"),project+"/images",new String[]{"jpg","png","jpeg"},true,(file,rel)->{
+			try {
+				File dir = new File(project+"/icon");
+				dir.mkdirs();
+				File[] old = dir.listFiles();
+				if(old!=null) for(File o:old) o.delete();
+				String n = file.getName().toLowerCase();
+				String ext = n.endsWith(".jpg")||n.endsWith(".jpeg") ? ".jpg" : ".png";
+				FileUtil.copyFile(file.getAbsolutePath(),dir.getAbsolutePath()+"/icon"+ext);
+				imgPath = dir.getAbsolutePath()+"/icon"+ext;
+				showIcon(project);
+			} catch(Throwable ignored){}
+		});
+	}
+
 	private static String currentIcon(String project){
 		File[] files = new File(project+"/icon/").listFiles();
 		if(files!=null) for(File f:files){
@@ -282,6 +337,10 @@ public class ExportDialog {
 		try { e.setText(number?(com.lumina.engine.Utils.getInt(s)+""):s); } catch(Exception ex){}
 	}
 
+	private static boolean isValidPackage(String s){
+		return s != null && s.matches("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$");
+	}
+
 	/** [version, versionName, package, name, orientation] or null (an empty field is marked). */
 	private static String[] collect(Context context,String project,boolean portrait,EditText version,EditText versionName,EditText pkg,EditText name){
 		EditText[] f = {version,versionName,pkg,name};
@@ -295,6 +354,10 @@ public class ExportDialog {
 				f[i].setError(t("export_enter_value","Enter a value"));
 				ok = false;
 			} else ed.putString(project+ids[i],out[i]);
+		}
+		if(ok && !isValidPackage(out[2])){
+			pkg.setError(t("export_bad_package","Use a unique package like com.yourname.mygame"));
+			ok = false;
 		}
 		if(!ok) return null;
 		ed.putBoolean(project+"or",portrait);
