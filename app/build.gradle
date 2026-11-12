@@ -41,8 +41,8 @@ android {
         applicationId "com.lumina.engine"
         minSdk 24
         targetSdk 36
-        versionCode 101
-        versionName "1.0.1"
+        versionCode 102
+        versionName "1.0.2"
         // AdMob: the app id must be declared before the Mobile Ads SDK is initialized.
         manifestPlaceholders["admobAppId"] = "ca-app-pub-5858301436237272~5737636624"
         buildConfigField "String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-5858301436237272/3433751966\""
