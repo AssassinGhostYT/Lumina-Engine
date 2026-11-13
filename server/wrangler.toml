@@ -22,3 +22,16 @@ fallthrough = true
 DAILY_CALLS = "4000"
 # How long (hours) an idle user's data is kept after the phone disconnects.
 IDLE_PURGE_HOURS = "24"
+
+# --- Lumina Store -----------------------------------------------------------------
+# Create them first (see store/README.md), then uncomment and set the real database_id.
+# [[d1_databases]]
+# binding = "STORE_DB"
+# database_name = "lumina-store"
+# database_id = "REPLACE_WITH_D1_ID"
+#
+# [[r2_buckets]]
+# binding = "STORE_R2"
+# bucket_name = "lumina-store"
+#
+# Set the publishing token with: wrangler secret put STORE_ADMIN_TOKEN

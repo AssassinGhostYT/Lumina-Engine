@@ -110,6 +110,10 @@ public class ProjectsHomeView extends FrameLayout {
         blocksBtn.setContentDescription(T("home_block_creator", "Block creator"));
         blocksBtn.setOnClickListener(v -> com.lumina.engine.ui.blocks.BlockCreatorActivity.open(activity));
         androidx.appcompat.widget.TooltipCompat.setTooltipText(blocksBtn, T("home_block_creator", "Block creator"));
+        View storeBtn = findViewById(R.id.home_store);
+        storeBtn.setContentDescription(T("store_title", "Lumina Store"));
+        storeBtn.setOnClickListener(v -> activity.startActivity(new Intent(activity, com.lumina.engine.store.StoreActivity.class)));
+        androidx.appcompat.widget.TooltipCompat.setTooltipText(storeBtn, T("store_title", "Lumina Store"));
         View cloneBtn = findViewById(R.id.home_clone);
         cloneBtn.setContentDescription(T("gh_clone_title", "Clone from GitHub"));
         cloneBtn.setOnClickListener(v -> com.lumina.engine.git.ui.CloneDialog.show(activity, projectsDir, dir -> {

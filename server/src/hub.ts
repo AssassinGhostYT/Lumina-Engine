@@ -5,6 +5,12 @@ export interface Env {
   HUB: DurableObjectNamespace<Hub>;
   DAILY_CALLS?: string;
   IDLE_PURGE_HOURS?: string;
+  /** D1 database with the published assets (optional until the store is configured). */
+  STORE_DB?: D1Database;
+  /** R2 bucket with packages and previews. */
+  STORE_R2?: R2Bucket;
+  /** Secret token for POST /store/assets. Set with: wrangler secret put STORE_ADMIN_TOKEN */
+  STORE_ADMIN_TOKEN?: string;
 }
 
 export interface ToolResult {
