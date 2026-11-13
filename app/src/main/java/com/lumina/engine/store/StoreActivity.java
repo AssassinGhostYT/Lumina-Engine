@@ -327,8 +327,8 @@ public class StoreActivity extends AppCompatActivity {
         File projectsDir = new File(getFilesDir(), "projects");
         //noinspection ResultOfMethodCallIgnored
         projectsDir.mkdirs();
-        File[] dirs = projectsDir.listFiles(File::isDirectory);
-        if (dirs == null) dirs = new File[0];
+        File[] found = projectsDir.listFiles(File::isDirectory);
+        final File[] dirs = found == null ? new File[0] : found;
         Arrays.sort(dirs, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
         String[] names = new String[dirs.length + 1];
         for (int i = 0; i < dirs.length; i++) names[i] = dirs[i].getName();
