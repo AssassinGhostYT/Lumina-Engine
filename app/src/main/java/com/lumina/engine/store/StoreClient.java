@@ -1,8 +1,11 @@
 package com.lumina.engine.store;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.OpenableColumns;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -23,9 +26,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
 
 /** Talks to the public Store API served by the same Worker as the remote control. */
 public final class StoreClient {
@@ -166,6 +174,87 @@ public final class StoreClient {
             final String err = error;
             MAIN.post(() -> done.onDone(err));
         });
+    }
+
+    /** Publishes a real .luminaasset package. The token is the Worker's STORE_ADMIN_TOKEN. */
+    public static void publish(final Context c, final String token, final String manifest,
+                               final Uri pkg, final List<Uri> previews, final Done done) {
+        final Context app = c.getApplicationContext();
+        IO.execute(() -> {
+            String error = null;
+            try {
+                if (token == null || token.trim().isEmpty()) throw new IOException("Publish token is required");
+                if (pkg == null) throw new IOException("Package is required");
+                MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                        .addFormDataPart("manifest", manifest)
+                        .addFormDataPart("package", fileName(app, pkg, "asset.luminaasset"),
+                                uriBody(app, pkg, MediaType.parse("application/zip")));
+                if (previews != null) {
+                    for (Uri u : previews) {
+                        String mime = app.getContentResolver().getType(u);
+                        if (mime == null || !mime.startsWith("image/")) mime = "image/png";
+                        body.addFormDataPart("previews", fileName(app, u, "preview.png"),
+                                uriBody(app, u, MediaType.parse(mime)));
+                    }
+                }
+                Request req = new Request.Builder()
+                        .url(base(app) + "/assets")
+                        .header("Authorization", "Bearer " + token.trim())
+                        .post(body.build())
+                        .build();
+                try (Response res = HTTP.newCall(req).execute()) {
+                    String text = res.body() == null ? "" : res.body().string();
+                    if (!res.isSuccessful())
+                        throw new IOException("HTTP " + res.code() + (text.isEmpty() ? "" : ": " + shorten(text, 300)));
+                }
+            } catch (Exception | Error e) {
+                error = e.getMessage() == null ? e.toString() : e.getMessage();
+            }
+            final String err = error;
+            MAIN.post(() -> done.onDone(err));
+        });
+    }
+
+    private static RequestBody uriBody(final Context c, final Uri uri, final MediaType type) {
+        return new RequestBody() {
+            @Override public MediaType contentType() { return type; }
+            @Override public long contentLength() { return fileSize(c, uri); }
+            @Override public void writeTo(BufferedSink sink) throws IOException {
+                try (InputStream in = c.getContentResolver().openInputStream(uri)) {
+                    if (in == null) throw new IOException("Cannot read file");
+                    sink.writeAll(Okio.source(in));
+                }
+            }
+        };
+    }
+
+    private static long fileSize(Context c, Uri uri) {
+        try (Cursor cur = c.getContentResolver().query(uri, new String[]{OpenableColumns.SIZE}, null, null, null)) {
+            if (cur != null && cur.moveToFirst()) {
+                int i = cur.getColumnIndex(OpenableColumns.SIZE);
+                if (i >= 0 && !cur.isNull(i)) return cur.getLong(i);
+            }
+        } catch (Exception ignored) {}
+        return -1;
+    }
+
+    private static String fileName(Context c, Uri uri, String fallback) {
+        try (Cursor cur = c.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cur != null && cur.moveToFirst()) {
+                int i = cur.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (i >= 0 && !cur.isNull(i)) {
+                    String n = cur.getString(i);
+                    if (n != null && !n.trim().isEmpty()) return n.trim();
+                }
+            }
+        } catch (Exception ignored) {}
+        String last = uri.getLastPathSegment();
+        return last == null || last.trim().isEmpty() ? fallback : last;
+    }
+
+    private static String shorten(String s, int max) {
+        String t = s.replace('\n', ' ').trim();
+        return t.length() <= max ? t : t.substring(0, max) + "...";
     }
 
     private static void downloadTo(Context c, StoreAsset a, File dest) throws Exception {

@@ -46,6 +46,7 @@ public class StoreActivity extends AppCompatActivity {
     private final List<StoreAsset> all = new ArrayList<>();
     private String query = "";
     private boolean offline = false;
+    private boolean resumedOnce = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +55,13 @@ public class StoreActivity extends AppCompatActivity {
         setContentView(buildUi());
         Ui.insets(this, Ui.BG);
         load();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (resumedOnce) load();
+        else resumedOnce = true;
     }
 
     private View buildUi() {
@@ -68,6 +76,9 @@ public class StoreActivity extends AppCompatActivity {
         title.setTextSize(20);
         title.setPadding(Ui.dp(this, 8), 0, 0, 0);
         bar.addView(title, Ui.weight(1));
+        ImageView publish = Ui.iconButton(this, R.drawable.ic_lumina_upload, T("store_publish", "Publish asset"),
+                v -> startActivity(new Intent(this, PublishActivity.class)));
+        bar.addView(publish);
         ImageView refresh = Ui.iconButton(this, R.drawable.ic_lumina_refresh, T("store_refresh", "Refresh"), v -> load());
         bar.addView(refresh);
         root.addView(bar, Ui.matchWrap());

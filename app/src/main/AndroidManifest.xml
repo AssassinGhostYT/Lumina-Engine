@@ -57,6 +57,12 @@
 			android:screenOrientation="portrait"
 			android:exported="false"/>
 		<activity
+			android:name="com.lumina.engine.store.PublishActivity"
+			android:theme="@style/AppTheme.FullScreen"
+			android:screenOrientation="portrait"
+			android:windowSoftInputMode="adjustResize"
+			android:exported="false"/>
+		<activity
 			android:name="com.lumina.engine.ui.AnimationEditorActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 			android:theme="@style/AppTheme.FullScreen"
