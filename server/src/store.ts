@@ -181,7 +181,7 @@ async function publish(request: Request, env: Env): Promise<Response> {
   const old = await env.STORE_DB.prepare("SELECT previews, object_key FROM assets WHERE id = ?").bind(id).first<{ previews: string; object_key: string }>();
 
   try {
-    await env.STORE_R2.put(pkgKey, await pkg.arrayBuffer(), {
+    await env.STORE_R2.put(pkgKey, pkg.stream(), {
       httpMetadata: { contentType: "application/zip", cacheControl: "public, max-age=3600" },
     });
     const tags = Array.isArray(manifest.tags) ? manifest.tags.map((x: unknown) => String(x)).filter(Boolean).slice(0, 12) : [];
