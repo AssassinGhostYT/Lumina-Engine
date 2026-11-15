@@ -16,6 +16,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import com.lumina.engine.Helpers.PropertySet;
 import com.lumina.engine.MainActivity;
 import com.lumina.engine.R;
+import com.lumina.engine.csharp.CSharpRuntime;
 import com.lumina.engine.ui.Bridge;
 import com.lumina.engine.ui.Dialogs;
 import com.lumina.engine.ui.EditorShell;
@@ -202,6 +203,24 @@ public class SettingsPanel implements PanelHost.Panel {
         col.addView(Ui.sectionLabel(c, Tr.t("bc_title", "Block creator")));
         col.addView(Ui.button(c, R.drawable.ic_lumina_wand, Tr.t("bc_open", "Make your own blocks"), false, v -> com.lumina.engine.ui.blocks.BlockCreatorActivity.open(shell.activity())),
                 new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));
+
+        col.addView(Ui.sectionLabel(c, Tr.t("ui_csharp", "C# / .NET")));
+        col.addView(Ui.text(c, CSharpRuntime.isAvailable()
+                        ? Tr.t("ui_csharp_ready", "Mono is bundled. Run the test to initialize it.")
+                        : Tr.t("ui_csharp_unavailable", "C# is not available on this CPU architecture."),
+                12, Ui.TEXT_3));
+        col.addView(Ui.button(c, R.drawable.ic_lumina_code, Tr.t("ui_csharp_test", "Test C# (Mono)"), false, v -> {
+            if (!CSharpRuntime.isAvailable()) {
+                Ui.toast(c, Tr.t("ui_csharp_unavailable", "C# is not available on this CPU architecture."));
+                return;
+            }
+            Ui.toast(c, Tr.t("ui_csharp_starting", "Starting C#..."));
+            new Thread(() -> {
+                String result = CSharpRuntime.test(c.getApplicationContext());
+                shell.post(() -> Dialogs.longText(c, Tr.t("ui_csharp_result", "C# runtime"), result));
+            }, "lumina-csharp").start();
+        }), new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));
+
         col.addView(Ui.sectionLabel(c, Tr.t("ui_help", "Help")));
         col.addView(Ui.button(c, R.drawable.ic_lumina_help, Tr.t("ui_quick_guide", "Quick guide"), false, v -> com.lumina.engine.ui.Help.show(c)),
                 new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));

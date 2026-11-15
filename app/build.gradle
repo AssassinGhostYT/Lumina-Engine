@@ -73,7 +73,15 @@ android {
 
     sourceSets {
         main {
-            jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = [
+                    'libs',
+                    "${rootDir}/thirdparty/Runtime.Mono/gen-android/jniLibs"
+            ]
+            assets.srcDirs = [
+                    'src/main/assets',
+                    'src/main/assetsGen',
+                    "${rootDir}/thirdparty/Runtime.Mono/gen-android/dist"
+            ]
         }
     }
     compileOptions {

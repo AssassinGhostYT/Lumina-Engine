@@ -95,3 +95,11 @@ lint/tmp/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Generated Mono/.NET Android runtime and C# host
+thirdparty/Runtime.Mono/
+app/src/main/assetsGen/*
+!app/src/main/assetsGen/.gitignore
+build/csharp-host/
+tools/csharp/**/bin/
+tools/csharp/**/obj/
