@@ -25,10 +25,10 @@ IDLE_PURGE_HOURS = "24"
 
 # --- Lumina Store -----------------------------------------------------------------
 # Create them first (see store/README.md), then uncomment and set the real database_id.
-# [[d1_databases]]
-# binding = "STORE_DB"
-# database_name = "lumina-store"
-# database_id = "REPLACE_WITH_D1_ID"
+[[d1_databases]]
+binding = "STORE_DB"
+database_name = "lumina-store"
+database_id = "e0d4865d-9c36-47be-8f0a-a6e6a5e8b76c"
 #
 # [[r2_buckets]]
 # binding = "STORE_R2"
@@ -36,8 +36,8 @@ IDLE_PURGE_HOURS = "24"
 #
 # Free alternative to R2 (no card, 1 GB, max 24 MB per file). Create it with:
 #   wrangler kv namespace create STORE_KV
-# [[kv_namespaces]]
-# binding = "STORE_KV"
-# id = "REPLACE_WITH_KV_ID"
+[[kv_namespaces]]
+binding = "STORE_KV"
+id = "57819ab3cbf84a79960b5ebcdbfab30f"
 #
 # Set the publishing token with: wrangler secret put STORE_ADMIN_TOKEN
