@@ -20,6 +20,7 @@ public class StoreAsset {
     public long updated = 0L;
     public List<String> previews = new ArrayList<>();
     public List<String> tags = new ArrayList<>();
+    public boolean mine = false;
 
     public String typeLabel() {
         if (type == null) return "";

@@ -9,6 +9,8 @@ export interface Env {
   STORE_DB?: D1Database;
   /** R2 bucket with packages and previews. */
   STORE_R2?: R2Bucket;
+  /** Free KV namespace used when R2 is not configured (packages up to 24 MB). */
+  STORE_KV?: KVNamespace;
   /** Secret token for POST /store/assets. Set with: wrangler secret put STORE_ADMIN_TOKEN */
   STORE_ADMIN_TOKEN?: string;
 }

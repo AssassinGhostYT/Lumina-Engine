@@ -51,7 +51,7 @@ async function handleV1(parts: string[], c: Ctx): Promise<Response> {
 
   if (parts[0] === "health") return withCors(new Response("ok"));
 
-  // public free-asset store (catalog + R2 downloads + admin publish)
+  // public free-asset store (catalog + accounts + KV/R2 package downloads)
   if (parts[0] === "store") return withCors(await handleStore(parts.slice(1), request, env));
 
   // MCP endpoint used by Claude (and any MCP client): the secret is part of the URL

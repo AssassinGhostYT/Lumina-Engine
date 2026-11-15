@@ -41,10 +41,13 @@ import java.util.List;
  */
 public class StoreActivity extends AppCompatActivity {
     private LinearLayout list;
+    private LinearLayout filters;
     private TextView status;
     private EditText search;
     private final List<StoreAsset> all = new ArrayList<>();
     private String query = "";
+    private String typeFilter = "";
+    private boolean mineOnly = false;
     private boolean offline = false;
     private boolean resumedOnce = false;
 
@@ -81,6 +84,9 @@ public class StoreActivity extends AppCompatActivity {
         bar.addView(publish);
         ImageView refresh = Ui.iconButton(this, R.drawable.ic_lumina_refresh, T("store_refresh", "Refresh"), v -> load());
         bar.addView(refresh);
+        ImageView account = Ui.iconButton(this, R.drawable.ic_lumina_key, T("store_account", "Store account"),
+                v -> StoreAccountDialog.account(this, this::load));
+        bar.addView(account);
         root.addView(bar, Ui.matchWrap());
 
         Ui.divider(this);
@@ -98,6 +104,14 @@ public class StoreActivity extends AppCompatActivity {
                 render();
             }
         });
+
+        HorizontalScrollView filterScroll = new HorizontalScrollView(this);
+        filterScroll.setHorizontalScrollBarEnabled(false);
+        filters = Ui.row(this);
+        filters.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 2));
+        filterScroll.addView(filters);
+        root.addView(filterScroll, Ui.matchWrap());
+        renderFilters();
 
         status = Ui.text(this, "", 12.5f, Ui.TEXT_3);
         status.setPadding(Ui.dp(this, 16), Ui.dp(this, 6), Ui.dp(this, 16), Ui.dp(this, 6));
@@ -150,12 +164,70 @@ public class StoreActivity extends AppCompatActivity {
         list.addView(box);
     }
 
+    private void renderFilters() {
+        if (filters == null) return;
+        filters.removeAllViews();
+        filters.addView(chip(T("store_filter_all", "All"), typeFilter.isEmpty() && !mineOnly, () -> {
+            typeFilter = "";
+            mineOnly = false;
+            renderFilters();
+            render();
+        }));
+        addTypeChip("model3d", T("store_type_model3d", "3D models"));
+        addTypeChip("vehicle", T("store_type_vehicle", "Vehicles"));
+        addTypeChip("character", T("store_type_character", "Characters"));
+        addTypeChip("map", T("store_type_map", "Maps"));
+        addTypeChip("sound", T("store_type_sound", "Sounds"));
+        addTypeChip("sprite2d", T("store_type_sprite2d", "2D art"));
+        addTypeChip("prefab", T("store_type_prefab", "Prefabs"));
+        filters.addView(chip(T("store_filter_mine", "Mine"), mineOnly, () -> {
+            if (!StoreAccount.loggedIn(this)) {
+                StoreAccountDialog.login(this, () -> {
+                    mineOnly = true;
+                    typeFilter = "";
+                    renderFilters();
+                    load();
+                });
+                return;
+            }
+            mineOnly = true;
+            typeFilter = "";
+            renderFilters();
+            render();
+        }));
+    }
+
+    private void addTypeChip(String type, String label) {
+        filters.addView(chip(label, type.equals(typeFilter) && !mineOnly, () -> {
+            mineOnly = false;
+            typeFilter = type.equals(typeFilter) ? "" : type;
+            renderFilters();
+            render();
+        }));
+    }
+
+    private TextView chip(String label, boolean selected, Runnable click) {
+        TextView t = Ui.text(this, label, 12.5f, selected ? Color.WHITE : Ui.TEXT_2);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(Ui.dp(this, 14), Ui.dp(this, 7), Ui.dp(this, 14), Ui.dp(this, 7));
+        t.setBackground(Ui.rounded(selected ? Ui.ACCENT : Ui.SURFACE_2, Ui.dp(this, 18),
+                selected ? Ui.ACCENT : Ui.BORDER, Ui.dp(this, 1)));
+        t.setClickable(true);
+        t.setOnClickListener(v -> click.run());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginEnd(Ui.dp(this, 6));
+        t.setLayoutParams(lp);
+        return t;
+    }
+
     private void render() {
         if (list == null) return;
         if (offline) return;
         list.removeAllViews();
         int shown = 0;
         for (StoreAsset a : all) {
+            if (mineOnly && !a.mine) continue;
+            if (!typeFilter.isEmpty() && !typeFilter.equals(a.type)) continue;
             if (!matches(a, query)) continue;
             list.addView(card(a));
             shown++;
@@ -204,7 +276,8 @@ public class StoreActivity extends AppCompatActivity {
         n.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         n.setMaxLines(2);
         info.addView(n, Ui.matchWrap());
-        TextView meta = Ui.text(this, a.typeLabel() + "  ·  " + (a.price == null || a.price.isEmpty() ? "Free" : a.price), 12, Ui.ACCENT);
+        TextView meta = Ui.text(this, a.typeLabel() + "  ·  " + (a.price == null || a.price.isEmpty() ? "Free" : a.price)
+                + (a.mine ? "  ·  " + T("store_yours", "Yours") : ""), 12, Ui.ACCENT);
         meta.setPadding(0, Ui.dp(this, 3), 0, 0);
         info.addView(meta, Ui.matchWrap());
         String by = (a.author == null || a.author.isEmpty() ? "" : "by " + a.author) + (a.version == null || a.version.isEmpty() ? "" : "  v" + a.version);
@@ -312,6 +385,13 @@ public class StoreActivity extends AppCompatActivity {
             dv.addView(video);
         }
 
+        if (a.mine) {
+            LinearLayout delete = Ui.button(this, 0, T("store_delete", "Remove from store"), false,
+                    v -> confirmDelete(a, d, state));
+            delete.setLayoutParams(Ui.margins(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 38)), this, 0, 12, 0, 0));
+            dv.addView(delete);
+        }
+
         LinearLayout close = Ui.button(this, 0, T("close", "Close"), false, v -> d.dismiss());
         close.setLayoutParams(Ui.margins(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 38)), this, 0, 12, 0, 0));
         dv.addView(close);
@@ -324,6 +404,26 @@ public class StoreActivity extends AppCompatActivity {
             win.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
         d.show();
+    }
+
+    private void confirmDelete(StoreAsset a, Dialog detail, TextView state) {
+        new AlertDialog.Builder(this)
+                .setTitle(T("store_delete_title", "Remove asset?"))
+                .setMessage(T("store_delete_message", "This removes the free asset from the store for everyone."))
+                .setPositiveButton(T("store_delete", "Remove"), (d, w) -> {
+                    state.setText(T("store_deleting", "Removing..."));
+                    StoreClient.delete(this, a, err -> {
+                        if (err != null) {
+                            state.setText(T("store_failed", "Failed") + ": " + err);
+                            return;
+                        }
+                        detail.dismiss();
+                        Toast.makeText(this, T("store_deleted", "Asset removed."), Toast.LENGTH_SHORT).show();
+                        load();
+                    });
+                })
+                .setNegativeButton(T("cancel", "Cancel"), null)
+                .show();
     }
 
     private void openVideo(String url) {

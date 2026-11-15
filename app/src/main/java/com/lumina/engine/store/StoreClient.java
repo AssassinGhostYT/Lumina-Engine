@@ -93,7 +93,10 @@ public final class StoreClient {
             String error = null;
             List<StoreAsset> assets = new ArrayList<>();
             try {
-                Request req = new Request.Builder().url(base(app) + "/assets").get().build();
+                Request.Builder rb = new Request.Builder().url(base(app) + "/assets").get();
+                String key = StoreAccount.apiKey(app);
+                if (!key.isEmpty()) rb.header("Authorization", "Bearer " + key);
+                Request req = rb.build();
                 try (Response res = HTTP.newCall(req).execute()) {
                     if (!res.isSuccessful()) throw new IOException("HTTP " + res.code());
                     String body = res.body() == null ? "" : res.body().string();
@@ -176,14 +179,14 @@ public final class StoreClient {
         });
     }
 
-    /** Publishes a real .luminaasset package. The token is the Worker's STORE_ADMIN_TOKEN. */
+    /** Publishes a real .luminaasset package. The token is the account API key. */
     public static void publish(final Context c, final String token, final String manifest,
                                final Uri pkg, final List<Uri> previews, final Done done) {
         final Context app = c.getApplicationContext();
         IO.execute(() -> {
             String error = null;
             try {
-                if (token == null || token.trim().isEmpty()) throw new IOException("Publish token is required");
+                if (token == null || token.trim().isEmpty()) throw new IOException("unauthorized");
                 if (pkg == null) throw new IOException("Package is required");
                 MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM)
                         .addFormDataPart("manifest", manifest)
@@ -206,6 +209,31 @@ public final class StoreClient {
                     String text = res.body() == null ? "" : res.body().string();
                     if (!res.isSuccessful())
                         throw new IOException("HTTP " + res.code() + (text.isEmpty() ? "" : ": " + shorten(text, 300)));
+                }
+            } catch (Exception | Error e) {
+                error = e.getMessage() == null ? e.toString() : e.getMessage();
+            }
+            final String err = error;
+            MAIN.post(() -> done.onDone(err));
+        });
+    }
+
+    /** Deletes one of the signed-in user's assets. */
+    public static void delete(final Context c, final StoreAsset a, final Done done) {
+        final Context app = c.getApplicationContext();
+        IO.execute(() -> {
+            String error = null;
+            try {
+                String key = StoreAccount.apiKey(app);
+                if (key.isEmpty()) throw new IOException("unauthorized");
+                Request req = new Request.Builder()
+                        .url(base(app) + "/assets/" + java.net.URLEncoder.encode(safe(a.id), "UTF-8"))
+                        .header("Authorization", "Bearer " + key)
+                        .delete()
+                        .build();
+                try (Response res = HTTP.newCall(req).execute()) {
+                    String text = res.body() == null ? "" : res.body().string();
+                    if (!res.isSuccessful()) throw new IOException("HTTP " + res.code() + (text.isEmpty() ? "" : ": " + shorten(text, 300)));
                 }
             } catch (Exception | Error e) {
                 error = e.getMessage() == null ? e.toString() : e.getMessage();

@@ -34,4 +34,10 @@ IDLE_PURGE_HOURS = "24"
 # binding = "STORE_R2"
 # bucket_name = "lumina-store"
 #
+# Free alternative to R2 (no card, 1 GB, max 24 MB per file). Create it with:
+#   wrangler kv namespace create STORE_KV
+# [[kv_namespaces]]
+# binding = "STORE_KV"
+# id = "REPLACE_WITH_KV_ID"
+#
 # Set the publishing token with: wrangler secret put STORE_ADMIN_TOKEN

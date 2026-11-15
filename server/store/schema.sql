@@ -1,5 +1,14 @@
--- Lumina Store D1 schema. Run once:
+-- Lumina Store D1 schema. Run once (and again after updates):
 --   wrangler d1 execute lumina-store --remote --file=store/schema.sql
+CREATE TABLE IF NOT EXISTS users (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  email     TEXT NOT NULL UNIQUE,
+  pass_hash TEXT NOT NULL,
+  salt      TEXT NOT NULL,
+  api_key   TEXT NOT NULL UNIQUE,
+  created   INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS assets (
   id          TEXT PRIMARY KEY,
   name        TEXT NOT NULL,
@@ -15,8 +24,11 @@ CREATE TABLE IF NOT EXISTS assets (
   size        INTEGER NOT NULL DEFAULT 0,
   downloads   INTEGER NOT NULL DEFAULT 0,
   object_key  TEXT NOT NULL,
+  owner_id    TEXT,
   status      TEXT NOT NULL DEFAULT 'published',
   created     INTEGER NOT NULL,
   updated     INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS assets_status_updated ON assets(status, updated DESC);
+CREATE INDEX IF NOT EXISTS assets_owner_updated ON assets(owner_id, updated DESC);
+CREATE INDEX IF NOT EXISTS users_api_key ON users(api_key);

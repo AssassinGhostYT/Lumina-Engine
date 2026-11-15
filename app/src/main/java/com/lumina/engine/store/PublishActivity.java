@@ -37,8 +37,8 @@ public class PublishActivity extends AppCompatActivity {
     private static final String[] TYPE_KEYS = {"model3d", "vehicle", "character", "map", "sound", "sprite2d", "prefab", "other"};
     private static final String[] TYPE_LABELS = {"3D model", "Vehicle", "Character", "Map", "Sound", "2D art", "Prefab", "Other"};
 
-    private EditText name, id, author, version, tags, video, license, description, token;
-    private TextView packageName, previewCount, typeValue, status;
+    private EditText name, id, author, version, tags, video, license, description;
+    private TextView packageName, previewCount, typeValue, status, account;
     private Uri packageUri;
     private final List<Uri> previews = new ArrayList<>();
     private String type = "model3d";
@@ -68,6 +68,24 @@ public class PublishActivity extends AppCompatActivity {
         Tr.init(this);
         setContentView(buildUi());
         Ui.insets(this, Ui.BG);
+        refreshAccount();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (account != null) refreshAccount();
+    }
+
+    private void refreshAccount() {
+        if (account == null) return;
+        if (StoreAccount.loggedIn(this)) {
+            account.setText(StoreAccount.email(this) + "  \u00b7  " + T("store_sign_out", "Sign out"));
+            account.setTextColor(Ui.TEXT_2);
+        } else {
+            account.setText(T("store_sign_in_to_publish", "Sign in to publish free assets"));
+            account.setTextColor(Ui.ACCENT);
+        }
     }
 
     private View buildUi() {
@@ -133,10 +151,19 @@ public class PublishActivity extends AppCompatActivity {
         previewCount.setPadding(0, Ui.dp(this, 6), 0, 0);
         form.addView(previewCount, Ui.matchWrap());
 
-        form.addView(Ui.sectionLabel(this, T("store_publish_auth", "Permission")));
-        token = field(form, T("store_field_token", "Publish token"), "");
-        token.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        TextView note = Ui.text(this, T("store_token_note", "The token is the STORE_ADMIN_TOKEN of the Worker. It is not saved."), 11.5f, Ui.TEXT_3);
+        form.addView(Ui.sectionLabel(this, T("store_publish_auth", "Account")));
+        account = Ui.text(this, "", 13, Ui.ACCENT);
+        account.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+        account.setOnClickListener(v -> {
+            if (StoreAccount.loggedIn(this)) {
+                StoreAccount.logout(this);
+                refreshAccount();
+            } else {
+                StoreAccountDialog.login(this, this::refreshAccount);
+            }
+        });
+        form.addView(account, Ui.matchWrap());
+        TextView note = Ui.text(this, T("store_account_note_publish", "Your account API key signs the upload. Free assets only; max 5 new assets per day."), 11.5f, Ui.TEXT_3);
         note.setPadding(0, Ui.dp(this, 6), 0, 0);
         form.addView(note, Ui.matchWrap());
 
@@ -167,7 +194,7 @@ public class PublishActivity extends AppCompatActivity {
     private void publish() {
         String nm = name.getText().toString().trim();
         String assetId = id.getText().toString().trim().toLowerCase(java.util.Locale.US);
-        String tk = token.getText().toString().trim();
+        String tk = StoreAccount.apiKey(this);
         if (packageUri == null) {
             status.setText(T("store_need_package", "Choose a .luminaasset package first."));
             return;
@@ -181,7 +208,8 @@ public class PublishActivity extends AppCompatActivity {
             return;
         }
         if (tk.isEmpty()) {
-            status.setText(T("store_need_token", "Publish token is required."));
+            status.setText(T("store_sign_in_required", "Sign in to continue."));
+            StoreAccountDialog.login(this, this::refreshAccount);
             return;
         }
 
@@ -205,7 +233,11 @@ public class PublishActivity extends AppCompatActivity {
         status.setText(T("store_publishing", "Uploading..."));
         StoreClient.publish(this, tk, m.toString(), packageUri, previews, err -> {
             if (err != null) {
-                status.setText(T("store_failed", "Failed") + ": " + err);
+                if ("unauthorized".equals(err)) {
+                    StoreAccount.logout(this);
+                    refreshAccount();
+                    status.setText(T("store_sign_in_required", "Sign in to continue."));
+                } else status.setText(T("store_failed", "Failed") + ": " + err);
                 return;
             }
             Toast.makeText(this, T("store_published", "Asset published."), Toast.LENGTH_LONG).show();
