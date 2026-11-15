@@ -306,6 +306,7 @@ async function login(request: Request, env: Env): Promise<Response> {
 }
 
 async function me(request: Request, env: Env): Promise<Response> {
+  if (request.method !== "GET") return new Response("method not allowed", { status: 405, headers: { allow: "GET" } });
   const a = await auth(request, env);
   if (!a) return bad("unauthorized", 401);
   if (a.admin) return json({ admin: true, email: "admin", quota: { used: 0, limit: DAILY_UPLOADS } });
@@ -389,7 +390,7 @@ async function publish(request: Request, env: Env, a: Auth): Promise<Response> {
 
     const tags = Array.isArray(manifest.tags) ? manifest.tags.map((x: unknown) => String(x)).filter(Boolean).slice(0, 12) : [];
     const ownerId = old ? old.owner_id : a.admin ? null : String(a.user!.id);
-    const author = String(manifest.author || a.user?.email || "Lumina").slice(0, 120);
+    const author = String(manifest.author || "Lumina creator").slice(0, 120);
     await env.STORE_DB.prepare(
       `INSERT INTO assets (id, name, type, description, author, version, price, tags, previews, video, license, size, downloads, object_key, owner_id, status, created, updated)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'published', ?, ?)
@@ -514,7 +515,7 @@ export async function handleStore(parts: string[], request: Request, env: Env): 
     const { results } = await env.STORE_DB.prepare(
       "SELECT * FROM assets WHERE status = 'published' ORDER BY updated DESC LIMIT 200",
     ).all<AssetRow>();
-    return json({ assets: (results || []).map((r) => toAsset(r, a?.user?.id)) }, 200, "public, max-age=60");
+    return json({ assets: (results || []).map((r) => toAsset(r, a?.user?.id)) }, 200, a ? "no-store" : "public, max-age=60");
   }
 
   if (parts[0] !== "assets" || parts.length < 2) return bad("not found", 404);
@@ -531,7 +532,7 @@ export async function handleStore(parts: string[], request: Request, env: Env): 
     const a = await auth(request, env);
     const row = await env.STORE_DB.prepare("SELECT * FROM assets WHERE id = ? AND status = 'published'").bind(id).first<AssetRow>();
     if (!row) return bad("not found", 404);
-    return json({ asset: toAsset(row, a?.user?.id) }, 200, "public, max-age=60");
+    return json({ asset: toAsset(row, a?.user?.id) }, 200, a ? "no-store" : "public, max-age=60");
   }
 
   if (parts.length === 3 && parts[2] === "download") {
