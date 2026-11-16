@@ -16,6 +16,9 @@ import net.mgsx.gltf.scene3d.scene.SceneAsset;
  * Loads and caches the files of a 3D scene: glTF / GLB models (with their animations) and textures.
  * Paths are project relative ("/car.glb" = models/car.glb, "/wood.png" = images/wood.png); absolute paths work too.
  * One cache for the whole game: two elements using the same model share the meshes and the textures.
+ *
+ * <p>FBX / OBJ / BLEND files are converted to a sibling .glb once (see {@link ModelImporter}); the rest of the
+ * engine only ever sees a glTF asset, so animations, skins and materials take the same path as a normal .glb.</p>
  */
 public final class Assets3D {
 	private static final ObjectMap<String, SceneAsset> MODELS = new ObjectMap<String, SceneAsset>();
@@ -60,11 +63,19 @@ public final class Assets3D {
 			return null;
 		}
 		try {
+			if (ModelImporter.isRaw(f)) {
+				FileHandle glb = ModelImporter.convert(f);
+				if (glb == null) {
+					ERRORS.put(k, "model conversion error " + path + ": " + ModelImporter.lastError());
+					return null;
+				}
+				f = glb;
+			}
 			String ext = f.extension().toLowerCase();
 			if (ext.equals("glb")) a = new GLBLoader().load(f, true);
 			else if (ext.equals("gltf")) a = new GLTFLoader().load(f, true);
 			else {
-				ERRORS.put(k, "unsupported model format: " + ext + " (use .glb or .gltf)");
+				ERRORS.put(k, "unsupported model format: " + ext + " (use .glb, .gltf, .fbx, .obj or .blend)");
 				return null;
 			}
 			Materials3D.fixImported(a.scene.model);

@@ -778,7 +778,7 @@ public class ControlLayer extends Table {
 		actionAdd3D(kind,preset,null);
 	}
 
-	/** model: project path of a .glb / .gltf ("/name.glb"): a MODEL element showing it (named after the file). */
+	/** model: project path of a .glb / .gltf (or .fbx / .obj / .blend, converted to GLB): a MODEL element showing it. */
 	public void actionAdd3D(String kind,String preset,String model){
 		try {
 			com.lumina.engine.editor.LibgdxEditor ed = app.getEditor();

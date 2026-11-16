@@ -67,7 +67,7 @@ public class AddItemPanel implements PanelHost.Panel {
             {"s3_disc", "Disc", "Sphere", "Round flat plate.", "قرص مسطح دائري.", "OBJ3D", "DISC"},
     };
     private static final String[][] SPECIAL_3D = {
-            {"s3_model", "3D model", "Model", "Import a .glb / .gltf model (with animations).", "استورد نموذج ‎.glb / .gltf (مع الحركات).", "OBJ3D", "MODEL"},
+            {"s3_model", "3D model", "Model", "Import a .glb / .gltf / .fbx / .obj / .blend model (with animations).", "استورد نموذج ‎.glb / .gltf / .fbx / .obj / .blend (مع الحركات).", "OBJ3D", "MODEL"},
             {"s3_terrain", "Terrain", "Terrain", "Hills and valleys (noise or height image).", "تلال ووديان (ضوضاء أو صورة ارتفاعات).", "OBJ3D", "TERRAIN"},
             {"s3_water", "Water", "Water", "Animated water with waves; things can float.", "ماء متحرك بأمواج، والأشياء تطفو عليه.", "OBJ3D", "WATER"},
             {"s3_empty", "Empty", "Cube", "Invisible point: parent, spawn point, target.", "نقطة غير مرئية: أب، نقطة ظهور، هدف.", "OBJ3D", "EMPTY"},
@@ -93,7 +93,7 @@ public class AddItemPanel implements PanelHost.Panel {
         if (ed != null && ed.is3DScene()) {
             col.addView(Ui.sectionLabel(c, Tr.t("s3_shapes", "3D shapes")));
             col.addView(grid3d(c, SHAPES_3D, ar));
-            LinearLayout imp = Ui.button(c, R.drawable.ic_lumina_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf)"), true, v -> importModels(c));
+            LinearLayout imp = Ui.button(c, R.drawable.ic_lumina_download, Tr.t("s3_import_glb", "Import 3D models (.glb / .gltf / .fbx / .obj / .blend)"), true, v -> importModels(c));
             col.addView(imp, Ui.margins(new LinearLayout.LayoutParams(-1, Ui.dp(c, 44)), c, 4, 4, 4, 6));
             col.addView(Ui.sectionLabel(c, Tr.t("s3_special", "Models, terrain and water")));
             col.addView(grid3d(c, SPECIAL_3D, ar));
@@ -136,8 +136,9 @@ public class AddItemPanel implements PanelHost.Panel {
     }
 
     /**
-     * Imports .glb / .gltf files from the phone into the project's models folder (a .gltf with its .bin and pictures) and
-     * adds a MODEL element for each model file chosen.
+     * Imports .glb / .gltf / .fbx / .obj / .blend files from the phone into the project's models folder (a .gltf
+     * with its .bin and pictures, an .obj with its .mtl) and adds a MODEL element for each model file chosen.
+     * FBX / OBJ / BLEND are converted to a sibling .glb first (Assimp), keeping their animations.
      */
     private void importModels(Context c) {
         final String project = shell.projectPath();
@@ -145,7 +146,7 @@ public class AddItemPanel implements PanelHost.Panel {
         final java.io.File tmp = new java.io.File(project, ".glb_import");
         tmp.mkdirs();
         shell.host().importFiles(tmp.getAbsolutePath(), () -> {
-            final java.util.ArrayList<String> models = new java.util.ArrayList<>();
+            final java.util.ArrayList<java.io.File> models = new java.util.ArrayList<>();
             try {
                 java.io.File dest = new java.io.File(project, "models");
                 dest.mkdirs();
@@ -153,29 +154,54 @@ public class AddItemPanel implements PanelHost.Panel {
                 if (chosen != null) for (java.io.File f : chosen) {
                     String n = f.getName();
                     String low = n.toLowerCase();
-                    boolean model = low.endsWith(".glb") || low.endsWith(".gltf");
-                    boolean part = low.endsWith(".bin") || low.endsWith(".png") || low.endsWith(".jpg") || low.endsWith(".jpeg") || low.endsWith(".webp");
+                    boolean model = low.endsWith(".glb") || low.endsWith(".gltf") || low.endsWith(".fbx")
+                            || low.endsWith(".obj") || low.endsWith(".blend");
+                    boolean part = low.endsWith(".bin") || low.endsWith(".mtl") || low.endsWith(".png") || low.endsWith(".jpg")
+                            || low.endsWith(".jpeg") || low.endsWith(".webp");
                     if (!model && !part) continue; // anything else is ignored
                     java.io.File to = new java.io.File(dest, n.replace(' ', '_'));
                     if (to.exists()) to.delete();
                     if (!f.renameTo(to)) {
                         com.lumina.engine.Helpers.FileUtil.copyFile(f.getAbsolutePath(), to.getAbsolutePath());
                     }
-                    if (model) models.add("/" + to.getName());
+                    if (model) models.add(to);
                 }
             } catch (Throwable t) {
                 Ui.toast(c, String.valueOf(t));
             }
             com.lumina.engine.Helpers.FileUtil.deleteFile(tmp.getAbsolutePath());
             if (models.isEmpty()) {
-                Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf model was chosen"));
+                Ui.toast(c, Tr.t("s3_import_none", "No .glb / .gltf / .fbx / .obj / .blend model was chosen"));
                 return;
             }
-            shell.panels.hide();
-            Bridge.gl(() -> {
-                for (String m : models) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", m);
-            });
-            Ui.toast(c, Tr.t("s3_import_done", "Imported") + ": " + models.size());
+            // Assimp may take a few seconds: convert on a worker, then add the elements on the GL thread
+            new Thread(() -> {
+                final java.util.ArrayList<String> ready = new java.util.ArrayList<>();
+                String firstError = "";
+                for (java.io.File m : models) {
+                    com.badlogic.gdx.files.FileHandle fh = com.badlogic.gdx.Gdx.files.absolute(m.getAbsolutePath());
+                    com.badlogic.gdx.files.FileHandle glb = com.lumina.engine.runtime.d3.ModelImporter.isRaw(m)
+                            ? com.lumina.engine.runtime.d3.ModelImporter.convert(fh) : fh;
+                    if (glb == null) {
+                        if (firstError.isEmpty()) firstError = com.lumina.engine.runtime.d3.ModelImporter.lastError();
+                        continue;
+                    }
+                    ready.add("/" + glb.name());
+                }
+                final String error = firstError;
+                Ui.ui(() -> {
+                    if (ready.isEmpty()) {
+                        Ui.toast(c, Tr.t("s3_import_none", "The model could not be imported") + (error.isEmpty() ? "" : ": " + error));
+                        return;
+                    }
+                    shell.panels.hide();
+                    Bridge.gl(() -> {
+                        for (String m : ready) Bridge.controls().actionAdd3D("OBJ3D", "MODEL", m);
+                    });
+                    Ui.toast(c, Tr.t("s3_import_done", "Imported") + ": " + ready.size()
+                            + (error.isEmpty() ? "" : " (" + error + ")"));
+                });
+            }, "lumina-model-import").start();
         });
     }
 

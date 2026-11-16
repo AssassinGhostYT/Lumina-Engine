@@ -74,7 +74,7 @@ Never send a whole script again to change a few lines (slow, costs shared quota,
 43. **Fog / ambient / sky colors ignored.** They only apply with `"Lighting Preset":"CUSTOM"`; the other presets set them.
 44. **Characters tip over.** DYNAMIC CAPSULE + `Lock Rotation X` and `Lock Rotation Z` true; turn it with Rotation Y (blocks), not torque.
 45. **Slow game.** Many shadow-casting lights, PBR, huge models, MESH colliders on moving bodies. Prefer SIMPLE/SOFT, one sun, `Static Object` for scenery, low-poly GLB, Quality MEDIUM.
-46. **Model not found.** The file must be in `models/` and `Model` written "/name.glb" (Mesh MODEL); FBX/OBJ are not supported.
+46. **Model not found.** The file must be in `models/` and `Model` written "/name.glb" (Mesh MODEL). FBX / OBJ / BLEND files are converted to a sibling `.glb` by the editor (import them from the 3D panel or drop them in `models/`).
 
 ## build vs run_game
 `run_game` compiles AND starts the game in one call. Do not call `build` and then `run_game`: that compiles twice. Use `build` alone only to check compile errors when you do not want the game to open.

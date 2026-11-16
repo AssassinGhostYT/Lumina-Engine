@@ -110,6 +110,14 @@ public class ExportThread extends Thread {
 					source = copy;
 				}
 			}
+			// FBX / OBJ / BLEND models: convert every raw file to a sibling GLB before packing, so the exported game
+			// (which has no Assimp library) can load raw references through the generated .glb.
+			try {
+				int converted = com.lumina.engine.runtime.d3.ModelImporter.convertAll(new java.io.File(source, "models"));
+				if (converted > 0) onProgress(com.lumina.engine.ui.Tr.t("export_p_models", "Converting 3D models...") + " (" + converted + ")");
+			} catch (Throwable t) {
+				onProgress("3D model conversion skipped: " + t.getMessage());
+			}
 			Utils.zipf(source,export_temp+"/assets/project.zip","tulsgskdiensl626__Xxmoishs");
 			if(!source.equals(project)) FileUtil.deleteFile(dataDir+"/exportProject");
 			try {

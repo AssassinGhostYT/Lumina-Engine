@@ -73,6 +73,18 @@ public class Object3D extends Actor implements PlayerItem {
 	String currentAnim = "";
 	float animSpeed = 1;
 	boolean animPaused;
+	/** Plays the configured sound when a clip starts and (optionally) on every loop of a looping clip. */
+	private final AnimationController.AnimationListener animSoundListener = new AnimationController.AnimationListener() {
+		@Override
+		public void onEnd(AnimationController.AnimationDesc animation) {
+		}
+
+		@Override
+		public void onLoop(AnimationController.AnimationDesc animation) {
+			if (def != null && def.Animation_Sound_On_Loop && animation != null && animation.animation != null)
+				playAnimSound(animation.animation.id);
+		}
+	};
 
 	public Object3D(StageImp stage) {
 		this.stage = stage;
@@ -793,9 +805,10 @@ public class Object3D extends Actor implements PlayerItem {
 		animPaused = false;
 		currentAnim = id;
 		try {
-			anim.setAnimation(id, loop ? -1 : 1, 1f, null);
+			anim.setAnimation(id, loop ? -1 : 1, 1f, animSoundListener);
 		} catch (Throwable ignored) {
 		}
+		playAnimSound(id);
 	}
 
 	/** Smoothly blends into another clip over the given seconds. */
@@ -807,9 +820,10 @@ public class Object3D extends Actor implements PlayerItem {
 		animPaused = false;
 		currentAnim = id;
 		try {
-			anim.animate(id, loop ? -1 : 1, 1f, null, Math.max(0f, seconds));
+			anim.animate(id, loop ? -1 : 1, 1f, animSoundListener, Math.max(0f, seconds));
 		} catch (Throwable ignored) {
 		}
+		playAnimSound(id);
 	}
 
 	/** Plays a clip once on top of the current one, then goes back (attack, wave...). */
@@ -818,9 +832,10 @@ public class Object3D extends Actor implements PlayerItem {
 		String id = resolveAnim(name);
 		if (id == null) return;
 		try {
-			anim.action(id, 1, speed, null, 0.15f);
+			anim.action(id, 1, speed, animSoundListener, 0.15f);
 		} catch (Throwable ignored) {
 		}
+		playAnimSound(id);
 	}
 
 	public void stopAnimation() {
@@ -869,6 +884,33 @@ public class Object3D extends Actor implements PlayerItem {
 			sb.append(a.id);
 		}
 		return sb.toString();
+	}
+
+	/** Sound configured for a clip (Animation Sounds "clip=sound;...", then the single Animation Sound). */
+	private String soundFor(String clip) {
+		if (def == null) return "";
+		String map = def.Animation_Sounds == null ? "" : def.Animation_Sounds.trim();
+		String fallback = "";
+		if (map.length() > 0) {
+			for (String part : map.split(";")) {
+				int eq = part.indexOf('=');
+				if (eq <= 0) continue;
+				String key = part.substring(0, eq).trim();
+				String value = part.substring(eq + 1).trim();
+				if (key.equalsIgnoreCase(clip)) return value;
+				if ("*".equals(key)) fallback = value;
+			}
+			if (fallback.length() > 0) return fallback;
+		}
+		return def.Animation_Sound == null ? "" : def.Animation_Sound.trim();
+	}
+
+	private void playAnimSound(String clip) {
+		if (def == null || stage == null) return; // no audio while previewing the model in the editor
+		String sound = soundFor(clip);
+		if (sound.length() == 0) return;
+		float distance = def.Animation_Sound_Distance <= 0 ? 30f : def.Animation_Sound_Distance;
+		B3.playSoundAt(sound, this, distance, def.Animation_Sound_Volume);
 	}
 
 	private String resolveAnim(String name) {

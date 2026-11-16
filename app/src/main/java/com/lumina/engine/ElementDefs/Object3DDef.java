@@ -16,7 +16,7 @@ public class Object3DDef extends ItemDef {
 	// ---- what it is
 	/** CUBE SPHERE CYLINDER CAPSULE CONE PLANE TORUS RAMP STAIRS PYRAMID HEMISPHERE TUBE WEDGE QUAD DISC, MODEL, TERRAIN, WATER, EMPTY */
 	public String Mesh = "CUBE";
-	/** MODEL: project path of the .glb / .gltf (e.g. "models/car.glb"). */
+	/** MODEL: project path of a .glb / .gltf (or an .fbx / .obj / .blend the editor converts to .glb). */
 	public String Model = "";
 	/** MODEL: only this node of the model ("" = all). */
 	public String Model_Node = "";
@@ -64,6 +64,13 @@ public class Object3DDef extends ItemDef {
 	public String Animation = "";
 	public boolean Animation_Loop = true;
 	public float Animation_Speed = 1;
+	/** Sound of the sounds folder played when the clip starts and each time it loops ("" = none). */
+	public String Animation_Sound = "";
+	/** Per-clip sounds: "walk=steps.mp3;run=run.mp3" (the single Animation Sound is the fallback). */
+	public String Animation_Sounds = "";
+	public float Animation_Sound_Volume = 1, Animation_Sound_Distance = 30;
+	/** Play the sound again when a looping clip starts a new lap. */
+	public boolean Animation_Sound_On_Loop = true;
 
 	// ---- terrain
 	public String Heightmap = "";

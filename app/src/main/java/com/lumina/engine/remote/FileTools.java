@@ -502,15 +502,23 @@ final class FileTools {
             out.write(data);
         }
         refreshAssets();
-        final String rel = Proj.rel(p, f);
+        String rel = Proj.rel(p, f);
+        String conversionError = "";
+        if (com.lumina.engine.runtime.d3.ModelImporter.isRaw(f)) {
+            java.io.File glb = com.lumina.engine.runtime.d3.ModelImporter.convert(f);
+            if (glb != null) rel = Proj.rel(p, glb);
+            else conversionError = " (conversion failed: " + com.lumina.engine.runtime.d3.ModelImporter.lastError() + ")";
+        }
+        final String useRel = rel;
         if (rel.startsWith("models/")) {
             // 3D model: drop a cached older copy; OBJ3D elements refer to it as "/name.glb" (Mesh MODEL)
             Gl.run(() -> {
-                com.lumina.engine.runtime.d3.Assets3D.reload("/" + rel.substring(7));
+                com.lumina.engine.runtime.d3.Assets3D.reload("/" + useRel.substring(7));
                 return null;
             });
-            return ToolResult.text("saved " + rel + " (" + data.length + " bytes). Use it on an OBJ3D: props {\"Mesh\":\"MODEL\",\"Model\":\"/" + rel.substring(7) + "\"}");
+            return ToolResult.text("saved " + rel + " (" + data.length + " bytes)" + conversionError
+                    + ". Use it on an OBJ3D: props {\"Mesh\":\"MODEL\",\"Model\":\"/" + rel.substring(7) + "\"}");
         }
-        return ToolResult.text("saved " + rel + " (" + data.length + " bytes)");
+        return ToolResult.text("saved " + rel + " (" + data.length + " bytes)" + conversionError);
     }
 }

@@ -826,9 +826,14 @@ public final class B3 {
 
 	/** Plays a sound of the project (sounds folder) with a volume that fades with the distance to the camera. */
 	public static void playSoundAt(String sound, Object item, float maxDistance) {
+		playSoundAt(sound, item, maxDistance, 1f);
+	}
+
+	/** Same, scaled by a 0..1 volume (an element's animation sound). */
+	public static void playSoundAt(String sound, Object item, float maxDistance, float volume) {
 		World3D w = world();
 		float d = w == null ? 0 : w.camera.position.dst(x(item), y(item), z(item));
-		float vol = MathUtils.clamp(1f - d / Math.max(0.1f, maxDistance), 0f, 1f);
+		float vol = MathUtils.clamp(1f - d / Math.max(0.1f, maxDistance), 0f, 1f) * MathUtils.clamp(volume, 0f, 1f);
 		if (vol <= 0.01f) return;
 		Sound s = sound(sound);
 		if (s == null) return;

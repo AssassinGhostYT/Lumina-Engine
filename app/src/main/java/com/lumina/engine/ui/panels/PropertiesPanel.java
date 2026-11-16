@@ -449,7 +449,9 @@ public class PropertiesPanel implements PanelHost.Panel {
             switch (f) {
                 case "Light Kind": return false;
                 case "Model": case "Model Node": case "Keep Model Material":
-                case "Animation": case "Animation Loop": case "Animation Speed": return model;
+                case "Animation": case "Animation Loop": case "Animation Speed":
+                case "Animation Sound": case "Animation Sounds": case "Animation Sound Volume":
+                case "Animation Sound Distance": case "Animation Sound On Loop": return model;
                 case "Detail": return in(mesh, "SPHERE", "CYLINDER", "CAPSULE", "CONE", "TORUS", "HEMISPHERE", "TUBE", "DISC");
                 case "Steps": return mesh.equals("STAIRS");
                 case "Heightmap": case "Terrain Height": case "Terrain Resolution": case "Terrain Noise": case "Terrain Seed": return mesh.equals("TERRAIN");
@@ -724,6 +726,22 @@ public class PropertiesPanel implements PanelHost.Panel {
                 editors.put(f, r);
                 return box;
             }
+            case "sound": {
+                box.addView(label(c, f));
+                TextView t = chooser(c, val.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : val.replace(com.lumina.engine.runtime.Utils.Utils.seperator, "/"));
+                t.setOnClickListener(v -> Bridge.query(() -> {
+                    String root = Bridge.editor().getProject().getPath() + "/sounds";
+                    new java.io.File(root).mkdirs();
+                    return root;
+                }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"mp3", "ogg", "wav", "m4a"}, false, (file, rel) -> {
+                    values.put(f, rel);
+                    t.setText(rel);
+                    commit(() -> PropertyEditing.applyString(Bridge.app(), f, rel));
+                })));
+                box.addView(t, Ui.matchWrap());
+                editors.put(f, t);
+                return box;
+            }
             case "File": {
                 final ImageView[] animReset = new ImageView[1];
                 box.addView(label(c, f));
@@ -765,14 +783,14 @@ public class PropertiesPanel implements PanelHost.Panel {
                 return box;
             }
             case "model": {
-                // glTF / GLB of the project's models folder (import new ones with the Files panel)
+                // glTF / GLB / Assimp formats of the project's models folder (raw files convert to GLB)
                 box.addView(label(c, f));
                 TextView t = chooser(c, val.isEmpty() ? "[" + Tr.t("choose", "choose") + "]" : val);
                 t.setOnClickListener(v -> Bridge.query(() -> {
                             String root = Bridge.editor().getProject().getPath() + "/models";
                             new java.io.File(root).mkdirs();
                             return root;
-                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"glb", "gltf"}, false, (file, rel) -> {
+                        }, rootPath -> FilePickerDialog.show(c, Tr.t(f), rootPath, new String[]{"glb", "gltf", "fbx", "obj", "blend"}, false, (file, rel) -> {
                             String nv = rel.startsWith("/") ? rel : "/" + rel;
                             values.put(f, nv);
                             t.setText(nv);

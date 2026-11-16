@@ -87,7 +87,20 @@ public class FilesPanel implements PanelHost.Panel {
         create.setOnClickListener(v -> createMenu(c, create));
         ImageView imp = Ui.iconButton(c, R.drawable.ic_lumina_upload, Tr.t("import", "Import"), v -> {
             if (dir == null) return;
-            shell.host().importFiles(dir.getAbsolutePath(), this::reload);
+            final File target = dir;
+            shell.host().importFiles(target.getAbsolutePath(), () -> {
+                String targetPath = target.getAbsolutePath().replace('\\', '/');
+                if (target.isDirectory() && (targetPath.endsWith("/models") || targetPath.contains("/models/"))
+                        && com.lumina.engine.runtime.d3.ModelImporter.hasRaw(target)) {
+                    new Thread(() -> {
+                        final int n = com.lumina.engine.runtime.d3.ModelImporter.convertAll(target);
+                        Ui.ui(() -> {
+                            reload();
+                            if (n > 0) Ui.toast(shell.activity(), Tr.t("s3_import_done", "Imported") + ": " + n);
+                        });
+                    }, "lumina-model-convert").start();
+                } else reload();
+            });
         });
         com.lumina.engine.ui.tutorial.Tut.tag(imp, "files:import");
         ImageView col = Ui.iconButton(c, R.drawable.ic_lumina_collections, Tr.t("ui_collections", "Collections (free assets)"), v -> {
