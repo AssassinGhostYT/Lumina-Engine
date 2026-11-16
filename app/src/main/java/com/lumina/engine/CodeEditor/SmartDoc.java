@@ -43,6 +43,8 @@ public final class SmartDoc {
 
     /** Opens the document. Takes a moment in region mode (generates the scene), so call it off the UI thread. */
     public static SmartDoc open(String file) {
+        String lower = file == null ? "" : file.toLowerCase(java.util.Locale.ROOT);
+        if (lower.endsWith(".cs")) return new SmartDoc(file, null);
         String root = SmartProject.rootOf(file);
         if (root == null) return new SmartDoc(file, null);
         SmartDoc d = new SmartDoc(file, SmartProject.get(root));

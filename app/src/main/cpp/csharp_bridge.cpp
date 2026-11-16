@@ -33,6 +33,7 @@ using MonoClass = void;
 using MonoMethod = void;
 using MonoString = void;
 using MonoObject = void;
+using MonoThread = void;
 using MonoAssemblyName = void;
 using MonoImageOpenStatus = int;
 using MonoBool = int32_t;
@@ -56,6 +57,9 @@ struct MonoApi {
     MonoString* (*object_to_string)(MonoObject*, MonoObject**) = nullptr;
     void (*free_mem)(void*) = nullptr;
     void (*add_internal_call)(const char*, const void*) = nullptr;
+    MonoThread* (*thread_current)() = nullptr;
+    MonoThread* (*thread_attach)(MonoDomain*) = nullptr;
+    void (*thread_detach)(MonoThread*) = nullptr;
 
     MonoAssemblyName* (*assembly_name_new)(const char*) = nullptr;
     const char* (*assembly_name_get_name)(MonoAssemblyName*) = nullptr;
@@ -125,6 +129,9 @@ bool load_mono() {
     LOAD_MONO(object_to_string, "mono_object_to_string");
     LOAD_MONO(free_mem, "mono_free");
     LOAD_MONO(add_internal_call, "mono_add_internal_call");
+    LOAD_MONO(thread_current, "mono_thread_current");
+    LOAD_MONO(thread_attach, "mono_thread_attach");
+    LOAD_MONO(thread_detach, "mono_thread_detach");
     LOAD_MONO(assembly_name_new, "mono_assembly_name_new");
     LOAD_MONO(assembly_name_get_name, "mono_assembly_name_get_name");
     LOAD_MONO(image_open_from_data_with_name,
@@ -218,6 +225,34 @@ std::string exception_text(MonoObject* exception) {
     return take_string(text);
 }
 
+// Mono keeps per-thread state. Every Java thread that calls into the runtime
+// must be attached first, and detached again before it exits.
+class MonoThreadScope {
+public:
+    MonoThreadScope() {
+        if (api.thread_current == nullptr || api.thread_attach == nullptr) return;
+        if (api.thread_current() == nullptr) {
+            attached_ = api.thread_attach(g_domain);
+            __android_log_print(ANDROID_LOG_INFO, TAG,
+                                "Hilo Java adjuntado a Mono");
+        }
+    }
+
+    ~MonoThreadScope() {
+        if (attached_ != nullptr && api.thread_detach != nullptr) {
+            api.thread_detach(attached_);
+            __android_log_print(ANDROID_LOG_INFO, TAG,
+                                "Hilo Java separado de Mono");
+        }
+    }
+
+    MonoThreadScope(const MonoThreadScope&) = delete;
+    MonoThreadScope& operator=(const MonoThreadScope&) = delete;
+
+private:
+    MonoThread* attached_ = nullptr;
+};
+
 }  // namespace
 
 extern "C" void LuminaCSharpPing(MonoString* message) {
@@ -301,6 +336,8 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
         return env->NewStringUTF("Error: mono_jit_init devolvio null");
     }
 
+    // Keep the initializing thread attached for the lifetime of the runtime;
+    // CSharpRuntime serializes all calls on one dedicated worker thread.
     api.add_internal_call(INTERNAL_PING,
                           reinterpret_cast<const void*>(&LuminaCSharpPing));
 
@@ -341,6 +378,11 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeRun(
 
     if (!g_initialized || g_run_method == nullptr) {
         return env->NewStringUTF("Error: el runtime C# no esta iniciado");
+    }
+
+    MonoThreadScope thread_scope;
+    if (api.thread_current() == nullptr) {
+        return env->NewStringUTF("Error: no se pudo adjuntar el hilo a Mono");
     }
 
     const std::string text = jstring_to_string(env, argument);

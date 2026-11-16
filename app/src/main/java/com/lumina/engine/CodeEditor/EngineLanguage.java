@@ -2,8 +2,6 @@ package com.lumina.engine.CodeEditor;
 import android.os.Bundle;
 import android.view.View;
 
-import com.lumina.engine.Helpers.Project;
-import com.lumina.engine.Utils;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import java.util.ArrayList;
 import org.eclipse.tm4e.languageconfiguration.internal.model.IndentationRules;
@@ -44,10 +42,18 @@ public class EngineLanguage extends EmptyLanguage {
 		this.smart = smart;
 		
 		String lowerPath = filePath == null ? "" : filePath.toLowerCase();
-		String grammarPath = lowerPath.endsWith(".cpp") || lowerPath.endsWith(".cc") || lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp") ? "editor/syntaxes/cpp.tmLanguage.json" : (lowerPath.endsWith(".json") ? "editor/syntaxes/json.tmLanguage.json" : "editor/syntaxes/java.tmLanguage.json");
-		String scope = GrammarRegistry.getInstance().loadGrammars(grammarPath).get(0).getScopeName();
+		String scope = lowerPath.endsWith(".cs") ? "source.cs"
+				: (lowerPath.endsWith(".cpp") || lowerPath.endsWith(".cc") || lowerPath.endsWith(".cxx") || lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp") ? "source.cpp"
+				: (lowerPath.endsWith(".json") ? "source.json" : "source.java"));
+		try {
+			if (GrammarRegistry.getInstance().findGrammar(scope) == null) {
+				GrammarRegistry.getInstance().loadGrammars("editor/languages.json");
+			}
+		} catch (Throwable ignored) {
+		}
 		mTextMateLanguage = TextMateLanguage.create(scope, false);
-		mIndentationRules = GrammarRegistry.getInstance().findLanguageConfiguration(scope).getIndentationRules();
+		LanguageConfiguration configuration = GrammarRegistry.getInstance().findLanguageConfiguration(scope);
+		mIndentationRules = configuration == null ? null : configuration.getIndentationRules();
 		
 		// تعطيل الإكمال التلقائي المدمج في TextMate لأننا نستخدم نظامنا الخاص
 		mTextMateLanguage.setAutoCompleteEnabled(false);
@@ -83,7 +89,10 @@ public class EngineLanguage extends EmptyLanguage {
 	}
 	
 	public int getIndentAdvance(String line) {
-		return line.matches(mIndentationRules.increaseIndentPattern.pattern()) ? mEditor.getTabWidth() : 0;
+		if (mIndentationRules != null && mIndentationRules.increaseIndentPattern != null) {
+			return line.matches(mIndentationRules.increaseIndentPattern.pattern()) ? mEditor.getTabWidth() : 0;
+		}
+		return line.trim().endsWith("{") ? mEditor.getTabWidth() : 0;
 	}
 	
 	private final NewlineHandler[] mNewlineHandlers = new NewlineHandler[]{new EndwiseNewlineHandler()};

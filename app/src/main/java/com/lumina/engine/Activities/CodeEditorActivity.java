@@ -172,6 +172,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 				String lowerPath = path == null ? "" : path.toLowerCase();
 				if(lowerPath.endsWith(".cpp")) FileUtil.writeFile(path, "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
 				else if(lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp")) FileUtil.writeFile(path, "#pragma once\n\n// Declaraciones de tu juego\n");
+				else if(lowerPath.endsWith(".cs")) FileUtil.writeFile(path, "using System;\n\npublic class Player\n{\n    void Start()\n    {\n    }\n\n    void Update()\n    {\n    }\n}\n");
 				else if(lowerPath.endsWith(".json")) FileUtil.writeFile(path, "{\n  \"name\": \"Lumina Project\",\n  \"version\": 1\n}\n");
 			}
 			if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals("")){
@@ -272,10 +273,20 @@ public class CodeEditorActivity extends AppCompatActivity {
 		} else finish();
 	}
 	
+	private static boolean languagesLoaded;
+
 	//by abodi Nagdat... :) 
 	public static void loadTMThemes(Context context) {
 		FileProviderRegistry.getInstance()
 		.addFileProvider(new AssetsFileResolver(context.getAssets()));
+		if (!languagesLoaded) {
+			try {
+				GrammarRegistry.getInstance().loadGrammars("editor/languages.json");
+				languagesLoaded = true;
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
+		}
 		ThemeRegistry scheme = ThemeRegistry.getInstance();
 		String light = "editor/darcula.json";
 		for (String theme : new String[] { light}) {

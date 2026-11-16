@@ -5,6 +5,12 @@ import android.content.res.AssetManager;
 import android.util.Log;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Android entry point for the embedded Mono/.NET runtime.
@@ -19,6 +25,14 @@ public final class CSharpRuntime {
 
     private static volatile boolean initialized;
     private static volatile String lastPing = "";
+
+    // Mono keeps thread-local runtime state: initialization and every run must
+    // happen on the same living thread. A single worker also serializes calls.
+    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "lumina-csharp");
+        t.setDaemon(true);
+        return t;
+    });
 
     static {
         boolean available;
@@ -46,11 +60,28 @@ public final class CSharpRuntime {
     }
 
     /** Blocking call: run it from a worker thread, never from the UI thread. */
-    public static String test(Context context) {
+    public static String test(final Context context) {
         if (!AVAILABLE) {
             return "Mono no esta disponible en esta arquitectura.";
         }
 
+        Future<String> future = WORKER.submit(() -> testOnWorker(context));
+        try {
+            return future.get(60, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "Error C#: prueba interrumpida";
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            Log.e(TAG, "Fallo al ejecutar el host C#", cause);
+            return "Error C#: " + cause;
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            return "Error C#: la prueba tardo demasiado";
+        }
+    }
+
+    private static String testOnWorker(Context context) {
         try {
             File managed = CSharpAssets.ensureManaged(context);
             if (!initialized) {

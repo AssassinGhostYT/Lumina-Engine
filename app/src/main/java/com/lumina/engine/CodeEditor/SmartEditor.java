@@ -126,6 +126,10 @@ public final class SmartEditor {
             requireCppAutoComplete(content, pos, publisher);
             return;
         }
+        if (isCSharpFile()) {
+            requireCSharpAutoComplete(content, pos, publisher);
+            return;
+        }
         long deadline = System.currentTimeMillis() + 5000;
         while (doc == null && System.currentTimeMillis() < deadline) {
             publisher.checkCancelled();
@@ -169,6 +173,23 @@ public final class SmartEditor {
     private boolean isCppFile() {
         String p = file == null ? "" : file.toLowerCase(java.util.Locale.ROOT);
         return p.endsWith(".cpp") || p.endsWith(".cc") || p.endsWith(".cxx") || p.endsWith(".h") || p.endsWith(".hpp");
+    }
+
+    private boolean isCSharpFile() {
+        String p = file == null ? "" : file.toLowerCase(java.util.Locale.ROOT);
+        return p.endsWith(".cs");
+    }
+
+    private void requireCSharpAutoComplete(ContentReference content, CharPosition pos, CompletionPublisher publisher) {
+        String text = content.getReference().toString();
+        int off = Math.min(pos.index, text.length());
+        CompletionResult result = CSharpCompletion.complete(text, off);
+        publisher.checkCancelled();
+        if (result.items.isEmpty()) return;
+        ArrayList<CompletionItem> list = new ArrayList<>(result.items.size());
+        int rank = 0;
+        for (Item item : result.items) list.add(new SmartCompletionItem(item, result.prefix.length(), false, rank++));
+        publisher.addItems(list);
     }
 
     private void requireCppAutoComplete(ContentReference content, CharPosition pos, CompletionPublisher publisher) {
