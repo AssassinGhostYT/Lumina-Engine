@@ -1,16 +1,16 @@
-# Política de privacidad de Lumina Engine
+# Política de privacidad de Nebulon Engine
 
-**Última actualización: 11 de noviembre de 2026**
+**Última actualización: 17 de noviembre de 2026**
 
-**Responsable:** AssassinGhostYT, desarrollador de Lumina Engine.
+**Responsable:** AssassinGhostYT, desarrollador de Nebulon Engine.
 
-Lumina Engine («la app») es una herramienta para crear videojuegos 2D y 3D en el dispositivo. Esta política explica qué información maneja la app, para qué se usan los permisos de Android y cómo se relaciona con servicios opcionales de terceros.
+Nebulon Engine («la app») es una herramienta para crear videojuegos 2D y 3D en el dispositivo. Esta política explica qué información maneja la app, para qué se usan los permisos de Android y cómo se relaciona con servicios opcionales de terceros.
 
 ## 1. Información guardada en tu dispositivo
 
 Los proyectos, escenas, código, imágenes, sonidos, modelos, respaldos y preferencias se guardan localmente en el almacenamiento de la app o en la ubicación que elijas al exportar. Las claves de proveedores de IA y los tokens de GitHub también se guardan localmente.
 
-Lumina Engine no mantiene una cuenta central ni un servidor propio donde se suban tus proyectos. No vendemos datos personales. Si exportas, respaldas o sincronizas un proyecto, tú eliges el destino y mantienes el control sobre esos archivos.
+Nebulon Engine no mantiene una cuenta central ni un servidor propio donde se suban tus proyectos. No vendemos datos personales. Si exportas, respaldas o sincronizas un proyecto, tú eliges el destino y mantienes el control sobre esos archivos.
 
 ## 2. Permisos de Android y su finalidad
 
@@ -44,7 +44,7 @@ Estas funciones solo se activan si decides usarlas:
 
 - **GitHub:** la app usa el flujo de autorización de GitHub para acceder únicamente a la cuenta y los repositorios que autorices. El token se guarda en el dispositivo. Sujeto a la política de GitHub: <https://docs.github.com/site-policy/privacy-policies/github-privacy-statement>.
 - **Proveedores de IA:** si configuras Google Gemini, OpenRouter, OpenCode, Pollinations u otro endpoint compatible, el mensaje y el contexto que elijas enviar se transmiten al proveedor seleccionado para generar la respuesta. Las claves se guardan localmente. Cada proveedor aplica su propia política de privacidad.
-- **Lumina Remote (opcional):** permite conectar una terminal u otro dispositivo para controlar la app. La sesión pasa por el relay `https://lumina.brayanhernandez385.workers.dev` y solo se usa si activas esta función.
+- **Nebulon Remote (opcional):** permite conectar una terminal u otro dispositivo para controlar la app. La sesión pasa por el relay `https://lumina.brayanhernandez385.workers.dev` y solo se usa si activas esta función.
 - **Compras y donaciones:** las donaciones se procesan mediante Google Play Billing. No recibimos ni almacenamos datos de tarjetas ni de pago; Google gestiona la transacción.
 - **Actualizaciones y descargas:** la app consulta un archivo de versión en GitHub para avisar de actualizaciones y usa GitHub para distribuir APK. No se envía información personal en esa consulta.
 
@@ -66,7 +66,7 @@ Las claves y tokens se guardan en el almacenamiento privado de la app y las comu
 
 ## 8. Menores
 
-Lumina Engine no está dirigido a menores de 13 años ni se diseña para recopilar deliberadamente información personal de menores. Si un padre, madre o tutor cree que un menor ha proporcionado datos personales, puede contactarnos para solicitar su eliminación.
+Nebulon Engine no está dirigido a menores de 13 años ni se diseña para recopilar deliberadamente información personal de menores. Si un padre, madre o tutor cree que un menor ha proporcionado datos personales, puede contactarnos para solicitar su eliminación.
 
 ## 9. Tus derechos
 
