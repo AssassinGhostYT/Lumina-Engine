@@ -6,7 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.lumina.engine.LuminaApp;
+import com.lumina.engine.NebulonApp;
 import com.lumina.engine.remote.RemoteDocs;
 
 import java.io.File;
@@ -38,7 +38,7 @@ public final class AiDocs {
     public static final String DOCS_DIR = ".lumina/docs";
 
     public static void generate(File dir, boolean engine) throws IOException {
-        generate(dir, engine, LuminaApp.getContext());
+        generate(dir, engine, NebulonApp.getContext());
     }
 
     /** Same as {@link #generate(File, boolean)} with an explicit Context (needed to read the documentation assets). */

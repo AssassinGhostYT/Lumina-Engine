@@ -49,7 +49,7 @@ public class DebugActivity extends Activity {
 			@Override
 			public void onClick(View _view) {
 				intent.setAction(Intent.ACTION_VIEW);
-				intent.setData(Uri.parse("https://github.com/lumina-engine/LuminaEngine/issues"));
+				intent.setData(Uri.parse("https://github.com/AssassinGhostYT/Lumina-Engine/issues"));
 				startActivity(intent);
 			}
 		});

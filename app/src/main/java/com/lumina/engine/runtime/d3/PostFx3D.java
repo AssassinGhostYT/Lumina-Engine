@@ -55,7 +55,7 @@ public class PostFx3D implements Disposable {
 		ShaderProgram.pedantic = false;
 		p = new ShaderProgram(V, f);
 		if (!p.isCompiled()) {
-			Gdx.app.error("Lumina-3D", "post effect " + effect + ": " + p.getLog());
+			Gdx.app.error("Nebulon-3D", "post effect " + effect + ": " + p.getLog());
 			p.dispose();
 			p = null;
 			if (!"NONE".equals(effect)) return program("NONE");

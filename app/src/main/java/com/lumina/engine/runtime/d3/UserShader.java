@@ -289,7 +289,7 @@ public class UserShader implements Shader {
 		ShaderProgram p = new ShaderProgram(vertexSource(program, textured), fragmentSource(program));
 		if (!p.isCompiled()) {
 			program.error = p.getLog();
-			Gdx.app.error("Lumina-3D", "shader " + program.name + ":\n" + p.getLog());
+			Gdx.app.error("Nebulon-3D", "shader " + program.name + ":\n" + p.getLog());
 			p.dispose();
 			return false;
 		}

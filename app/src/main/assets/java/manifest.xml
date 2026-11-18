@@ -33,7 +33,7 @@
         android:theme="@7F090000"
         android:label="%4$s"
         android:icon="@7F040008"
-        android:name="com.lumina.engine.runtime.LuminaApp"
+        android:name="com.lumina.engine.runtime.NebulonApp"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:extractNativeLibs="true"

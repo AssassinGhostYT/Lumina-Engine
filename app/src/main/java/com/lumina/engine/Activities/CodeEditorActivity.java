@@ -36,6 +36,9 @@ import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.SelectionMovement;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.eclipse.tm4e.core.registry.IThemeSource;
 /*
     Advanced code editor using tyron java completion library and sora editor.....
@@ -52,6 +55,32 @@ public class CodeEditorActivity extends AppCompatActivity {
 	}
 
 	/** The new script extends the scene's generated Refs base class: make sure that class exists (from the saved scene). */
+	private File[] csharpSources(){
+		List<File> files = new ArrayList<>();
+		File current = new File(path);
+		try {
+			String root = com.lumina.engine.CodeEditor.SmartProject.rootOf(path);
+			if(root != null) collectCSharp(new File(root), files);
+		} catch(Throwable ignored){}
+		if(!files.contains(current)) files.add(current);
+		Collections.sort(files);
+		return files.toArray(new File[0]);
+	}
+
+	private static void collectCSharp(File dir, List<File> out){
+		File[] children = dir.listFiles();
+		if(children == null) return;
+		for(File child : children){
+			if(child.isDirectory()){
+				String name = child.getName();
+				if(name.startsWith(".") || name.equals("build") || name.equals("bin") || name.equals("obj")) continue;
+				collectCSharp(child, out);
+			} else if(child.getName().toLowerCase().endsWith(".cs")){
+				out.add(child);
+			}
+		}
+	}
+
 	private void writeSceneRefs(String scene){
 		try {
 			String root = com.lumina.engine.CodeEditor.SmartProject.rootOf(path);
@@ -106,6 +135,25 @@ public class CodeEditorActivity extends AppCompatActivity {
 				hideKeyboard();
 		});
 		
+		View runCs = findViewById(R.id.run_cs);
+		if(path != null && path.toLowerCase().endsWith(".cs")
+				&& com.lumina.engine.csharp.CSharpRuntime.isAvailable()){
+			runCs.setVisibility(View.VISIBLE);
+			runCs.setOnClickListener(v->{
+				FileUtil.writeFile(path, editor.getText().toString());
+				runCs.setEnabled(false);
+				final File[] sources = csharpSources();
+				new Thread(()->{
+					String result = com.lumina.engine.csharp.CSharpRuntime.compileAndRun(
+							this, sources);
+					runOnUiThread(()->{
+						runCs.setEnabled(true);
+						com.lumina.engine.ui.Dialogs.longText(this, "C# / .NET", result);
+					});
+				}, "nebulon-csharp-run").start();
+			});
+		}
+
 		findViewById(R.id.back).setOnClickListener(v->{
 			back();
 		});
@@ -172,8 +220,8 @@ public class CodeEditorActivity extends AppCompatActivity {
 				String lowerPath = path == null ? "" : path.toLowerCase();
 				if(lowerPath.endsWith(".cpp")) FileUtil.writeFile(path, "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
 				else if(lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp")) FileUtil.writeFile(path, "#pragma once\n\n// Declaraciones de tu juego\n");
-				else if(lowerPath.endsWith(".cs")) FileUtil.writeFile(path, "using System;\n\npublic class Player\n{\n    void Start()\n    {\n    }\n\n    void Update()\n    {\n    }\n}\n");
-				else if(lowerPath.endsWith(".json")) FileUtil.writeFile(path, "{\n  \"name\": \"Lumina Project\",\n  \"version\": 1\n}\n");
+				else if(lowerPath.endsWith(".cs")) FileUtil.writeFile(path, "using System;\nusing Nebulon;\n\npublic class Player\n{\n    void Start()\n    {\n        Engine.Log(\"Hola desde C#\");\n    }\n\n    void Update()\n    {\n    }\n}\n");
+				else if(lowerPath.endsWith(".json")) FileUtil.writeFile(path, "{\n  \"name\": \"Nebulon Project\",\n  \"version\": 1\n}\n");
 			}
 			if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals("")){
 				String sceneName = getIntent().getStringExtra("scene");

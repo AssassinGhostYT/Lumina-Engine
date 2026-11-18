@@ -19,7 +19,7 @@
         android:required="true" />
 
     <application
-        android:name="com.lumina.engine.runtime.LuminaApp"
+        android:name="com.lumina.engine.runtime.NebulonApp"
         android:allowBackup="true"
         android:icon="@drawable/icon"
         android:label="TPL_APP_LABEL"

@@ -66,7 +66,7 @@ public final class Vehicle3D {
 			p.vehicles.add(v);
 			return v;
 		} catch (Throwable t) {
-			com.badlogic.gdx.Gdx.app.error("Lumina-3D", "vehicle of " + chassis.getName() + ": " + t);
+			com.badlogic.gdx.Gdx.app.error("Nebulon-3D", "vehicle of " + chassis.getName() + ": " + t);
 			v.dispose();
 			return null;
 		}

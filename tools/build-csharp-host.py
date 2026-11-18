@@ -10,9 +10,29 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT = ROOT / "tools" / "csharp" / "Lumina.ScriptHost"
+PROJECT = ROOT / "tools" / "csharp" / "Nebulon.ScriptHost"
 OUT = ROOT / "build" / "csharp-host"
 ASSETS = ROOT / "app" / "src" / "main" / "assetsGen" / "Managed"
+REFS = ASSETS / "refs"
+
+
+def reference_dir(dotnet: str) -> Path | None:
+    roots = [Path(dotnet).resolve().parent]
+    env_root = os.environ.get("DOTNET_ROOT")
+    if env_root:
+        roots.append(Path(env_root))
+    for root in roots:
+        packs = root / "packs" / "Microsoft.NETCore.App.Ref"
+        if not packs.is_dir():
+            continue
+        versions = sorted(
+            (p for p in packs.iterdir() if (p / "ref" / "net10.0").is_dir()),
+            key=lambda p: p.name,
+            reverse=True,
+        )
+        if versions:
+            return versions[0] / "ref" / "net10.0"
+    return None
 
 
 def main() -> int:
@@ -45,14 +65,30 @@ def main() -> int:
         env=env,
     )
 
-    dll = OUT / "Lumina.ScriptHost.dll"
+    dll = OUT / "Nebulon.ScriptHost.dll"
     if not dll.is_file():
         print(f"Build finished but {dll} is missing", file=sys.stderr)
         return 1
 
+    refs = reference_dir(dotnet)
+    if refs is None:
+        print("Microsoft.NETCore.App.Ref net10.0 was not found", file=sys.stderr)
+        return 1
+
     ASSETS.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(dll, ASSETS / dll.name)
-    print(f"Copied {dll.name} to {ASSETS}")
+    for old in ASSETS.glob("*.dll"):
+        old.unlink()
+    for source in sorted(OUT.glob("*.dll")):
+        shutil.copy2(source, ASSETS / source.name)
+
+    REFS.mkdir(parents=True, exist_ok=True)
+    for old in REFS.glob("*.dll"):
+        old.unlink()
+    for source in sorted(refs.glob("*.dll")):
+        shutil.copy2(source, REFS / source.name)
+
+    print(f"Copied {len(list(ASSETS.glob('*.dll')))} host assemblies and "
+          f"{len(list(REFS.glob('*.dll')))} reference assemblies to {ASSETS}")
     return 0
 
 

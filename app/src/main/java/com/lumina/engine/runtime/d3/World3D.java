@@ -436,7 +436,7 @@ public class World3D implements Disposable {
 			iblSpecular = PBRCubemapAttribute.createSpecularEnv(spec);
 			brdfLut = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
 		} catch (Throwable t) {
-			Gdx.app.error("Lumina-3D", "IBL: " + t);
+			Gdx.app.error("Nebulon-3D", "IBL: " + t);
 		}
 	}
 
@@ -641,7 +641,7 @@ public class World3D implements Disposable {
 					fbo.getColorBufferTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 				} catch (Throwable t) {
 					// a GPU that can't render into this frame buffer: draw straight to the screen (no scale / post effect)
-					Gdx.app.error("Lumina-3D", "frame buffer: " + t);
+					Gdx.app.error("Nebulon-3D", "frame buffer: " + t);
 					fboFailed = true;
 					fbo = null;
 				}

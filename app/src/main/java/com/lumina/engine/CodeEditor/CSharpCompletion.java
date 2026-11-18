@@ -29,10 +29,9 @@ public final class CSharpCompletion {
             "GetComponent", "AddComponent", "Random.Range", "Coroutine", "WaitForSeconds",
             "Application.Quit", "SceneManager"
     };
-    private static final String[] LUMINA = {
-            "LuminaEngine", "LuminaEngine.Version", "LuminaEngine.Log",
-            "LuminaEngine.Entity", "LuminaEngine.Scene", "LuminaEngine.Sprite",
-            "LuminaEngine.Vector2", "LuminaEngine.Vector3", "LuminaEngine.Input"
+    private static final String[] NEBULON = {
+            "Engine", "Engine.Version", "Engine.Log", "Engine.LogWarning",
+            "Engine.LogError"
     };
     private static final Pattern TYPE = Pattern.compile(
             "\\b(?:class|struct|interface|enum|record)\\s+([A-Za-z_]\\w*)");
@@ -54,7 +53,7 @@ public final class CSharpCompletion {
         HashSet<String> seen = new HashSet<>();
         for (String value : KEYWORDS) add(result, seen, value, Item.Kind.KEYWORD, "C#", value);
         for (String value : UNITY) add(result, seen, value, Item.Kind.METHOD, "Unity", value + "($0)");
-        for (String value : LUMINA) add(result, seen, value, Item.Kind.METHOD, "Lumina", value + "($0)");
+        for (String value : NEBULON) add(result, seen, value, Item.Kind.METHOD, "Nebulon", value + "($0)");
 
         Matcher type = TYPE.matcher(text);
         while (type.find()) add(result, seen, type.group(1), Item.Kind.CLASS, "Proyecto", type.group(1));

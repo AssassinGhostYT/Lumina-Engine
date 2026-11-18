@@ -77,7 +77,7 @@ public final class RemoteCommands {
                 + "4. Dentro de OpenCode usa /connect y luego /models; elige un modelo gratuito.\n"
                 + "5. Escribe tu petición en la terminal. La IA usará las herramientas de Nebulon y los cambios aparecerán en el editor.\n\n"
                 + "Conector privado: " + RemoteSettings.connectorUrl(c) + "\n"
-                + "También funciona con cualquier cliente MCP compatible. No cierres Lumina mientras trabaja.";
+                + "También funciona con cualquier cliente MCP compatible. No cierres Nebulon mientras trabaja.";
     }
 
     /** The short one for any other AI. */

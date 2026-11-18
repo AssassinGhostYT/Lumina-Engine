@@ -149,7 +149,7 @@ public class Editor3DItem extends Actor implements EditorItem {
 				obj.setVisible(d.Visible && !com.lumina.engine.editor.Hierarchy.isHidden(propertySet));
 			}
 		} catch (Throwable t) {
-			com.badlogic.gdx.Gdx.app.error("Lumina-3D", "editor item " + getName() + ": " + t);
+			com.badlogic.gdx.Gdx.app.error("Nebulon-3D", "editor item " + getName() + ": " + t);
 		}
 	}
 

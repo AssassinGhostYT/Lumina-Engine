@@ -15,6 +15,12 @@
 - `Animation Sound` y `Animation Sounds` para asociar sonidos a clips.
 - Volumen, distancia y reproducción en cada bucle.
 
+### C# en el móvil
+
+- Editor con resaltado, autocompletado y plantilla `Nebulon`.
+- **Mono + Roslyn** incluidos: abre un archivo `.cs`, pulsa el botón verde y el proyecto se compila y ejecuta en el teléfono.
+- Errores del compilador con archivo, línea y columna; `Engine.Log` escribe en la consola del editor.
+
 ### Otros
 
 - Correcciones y traducciones.

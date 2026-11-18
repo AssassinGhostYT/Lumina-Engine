@@ -124,7 +124,7 @@ public class RemotePanel implements PanelHost.Panel, RemoteClient.StateListener 
         LinearLayout b3 = Ui.button(c, R.drawable.ic_lumina_copy, Tr.t("rc_copy_opencode", "Copiar configuración MCP de OpenCode (modelos gratis)"), false, v -> copyOpenCode(c));
         b3.setLayoutParams(Ui.margins(Ui.matchWrap(), c, 0, 8, 0, 0));
         cc.addView(b3);
-        TextView terminalHint = Ui.text(c, "Sí: puedes tener Nebulon abierto y la IA de terminal abierta al mismo tiempo. La terminal controla Lumina mediante MCP; no necesitas poner una API key dentro de Lumina.", 12.5f, Ui.TEXT_2);
+        TextView terminalHint = Ui.text(c, "Sí: puedes tener Nebulon abierto y la IA de terminal abierta al mismo tiempo. La terminal controla Nebulon mediante MCP; no necesitas poner una API key dentro de Nebulon.", 12.5f, Ui.TEXT_2);
         terminalHint.setPadding(0, Ui.dp(c, 4), 0, Ui.dp(c, 8));
         cc.addView(terminalHint, Ui.matchWrap());
         LinearLayout bt = Ui.button(c, R.drawable.ic_lumina_terminal, "Copiar guía para IA de terminal", false, v -> copyTerminal(c));

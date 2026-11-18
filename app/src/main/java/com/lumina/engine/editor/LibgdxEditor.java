@@ -1372,7 +1372,7 @@ public class LibgdxEditor extends Stage {
 		if(e3d!=null && !(e3d.edit2D && !e3d.show3DBehind)){
 			// 3D scene: the 3D viewport, then the 2D layer (HUD / UI elements) on top
 			// (editing the 2D layer without "show 3D behind" falls through to the normal 2D canvas: grid, frame)
-			try { e3d.render(); } catch(Throwable t){ Gdx.app.error("Lumina-3D", "editor render: "+t); }
+			try { e3d.render(); } catch(Throwable t){ Gdx.app.error("Nebulon-3D", "editor render: "+t); }
 			shapeRenderer.setProjectionMatrix(camera.combined);
 			if(e3d.edit2D) drawSceneFrame(camera,getLogicWidth(),getLogicHeight());
 			try { Hierarchy.applyVisibility(this); } catch(Throwable ignored){}

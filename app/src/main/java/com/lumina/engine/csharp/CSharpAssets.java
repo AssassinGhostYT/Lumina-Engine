@@ -16,7 +16,7 @@ import java.io.InputStream;
 
 /** Extracts the compiled C# host assembly from the APK once per app update. */
 final class CSharpAssets {
-    private static final String TAG = "LuminaCSharp";
+    private static final String TAG = "NebulonCSharp";
     private static final String SOURCE = "Managed";
 
     private CSharpAssets() {}

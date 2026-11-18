@@ -5,7 +5,7 @@ import android.content.Context;
 import com.lumina.engine.CodeEditor.smart.JavaAnalyzer;
 import com.lumina.engine.CodeEditor.smart.JavaEnv;
 import com.lumina.engine.Helpers.FileUtil;
-import com.lumina.engine.LuminaApp;
+import com.lumina.engine.NebulonApp;
 
 import java.io.File;
 import java.io.InputStream;
@@ -61,7 +61,7 @@ public final class SmartProject {
     static List<File> libs() {
         ArrayList<File> out = new ArrayList<>();
         try {
-            Context c = LuminaApp.getContext();
+            Context c = NebulonApp.getContext();
             File bin = new File(FileUtil.getPackageDataDir(c), "bin");
             bin.mkdirs();
             File cp = new File(bin, "cp.jar"), add = new File(bin, "addition.jar");

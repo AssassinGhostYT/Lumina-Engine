@@ -2,4 +2,5 @@ Nebulon Engine 1.0.6
 - New name: Nebulon Engine (same app and projects)
 - Import FBX / OBJ / BLEND models (converted to GLB with animations)
 - Animation sounds with volume, distance and loop options
+- C# editor with on-device Mono + Roslyn compilation and execution
 - Many fixes and translations

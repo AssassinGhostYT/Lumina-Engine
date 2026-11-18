@@ -250,7 +250,7 @@ public class Object3D extends Actor implements PlayerItem {
 			sync();
 			rigid = p.createBody(this);
 		} catch (Throwable t) {
-			com.badlogic.gdx.Gdx.app.error("Lumina-3D", "body of " + def.name + ": " + t);
+			com.badlogic.gdx.Gdx.app.error("Nebulon-3D", "body of " + def.name + ": " + t);
 		}
 	}
 

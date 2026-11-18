@@ -172,7 +172,7 @@ public class ProjectsListStage extends Stage {
         githubTable.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                Gdx.net.openURI("https://github.com/lumina-engine/LuminaEngine/");
+                Gdx.net.openURI("https://github.com/AssassinGhostYT/Lumina-Engine/");
             }
         });
 

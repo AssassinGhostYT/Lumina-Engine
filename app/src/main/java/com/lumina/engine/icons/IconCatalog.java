@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Path;
 
 import com.google.gson.stream.JsonReader;
-import com.lumina.engine.LuminaApp;
+import com.lumina.engine.NebulonApp;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -92,7 +92,7 @@ public final class IconCatalog {
     }
 
     public static IconCatalog get() {
-        return get(LuminaApp.getContext());
+        return get(NebulonApp.getContext());
     }
 
     private void read(InputStream in) throws Exception {

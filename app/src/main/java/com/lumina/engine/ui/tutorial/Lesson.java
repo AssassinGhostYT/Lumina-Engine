@@ -43,11 +43,11 @@ public class Lesson {
     }
 
     static String blockName(String title) {
-        return BlockInfo.label(title, Ui.isRtl(Tutorial.activity() == null ? com.lumina.engine.LuminaApp.getContext() : Tutorial.activity()));
+        return BlockInfo.label(title, Ui.isRtl(Tutorial.activity() == null ? com.lumina.engine.NebulonApp.getContext() : Tutorial.activity()));
     }
 
     static String catName(String cat) {
-        return BlockInfo.category(cat, Ui.isRtl(Tutorial.activity() == null ? com.lumina.engine.LuminaApp.getContext() : Tutorial.activity()));
+        return BlockInfo.category(cat, Ui.isRtl(Tutorial.activity() == null ? com.lumina.engine.NebulonApp.getContext() : Tutorial.activity()));
     }
 
     Lesson add(Step s) {

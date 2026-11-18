@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-/** Shows the crash text of the game (started by LuminaApp). Built in code: no layout resources needed. */
+/** Shows the crash text of the game (started by NebulonApp). Built in code: no layout resources needed. */
 public class DebugActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

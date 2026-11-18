@@ -153,7 +153,7 @@ public class Utils {
 			while(Gdx.files.external("Logs"+n+".txt").exists()) n++;
 			Gdx.files.external("Logs"+n+".txt").writeString(error+"\n"+string,false);
 			*/
-			//com.lumina.engine.Utils.log(error+"\n"+string,LuminaApp.getContext());
+			//com.lumina.engine.Utils.log(error+"\n"+string,NebulonApp.getContext());
 		}
 		
 		public static String getStackTraceString(Throwable throwable){

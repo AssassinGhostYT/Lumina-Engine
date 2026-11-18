@@ -115,7 +115,7 @@ public class Editor3D {
 			if (config != null) p.putAll(config);
 			world.configure(p);
 		} catch (Throwable t) {
-			Gdx.app.error("Lumina-3D", "editor config: " + t);
+			Gdx.app.error("Nebulon-3D", "editor config: " + t);
 		}
 	}
 

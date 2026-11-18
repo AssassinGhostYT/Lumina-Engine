@@ -58,6 +58,15 @@
 				android:scaleType="fitCenter"
 				android:tint="#FFFFFF" />
 			<ImageView
+				android:id="@+id/run_cs"
+				android:layout_width="35dp"
+				android:layout_height="match_parent"
+				android:padding="6dp"
+				android:src="@drawable/ic_lumina_play"
+				android:scaleType="fitCenter"
+				android:tint="#66BB6A"
+				android:visibility="gone" />
+			<ImageView
 				android:id="@+id/rotate"
 				android:layout_width="35dp"
 				android:layout_height="match_parent"

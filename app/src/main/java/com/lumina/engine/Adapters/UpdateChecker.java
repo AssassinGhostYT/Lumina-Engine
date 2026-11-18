@@ -15,8 +15,8 @@ import java.util.concurrent.Executors;
 public class UpdateChecker {
 
     private static final String CURRENT_VERSION = "0.2.8";
-    private static final String CHECK_UPDATE_URL = "https://raw.githubusercontent.com/lumina-engine/LuminaEngine/master/assets/latest.version";
-    private static final String UPDATE_PAGE_URL = "https://github.com/lumina-engine/LuminaEngine/releases/";
+    private static final String CHECK_UPDATE_URL = "https://raw.githubusercontent.com/AssassinGhostYT/Lumina-Engine/master/assets/latest.version";
+    private static final String UPDATE_PAGE_URL = "https://github.com/AssassinGhostYT/Lumina-Engine/releases/";
 
     public static void checkForUpdate(TestApp testApp) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();

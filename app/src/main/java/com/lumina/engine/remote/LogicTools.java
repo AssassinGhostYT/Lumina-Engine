@@ -10,7 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lumina.engine.Helpers.editor.Project;
 import com.lumina.engine.editor.LibgdxEditor;
-import com.lumina.engine.LuminaApp;
+import com.lumina.engine.NebulonApp;
 import com.lumina.engine.ui.blocks.BlockCatalog;
 import com.lumina.engine.ui.blocks.BlockInfo;
 import com.lumina.engine.ui.blocks.BlockModel;
@@ -33,7 +33,7 @@ final class LogicTools {
 
     private static Context ctx() {
         Context c = RemoteClient.get().activity();
-        if (c == null) c = LuminaApp.getContext();
+        if (c == null) c = NebulonApp.getContext();
         if (c == null) throw new Gl.ToolError("The app is not on screen.");
         return c.getApplicationContext();
     }

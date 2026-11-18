@@ -19,7 +19,7 @@ import com.lumina.engine.Helpers.EngineSettings;
 import com.lumina.engine.Helpers.FileUtil;
 import com.lumina.engine.Utils;
 
-public class LuminaApp extends Application {
+public class NebulonApp extends Application {
 	private static Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 	private static Context mApplicationContext;
 	public static Context getContext() {
@@ -62,8 +62,8 @@ public class LuminaApp extends Application {
 				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
 				//PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 11111, intent, PendingIntent.FLAG_ONE_SHOT);
 				int x=0;
-				String str=FileUtil.getPackageDataDir(LuminaApp.this)+"/logs/log"+"%1$s"+".txt";
-				while(FileUtil.isExistFile(FileUtil.getPackageDataDir(LuminaApp.this)+"/logs/log"+x+".txt")){
+				String str=FileUtil.getPackageDataDir(NebulonApp.this)+"/logs/log"+"%1$s"+".txt";
+				while(FileUtil.isExistFile(FileUtil.getPackageDataDir(NebulonApp.this)+"/logs/log"+x+".txt")){
 					x++;
 				}
 				String log=Log.getStackTraceString(throwable);
@@ -75,7 +75,7 @@ public class LuminaApp extends Application {
 				//Process.killProcess(Process.myPid());
 				//System.exit(1);
 				//Logger.initialize(this);
-				LuminaApp.uncaughtExceptionHandler.uncaughtException(thread, throwable);
+				NebulonApp.uncaughtExceptionHandler.uncaughtException(thread, throwable);
 			}
 		});
         

@@ -206,7 +206,7 @@ public class SettingsPanel implements PanelHost.Panel {
 
         col.addView(Ui.sectionLabel(c, Tr.t("ui_csharp", "C# / .NET")));
         col.addView(Ui.text(c, CSharpRuntime.isAvailable()
-                        ? Tr.t("ui_csharp_ready", "Mono is bundled. Run the test to initialize it.")
+                        ? Tr.t("ui_csharp_ready", "Mono and Roslyn are bundled. Open a .cs file and press the green play button to compile and run it.")
                         : Tr.t("ui_csharp_unavailable", "C# is not available on this CPU architecture."),
                 12, Ui.TEXT_3));
         col.addView(Ui.button(c, R.drawable.ic_lumina_code, Tr.t("ui_csharp_test", "Test C# (Mono)"), false, v -> {
@@ -218,7 +218,7 @@ public class SettingsPanel implements PanelHost.Panel {
             new Thread(() -> {
                 String result = CSharpRuntime.test(c.getApplicationContext());
                 shell.post(() -> Dialogs.longText(c, Tr.t("ui_csharp_result", "C# runtime"), result));
-            }, "lumina-csharp").start();
+            }, "nebulon-csharp").start();
         }), new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));
 
         col.addView(Ui.sectionLabel(c, Tr.t("ui_help", "Help")));

@@ -8,7 +8,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Music;
-//import com.lumina.engine.LuminaApp;
+//import com.lumina.engine.NebulonApp;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -990,7 +990,7 @@ public class StageImp extends ApplicationAdapter {
 			if(set == null){
 			    Gdx.files.external("logs/set.null.txt").writeString(String.format("path : %1$s, read : \n%2$s\n\n"),true);
 			}
-			String optimizedDir = null;// LuminaApp.getContext().getDir("odex", android.content.Context.MODE_PRIVATE).getAbsolutePath();
+			String optimizedDir = null;// NebulonApp.getContext().getDir("odex", android.content.Context.MODE_PRIVATE).getAbsolutePath();
 			java.io.File file = new java.io.File(project.getDex());
 			Class<?> playerClass = null;
 			// an exported game has its scenes in the APK (classesN.dex): use them directly

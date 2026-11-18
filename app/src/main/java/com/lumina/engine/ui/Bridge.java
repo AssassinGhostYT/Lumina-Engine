@@ -72,8 +72,8 @@ public final class Bridge {
         try {
             Gdx.files.external("logs/native_ui_errors.txt").writeString(android.util.Log.getStackTraceString(t) + "\n----\n", true);
         } catch (Throwable ignored) {}
-        if (com.lumina.engine.LuminaApp.getContext() != null)
-            Ui.toast(com.lumina.engine.LuminaApp.getContext(), "Error: " + t);
+        if (com.lumina.engine.NebulonApp.getContext() != null)
+            Ui.toast(com.lumina.engine.NebulonApp.getContext(), "Error: " + t);
     }
 
     // ---------------------------------------------------------------- snapshots (call on GL thread)

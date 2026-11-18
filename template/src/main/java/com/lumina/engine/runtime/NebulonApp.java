@@ -7,7 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 
 /** Application of an exported game: on a crash, opens DebugActivity with the stack trace (and keeps the default handler). */
-public class LuminaApp extends Application {
+public class NebulonApp extends Application {
     private static Thread.UncaughtExceptionHandler previous;
 
     @Override

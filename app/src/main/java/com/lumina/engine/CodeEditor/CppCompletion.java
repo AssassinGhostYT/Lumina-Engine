@@ -34,7 +34,7 @@ public final class CppCompletion {
         result.member = start > 0 && (text.charAt(start - 1) == '.' || text.charAt(start - 1) == ':');
         HashSet<String> seen = new HashSet<>();
         for (String value : KEYWORDS) add(result, seen, value, Item.Kind.KEYWORD, "C++", value);
-        for (String value : LUMINA) add(result, seen, value, Item.Kind.METHOD, "Lumina Runtime", value + "($0)");
+        for (String value : LUMINA) add(result, seen, value, Item.Kind.METHOD, "Nebulon Runtime", value + "($0)");
 
         Matcher matcher = DECLARATION.matcher(text);
         while (matcher.find()) {

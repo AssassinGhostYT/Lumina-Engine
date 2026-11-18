@@ -28,7 +28,7 @@ tools/verify_template.py                            → safety checks
 * `template/runtime-sources.txt` is the single list of shared runtime sources
   (`com/lumina/engine/runtime/**`, `ElementDefs/**`, `Helpers/rtl/**`, `Helpers/Pair.java`, gdx `StringBuilder`).
   The editor keeps compiling them as part of `:app`; the template compiles the very same files, so they can't drift apart.
-* Files that only the template has live in `template/src/main` (manifest, resources, `LuminaApp`, `DebugActivity`,
+* Files that only the template has live in `template/src/main` (manifest, resources, `NebulonApp`, `DebugActivity`,
   `FileUtil`, `Logger`, and a slim `Helpers/Project`). If a runtime class starts using another `Project` method,
   the template build fails to compile until it is added to the slim class.
 * The manifest of `template/src/main/AndroidManifest.xml` is turned into `java/manifest.xml` automatically

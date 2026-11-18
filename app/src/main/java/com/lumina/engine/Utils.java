@@ -53,7 +53,7 @@ import com.lumina.engine.Helpers.FileUtil;
 import com.lumina.engine.Helpers.PropertySet;
 import com.lumina.engine.editor.items.EditorItem;
 import com.lumina.engine.R;
-import com.lumina.engine.LuminaApp;
+import com.lumina.engine.NebulonApp;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.io.File;
@@ -487,7 +487,7 @@ public class Utils {
 		public static void createEmptyZipFile(String filePath) {
 		    FileUtil.writeFile(filePath,"");
 			try {
-				Utils.extractAssetFile(com.lumina.engine.LuminaApp.getContext(),"files/empty.zip",filePath);
+				Utils.extractAssetFile(com.lumina.engine.NebulonApp.getContext(),"files/empty.zip",filePath);
 		    } catch (Exception ex){
 				
 			}
@@ -730,8 +730,8 @@ public class Utils {
 	
 	public static void Log(String error,String string){
 		int x=0;
-		String str=LuminaApp.getContext().getExternalFilesDir(null)+"/logs/log"+"%1$s"+".txt";
-		while(FileUtil.isExistFile(LuminaApp.getContext().getExternalFilesDir(null)+"/logs/log"+x+".txt")){
+		String str=NebulonApp.getContext().getExternalFilesDir(null)+"/logs/log"+"%1$s"+".txt";
+		while(FileUtil.isExistFile(NebulonApp.getContext().getExternalFilesDir(null)+"/logs/log"+x+".txt")){
 		    if(FileUtil.readFile(String.format(str,x+"")).equals(error+" :\n"+string))
 		    break;
 			x++;

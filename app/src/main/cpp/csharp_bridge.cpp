@@ -17,14 +17,17 @@
 
 namespace {
 
-constexpr const char* TAG = "LuminaCSharp";
+constexpr const char* TAG = "NebulonCSharp";
 constexpr const char* MONO_LIB = "libmonosgen-2.0.so";
-constexpr const char* HOST_DLL = "Lumina.ScriptHost.dll";
-constexpr const char* HOST_NS = "Lumina.ScriptHost";
+constexpr const char* HOST_DLL = "Nebulon.ScriptHost.dll";
+constexpr const char* HOST_NS = "Nebulon.ScriptHost";
 constexpr const char* HOST_CLASS = "ScriptHost";
 constexpr const char* HOST_METHOD = "Run";
+constexpr const char* HOST_COMPILE = "Compile";
+constexpr const char* HOST_EXECUTE = "Execute";
 constexpr const char* INTERNAL_PING =
-        "Lumina.ScriptHost.ScriptHost::NativePing";
+        "Nebulon.ScriptHost.ScriptHost::NativePing";
+constexpr const char* INTERNAL_LOG = "Nebulon.Engine::NativeLog";
 
 using MonoDomain = void;
 using MonoAssembly = void;
@@ -76,10 +79,13 @@ std::mutex g_mutex;
 MonoDomain* g_domain = nullptr;
 MonoImage* g_host_image = nullptr;
 MonoMethod* g_run_method = nullptr;
+MonoMethod* g_compile_method = nullptr;
+MonoMethod* g_execute_method = nullptr;
 AAssetManager* g_assets = nullptr;
 JavaVM* g_vm = nullptr;
 jclass g_runtime_class = nullptr;
 jmethodID g_ping_method = nullptr;
+jmethodID g_log_method = nullptr;
 bool g_initialized = false;
 std::string g_last_error;
 
@@ -253,9 +259,42 @@ private:
     MonoThread* attached_ = nullptr;
 };
 
+std::string invoke_string(MonoMethod* method, const std::vector<std::string>& arguments) {
+    if (!g_initialized || method == nullptr) {
+        return "Error: el runtime C# no esta iniciado";
+    }
+
+    MonoThreadScope thread_scope;
+    if (api.thread_current() == nullptr) {
+        return "Error: no se pudo adjuntar el hilo a Mono";
+    }
+
+    std::vector<MonoString*> strings;
+    strings.reserve(arguments.size());
+    for (const std::string& argument : arguments) {
+        MonoString* value = api.string_new(g_domain, argument.c_str());
+        if (value == nullptr) return "Error: no se pudo crear un argumento C#";
+        strings.push_back(value);
+    }
+
+    void* params[4] = {nullptr, nullptr, nullptr, nullptr};
+    for (size_t i = 0; i < strings.size() && i < 4; ++i) {
+        params[i] = strings[i];
+    }
+
+    MonoObject* exception = nullptr;
+    MonoObject* result = api.runtime_invoke(method, nullptr, params, &exception);
+    if (exception != nullptr) {
+        const std::string message = exception_text(exception);
+        return message.empty() ? "Error: excepcion C#" : "Error C#: " + message;
+    }
+    if (result == nullptr) return "Error: C# no devolvio resultado";
+    return take_string(static_cast<MonoString*>(result));
+}
+
 }  // namespace
 
-extern "C" void LuminaCSharpPing(MonoString* message) {
+extern "C" void NebulonCSharpPing(MonoString* message) {
     if (g_vm == nullptr || g_runtime_class == nullptr || g_ping_method == nullptr) {
         return;
     }
@@ -271,6 +310,32 @@ extern "C" void LuminaCSharpPing(MonoString* message) {
     jstring value = env->NewStringUTF(text.c_str());
     env->CallStaticVoidMethod(g_runtime_class, g_ping_method, value);
     env->DeleteLocalRef(value);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    if (attached) g_vm->DetachCurrentThread();
+}
+
+extern "C" void NebulonCSharpLog(MonoString* level, MonoString* message) {
+    if (g_vm == nullptr || g_runtime_class == nullptr || g_log_method == nullptr) {
+        return;
+    }
+
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        if (g_vm->AttachCurrentThread(&env, nullptr) != JNI_OK) return;
+        attached = true;
+    }
+
+    const std::string level_text = take_string(level);
+    const std::string message_text = take_string(message);
+    jstring level_value = env->NewStringUTF(level_text.c_str());
+    jstring message_value = env->NewStringUTF(message_text.c_str());
+    env->CallStaticVoidMethod(g_runtime_class, g_log_method, level_value, message_value);
+    env->DeleteLocalRef(level_value);
+    env->DeleteLocalRef(message_value);
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -318,6 +383,12 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
         env->ExceptionClear();
         return env->NewStringUTF("Error: callback onNativePing no encontrado");
     }
+    g_log_method = env->GetStaticMethodID(
+            g_runtime_class, "onNativeLog", "(Ljava/lang/String;Ljava/lang/String;)V");
+    if (g_log_method == nullptr) {
+        env->ExceptionClear();
+        return env->NewStringUTF("Error: callback onNativeLog no encontrado");
+    }
 
     if (!load_mono()) {
         return env->NewStringUTF(("Error: " + g_last_error).c_str());
@@ -331,7 +402,7 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     api.set_assemblies_path(managed.c_str());
     api.install_assembly_preload_hook(preload_assembly, nullptr);
 
-    g_domain = api.jit_init("Lumina");
+    g_domain = api.jit_init("Nebulon");
     if (g_domain == nullptr) {
         return env->NewStringUTF("Error: mono_jit_init devolvio null");
     }
@@ -339,7 +410,9 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     // Keep the initializing thread attached for the lifetime of the runtime;
     // CSharpRuntime serializes all calls on one dedicated worker thread.
     api.add_internal_call(INTERNAL_PING,
-                          reinterpret_cast<const void*>(&LuminaCSharpPing));
+                          reinterpret_cast<const void*>(&NebulonCSharpPing));
+    api.add_internal_call(INTERNAL_LOG,
+                          reinterpret_cast<const void*>(&NebulonCSharpLog));
 
     const std::string host_path = managed + "/" + HOST_DLL;
     MonoAssembly* host = api.domain_assembly_open(g_domain, host_path.c_str());
@@ -357,13 +430,18 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     MonoClass* host_class =
             api.class_from_name(g_host_image, HOST_NS, HOST_CLASS);
     if (host_class == nullptr) {
-        return env->NewStringUTF("Error: clase Lumina.ScriptHost.ScriptHost no encontrada");
+        return env->NewStringUTF("Error: clase Nebulon.ScriptHost.ScriptHost no encontrada");
     }
 
     g_run_method =
             api.class_get_method_from_name(host_class, HOST_METHOD, 1);
-    if (g_run_method == nullptr) {
-        return env->NewStringUTF("Error: metodo ScriptHost.Run(string) no encontrado");
+    g_compile_method =
+            api.class_get_method_from_name(host_class, HOST_COMPILE, 3);
+    g_execute_method =
+            api.class_get_method_from_name(host_class, HOST_EXECUTE, 4);
+    if (g_run_method == nullptr || g_compile_method == nullptr ||
+        g_execute_method == nullptr) {
+        return env->NewStringUTF("Error: metodos C# del host no encontrados");
     }
 
     g_initialized = true;
@@ -375,38 +453,34 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_lumina_engine_csharp_CSharpRuntime_nativeRun(
         JNIEnv* env, jclass, jstring argument) {
     std::lock_guard<std::mutex> lock(g_mutex);
-
-    if (!g_initialized || g_run_method == nullptr) {
-        return env->NewStringUTF("Error: el runtime C# no esta iniciado");
-    }
-
-    MonoThreadScope thread_scope;
-    if (api.thread_current() == nullptr) {
-        return env->NewStringUTF("Error: no se pudo adjuntar el hilo a Mono");
-    }
-
     const std::string text = jstring_to_string(env, argument);
-    MonoString* managed_argument = api.string_new(g_domain, text.c_str());
-    if (managed_argument == nullptr) {
-        return env->NewStringUTF("Error: no se pudo crear el argumento C#");
-    }
+    const std::string out = invoke_string(g_run_method, {text});
+    return env->NewStringUTF(out.c_str());
+}
 
-    void* params[1] = {managed_argument};
-    MonoObject* exception = nullptr;
-    MonoObject* result =
-            api.runtime_invoke(g_run_method, nullptr, params, &exception);
-    if (exception != nullptr) {
-        const std::string message = exception_text(exception);
-        const std::string out = message.empty()
-                                        ? "Error: excepcion C#"
-                                        : "Error C#: " + message;
-        return env->NewStringUTF(out.c_str());
-    }
-    if (result == nullptr) {
-        return env->NewStringUTF("Error: C# no devolvio resultado");
-    }
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_lumina_engine_csharp_CSharpRuntime_nativeCompile(
+        JNIEnv* env, jclass, jstring output, jstring files, jstring references) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    const std::string output_path = jstring_to_string(env, output);
+    const std::string file_list = jstring_to_string(env, files);
+    const std::string reference_dir = jstring_to_string(env, references);
+    const std::string out = invoke_string(
+            g_compile_method, {output_path, file_list, reference_dir});
+    return env->NewStringUTF(out.c_str());
+}
 
-    const std::string out = take_string(static_cast<MonoString*>(result));
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_lumina_engine_csharp_CSharpRuntime_nativeExecute(
+        JNIEnv* env, jclass, jstring assembly, jstring type, jstring method,
+        jstring argument) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    const std::string assembly_path = jstring_to_string(env, assembly);
+    const std::string type_name = jstring_to_string(env, type);
+    const std::string method_name = jstring_to_string(env, method);
+    const std::string text = jstring_to_string(env, argument);
+    const std::string out = invoke_string(
+            g_execute_method, {assembly_path, type_name, method_name, text});
     return env->NewStringUTF(out.c_str());
 }
 
@@ -417,5 +491,5 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeStatus(JNIEnv* env, jclass) {
                 g_last_error.empty() ? "Mono sin iniciar" : g_last_error;
         return env->NewStringUTF(text.c_str());
     }
-    return env->NewStringUTF("Mono activo; host C# cargado");
+    return env->NewStringUTF("Mono activo; host C# con compilador Roslyn");
 }

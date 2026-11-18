@@ -197,7 +197,7 @@ public class EditorAI extends VisTable {
         });
         header.add(menuBtn).size(48, 48).padRight(5);
         
-        header.add(new VisLabel("Lumina AI")).expandX().align(Align.left);
+        header.add(new VisLabel("Nebulon AI")).expandX().align(Align.left);
         
         modelSelector = new VisSelectBox<>();
         modelSelector.setItems(MODEL_DISPLAY_NAMES);

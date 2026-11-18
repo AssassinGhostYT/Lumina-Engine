@@ -219,7 +219,7 @@ public final class Shaders3D {
 				// compiled now: a broken shader falls back to the normal one instead of throwing inside ModelBatch
 				return us.compile() ? us : null;
 			} catch (Throwable t) {
-				Gdx.app.error("Lumina-3D", "shader " + a.program.name + ": " + t);
+				Gdx.app.error("Nebulon-3D", "shader " + a.program.name + ": " + t);
 				return null;
 			}
 		}

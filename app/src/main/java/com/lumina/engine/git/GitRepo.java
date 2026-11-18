@@ -211,7 +211,7 @@ public final class GitRepo implements AutoCloseable {
                 File f = new File(dst, n);
                 if (f.exists()) continue;
                 dst.mkdirs();
-                try (java.io.InputStream in = com.lumina.engine.LuminaApp.getContext().getAssets().open("ci/workflows/" + n);
+                try (java.io.InputStream in = com.lumina.engine.NebulonApp.getContext().getAssets().open("ci/workflows/" + n);
                      FileOutputStream o = new FileOutputStream(f)) {
                     byte[] b = new byte[8192];
                     int c;

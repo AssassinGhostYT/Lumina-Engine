@@ -17,7 +17,7 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "LuminaEngine"
+rootProject.name = "NebulonEngine"
 
 include(
    ":app",
