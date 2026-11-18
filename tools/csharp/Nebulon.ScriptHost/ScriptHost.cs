@@ -54,7 +54,7 @@ namespace Nebulon.ScriptHost
                 if (references.Count == 0) return "ERR:no se encontraron ensamblados de referencia";
 
                 CSharpCompilation compilation = CSharpCompilation.Create(
-                        "NebulonUserScripts",
+                        "NebulonUserScripts_" + Guid.NewGuid().ToString("N"),
                         trees,
                         references,
                         new CSharpCompilationOptions(
