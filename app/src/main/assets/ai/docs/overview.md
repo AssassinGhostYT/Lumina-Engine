@@ -2,7 +2,7 @@
 
 ## The pieces
 
-A Lumina Engine **project** is a folder on the phone. It holds **scenes** (levels/screens). A scene has **elements** (sprites, text, joysticks...), **events** (logic, as visual blocks or Java), optional **joints** and **variables**. When you build, the app generates one Java class per scene, compiles all of it on the phone and runs it with LibGDX + Box2D. A scene can also be **3D** (`scenes create {type:'3D'}`): 3D elements OBJ3D / LIGHT3D / CAMERA3D in meters with Bullet physics and glTF models, drawn under the normal 2D layer (HUD, UI holders). See `scenes`, section "3D scenes".
+A Nebulon Engine **project** is a folder on the phone. It holds **scenes** (levels/screens). A scene has **elements** (sprites, text, joysticks...), **events** (logic, as visual blocks or Java), optional **joints** and **variables**. When you build, the app generates one Java class per scene, compiles all of it on the phone and runs it with LibGDX + Box2D. A scene can also be **3D** (`scenes create {type:'3D'}`): 3D elements OBJ3D / LIGHT3D / CAMERA3D in meters with Bullet physics and glTF models, drawn under the normal 2D layer (HUD, UI holders). See `scenes`, section "3D scenes".
 
 ## Folders on disk (relative to the project root; the `files` tool uses these paths)
 

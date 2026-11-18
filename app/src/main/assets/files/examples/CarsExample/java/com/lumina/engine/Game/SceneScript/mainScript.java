@@ -7,7 +7,7 @@ import com.lumina.engine.runtime.Utils.PlayerItem;
 import box2dLight.Light;
 /*
     Hi Coder :)
-    & Thanks for using Lumina Engine
+    & Thanks for using Nebulon Engine
     example :
     - Reverse body gravity on create:
         getStage().findItem("body").getBody().setGavityScale(-1);

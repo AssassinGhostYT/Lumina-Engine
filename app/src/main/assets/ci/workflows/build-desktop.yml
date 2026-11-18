@@ -1,6 +1,6 @@
 name: Build PC (Windows + Linux)
 
-# Experimental desktop build (see docs/DESKTOP.md in the Lumina Engine repo). Needs dex/scenes.dex committed (run the game once in the editor).
+# Experimental desktop build (see docs/DESKTOP.md in the Nebulon Engine repo). Needs dex/scenes.dex committed (run the game once in the editor).
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,7 @@ on:
         type: boolean
         default: true
       engine_ref:
-        description: "Lumina Engine engine branch / tag used to build"
+        description: "Nebulon Engine branch / tag used to build"
         default: "master"
 
 permissions:
@@ -47,7 +47,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test -f dex/scenes.dex || { echo "::error::dex/scenes.dex is missing. Run the game once in the Lumina Engine editor, then commit dex/scenes.dex"; exit 1; }
+          test -f dex/scenes.dex || { echo "::error::dex/scenes.dex is missing. Run the game once in the Nebulon Engine editor, then commit dex/scenes.dex"; exit 1; }
           mkdir -p build/d2j
           gh release download --repo ThexXTURBOXx/dex2jar --pattern 'dex-tools-*.zip' --dir build/d2j
           cd build/d2j && unzip -q -o dex-tools-*.zip && cd ../..

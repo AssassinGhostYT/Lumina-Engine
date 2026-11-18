@@ -65,5 +65,5 @@ Kenney asks, but does not require, for a credit to "Kenney" / www.kenney.nl).
 | sounds/heartbeat.ogg | see packs above |
 | sounds/ui_click.ogg | Kenney Interface Sounds |
 
-Button, joystick and icon images (images/) were drawn for Lumina Engine by tools/gen_3d_examples.py (CC0).
+Button, joystick and icon images (images/) were drawn for Nebulon Engine by tools/gen_3d_examples.py (CC0).
 Kenney car models were re-packed with a 180 degree turn baked into their root nodes so they face -Z (the engine's forward); the geometry is unchanged.

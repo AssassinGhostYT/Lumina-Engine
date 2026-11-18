@@ -1,6 +1,6 @@
 # Testing: build, run, input, state, run_test
 
-The game runs on the user's phone in REAL time. Nothing can be simulated faster. The Lumina Engine app must stay open and visible (split screen next to the chat works): screenshots and input only work while the app is on screen. If a call says the app is not on screen, ask the user to bring it back and call `status`.
+The game runs on the user's phone in REAL time. Nothing can be simulated faster. The Nebulon Engine app must stay open and visible (split screen next to the chat works): screenshots and input only work while the app is on screen. If a call says the app is not on screen, ask the user to bring it back and call `status`.
 
 ## Order of work
 
@@ -74,7 +74,7 @@ Include `start:false` to test the game that is already running. Use `scene` to s
 
 ## How to test what you built (checklist)
 
-1. **Visual**: `screenshot` right after start. Are all elements visible, the right size, not the Lumina Engine logo (= wrong image path), HUD readable, nothing stuck at the bottom-left corner (= position or unit mistake)?
+1. **Visual**: `screenshot` right after start. Are all elements visible, the right size, not the Nebulon Engine logo (= wrong image path), HUD readable, nothing stuck at the bottom-left corner (= position or unit mistake)?
 2. **Movement**: joystick/keys for 1 second then `assert` x or `vx`.
 3. **Jump**: `tap` the button, wait 250 ms, `assert vy > 0` (the sign: y is up), wait, `assert` back on the ground.
 4. **Pickups/score**: move onto the coin (drive the player with the joystick or place the coin next to the start while testing), then `assert var:score`.

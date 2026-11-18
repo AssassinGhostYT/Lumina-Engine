@@ -3,7 +3,7 @@ package com.lumina.engine.store;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Public metadata of an asset published in the Lumina Store. */
+/** Public metadata of an asset published in the Nebulon Store. */
 public class StoreAsset {
     public String id = "";
     public String name = "";

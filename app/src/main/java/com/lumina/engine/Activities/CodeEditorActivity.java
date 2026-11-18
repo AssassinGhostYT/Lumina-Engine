@@ -185,7 +185,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 			FileInputStream fis=new FileInputStream(file);
 			Content content=ContentIO.createFrom(fis);
 			editor.setText(content);
-		}// else editor.setText("Hello To Lumina Engine..");
+		}// else editor.setText("Hello To Nebulon Engine..");
 		} catch(Error | Exception ex){
 			
 		}

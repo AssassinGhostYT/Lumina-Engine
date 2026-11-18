@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The `fonts` tool: Lumina Engine bitmap fonts (.lmf). list = presets + real parameters, create = write a .lmf (optionally set a TEXT element's font),
+ * The `fonts` tool: Nebulon Engine bitmap fonts (.lmf). list = presets + real parameters, create = write a .lmf (optionally set a TEXT element's font),
  * get = read one back, apply = set an existing font on a TEXT element, measure = how wide a text is in a font (so the TEXT does not wrap).
  * A .lmf holds no glyph data: the game builds the bitmap font from the TTF with FreeType when the TEXT loads it (see FontPresets).
  */

@@ -61,7 +61,7 @@ final class DemoApp extends ApplicationAdapter {
         shapes.end();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        font.draw(batch, "Lumina Engine desktop demo\norientation: " + orientation + "\nviewport: " + (int) vw + " x " + (int) vh
+        font.draw(batch, "Nebulon Engine desktop demo\norientation: " + orientation + "\nviewport: " + (int) vw + " x " + (int) vh
                 + "\nwindow: " + Gdx.graphics.getWidth() + " x " + Gdx.graphics.getHeight(), vw * 0.05f, vh * 0.95f);
         batch.end();
     }

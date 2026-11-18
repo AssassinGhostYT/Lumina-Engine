@@ -23,14 +23,14 @@ import java.io.FileOutputStream;
 public final class BehaviorShare {
 	private BehaviorShare() {}
 
-	/** Writes Name.lmb to Lumina Engine/exports on the storage and opens the share sheet. */
+	/** Writes Name.lmb to Nebulon Engine/exports on the storage and opens the share sheet. */
 	public static void export(Context c, String projectPath, BehaviorMeta m) {
 		try {
-			File dir = new File(Environment.getExternalStorageDirectory(), "Lumina Engine/exports");
+			File dir = new File(Environment.getExternalStorageDirectory(), "Nebulon Engine/exports");
 			dir.mkdirs();
 			File out = new File(dir, m.id + ".lmb");
 			BehaviorPack.export(m, projectPath, out);
-			Ui.toast(c, Tr.t("bhv_exported", "Saved") + ": Lumina Engine/exports/" + out.getName());
+			Ui.toast(c, Tr.t("bhv_exported", "Saved") + ": Nebulon Engine/exports/" + out.getName());
 			Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".fileprovider", out);
 			Intent s = new Intent(Intent.ACTION_SEND).setType("application/octet-stream").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 			c.startActivity(Intent.createChooser(s, out.getName()));

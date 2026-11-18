@@ -175,7 +175,7 @@ public class AiPanel implements PanelHost.Panel {
     private void renderWelcome() {
         Context c = messagesBox.getContext();
         boolean ar = false;
-        TextView t = Ui.title(c, "✨ Asistente de Lumina Engine");
+        TextView t = Ui.title(c, "✨ Asistente de Nebulon Engine");
         t.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 4));
         messagesBox.addView(t);
         messagesBox.addView(Ui.text(c, "Entiendo tu proyecto (elementos, eventos y variables). Puedo añadir elementos, cambiar propiedades y escribir eventos después de que lo apruebes.", 13.5f, Ui.TEXT_2));

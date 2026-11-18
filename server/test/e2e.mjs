@@ -41,7 +41,7 @@ function phone() {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://127.0.0.1:${PORT}/v1/ws/${SECRET}`);
     ws.on("open", () => {
-      ws.send(JSON.stringify({ t: "hello", app: "Lumina Engine", ver: "test", device: "sim" }));
+      ws.send(JSON.stringify({ t: "hello", app: "Nebulon Engine", ver: "test", device: "sim" }));
       resolve(ws);
     });
     ws.on("message", (raw) => {
@@ -67,7 +67,7 @@ try {
   check("AI.md served with server url", r.ok && md.includes(BASE) && !md.includes("{{SERVER}}"));
 
   r = await rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "1" } });
-  check("initialize", r.json.result.protocolVersion === "2025-06-18" && r.json.result.instructions.includes("Lumina Engine"));
+  check("initialize", r.json.result.protocolVersion === "2025-06-18" && r.json.result.instructions.includes("Nebulon Engine"));
   const instr = r.json.result.instructions;
   const r0Instr = () => instr;
 
@@ -90,7 +90,7 @@ try {
   check("instructions carry the frame/z/physics rules", r0Instr().includes("status.frame") && r0Instr().includes("physics_info") && r0Instr().includes("Background 0"));
 
   r = await call("get_guide");
-  check("get_guide (local)", r.content[0].text.includes("Lumina Engine Remote"));
+  check("get_guide (local)", r.content[0].text.includes("Nebulon Engine Remote"));
 
   r = await call("status");
   check("status when no phone", JSON.parse(r.content[0].text).connected === false);

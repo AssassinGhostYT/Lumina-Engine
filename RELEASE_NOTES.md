@@ -1,4 +1,26 @@
-## 🎉 Lumina Engine 1.0.1 — 2D y 3D
+## Nebulon Engine 1.0.6
+
+### Nombre
+
+- La app pasa a llamarse **Nebulon Engine**. El paquete (`com.lumina.engine`) y los proyectos existentes no cambian.
+
+### Modelos 3D
+
+- Importación de **FBX / OBJ / BLEND** desde el panel 3D, el explorador de archivos y la nube.
+- Conversión automática a **GLB** con Assimp, conservando huesos, skins y animaciones.
+- Los juegos exportados incluyen los GLB convertidos y no necesitan la librería nativa.
+
+### Sonidos de animación
+
+- `Animation Sound` y `Animation Sounds` para asociar sonidos a clips.
+- Volumen, distancia y reproducción en cada bucle.
+
+### Otros
+
+- Correcciones y traducciones.
+- Versión Android `1.0.6`, código `106`.
+
+## 🎉 Nebulon Engine 1.0.1 — 2D y 3D
 
 ### Motor 3D
 

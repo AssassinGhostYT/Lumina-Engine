@@ -36,7 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Public Lumina Store: browse free assets published on the Worker, preview them, download the
+ * Public Nebulon Store: browse free assets published on the Worker, preview them, download the
  * .luminaasset package and copy its content/ tree into a project.
  */
 public class StoreActivity extends AppCompatActivity {
@@ -75,7 +75,7 @@ public class StoreActivity extends AppCompatActivity {
         bar.setPadding(Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 10), Ui.dp(this, 6));
         ImageView back = Ui.iconButton(this, R.drawable.ic_lumina_arrow_back, T("back", "Back"), v -> finish());
         bar.addView(back);
-        TextView title = Ui.title(this, T("store_title", "Lumina Store"));
+        TextView title = Ui.title(this, T("store_title", "Nebulon Store"));
         title.setTextSize(20);
         title.setPadding(Ui.dp(this, 8), 0, 0, 0);
         bar.addView(title, Ui.weight(1));

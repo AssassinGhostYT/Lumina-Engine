@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Lumina Engine</string>
+    <string name="app_name">Nebulon Engine</string>
     <string name="projects">Projects</string>
     <string name="tutorials">Tutorials</string>
     <string name="tutorial">Tutorial</string>
@@ -61,7 +61,7 @@
 	<string name="restart_the_app">Restart the app to change the language</string>
 	<string name="night_mode">Night Mode</string>
 	<string name="edit">Edit</string>
-	<string name="translation_by">Powered By Lumina Engine</string>
+	<string name="translation_by">Powered By Nebulon Engine</string>
 	<string name="translator_url"></string>
 	<string name="compiler">Compiler</string>
 	<string name="enter_value">Enter Value</string>

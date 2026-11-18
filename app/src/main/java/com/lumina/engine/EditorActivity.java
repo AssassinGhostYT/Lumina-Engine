@@ -318,7 +318,7 @@ public class EditorActivity extends AppCompatActivity implements AndroidFragment
 	public void backupProject(java.io.File projectDir) {
 		saveType = "backup";
 		String name = projectDir.getName();
-		java.io.File backups = new java.io.File(getExternalFilesDir(null),"Lumina Engine/backups");
+		java.io.File backups = new java.io.File(getExternalFilesDir(null),"Nebulon Engine/backups");
 		backups.mkdirs();
 		String exportPath = new java.io.File(backups,name+".zip").getAbsolutePath();
 		String path = projectDir.getAbsolutePath();

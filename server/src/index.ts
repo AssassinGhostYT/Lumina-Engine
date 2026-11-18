@@ -44,7 +44,7 @@ async function handleV1(parts: string[], c: Ctx): Promise<Response> {
   const guide = () => (AI_MD as string).replaceAll("{{SERVER}}", url.origin + c.base).replace("{{CORE}}", CORE_RULES);
 
   if (parts.length === 0)
-    return withCors(new Response("Lumina Engine Remote server is running (API v" + SUPPORTED.join(", v") + ").\nAI guide: " + url.origin + (c.base || "/v1") + "/AI.md\n", { headers: { "content-type": "text/plain; charset=utf-8" } }));
+    return withCors(new Response("Nebulon Engine Remote server is running (API v" + SUPPORTED.join(", v") + ").\nAI guide: " + url.origin + (c.base || "/v1") + "/AI.md\n", { headers: { "content-type": "text/plain; charset=utf-8" } }));
 
   if (parts[0] === "AI.md" || parts[0] === "ai.md")
     return withCors(new Response(guide(), { headers: { "content-type": "text/markdown; charset=utf-8", "cache-control": "public, max-age=300" } }));

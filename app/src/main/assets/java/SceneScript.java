@@ -9,7 +9,7 @@ import com.lumina.engine.runtime.ui.UINodeRef;
 import box2dLight.Light;
 /*
     Hi Coder :)
-    & Thanks for using Lumina Engine
+    & Thanks for using Nebulon Engine
     example :
     - Every element of the scene is a field (generated base class):
         player.getBody().setGravityScale(-1);

@@ -1504,7 +1504,7 @@ public final class UiKit {
         if (tabs.isEmpty()) {
             tabs.add(obj("title", "How to play", "text", "Tap to jump. Collect coins and avoid the enemies."));
             tabs.add(obj("title", "Tips", "text", "Jump on enemies to defeat them."));
-            tabs.add(obj("title", "About", "text", "Made with Lumina Engine."));
+            tabs.add(obj("title", "About", "text", "Made with Nebulon Engine."));
         }
         ArrayList<String> titles = new ArrayList<>(), ids = new ArrayList<>();
         for (JsonObject t : tabs) {
@@ -1541,7 +1541,7 @@ public final class UiKit {
         c.set("align", "center");
         UINode ic = icon(k, "credits_logo", str(sp, "icon", "star-circle"), "accent", k.px(110));
         if (ic != null) c.addChild(ic);
-        c.addChild(wrapText(k, "credits_text", str(sp, "text", "Game design: You\nArt: You\nMusic: You\n\nMade with Lumina Engine"), k.body(), "text", "center"));
+        c.addChild(wrapText(k, "credits_text", str(sp, "text", "Game design: You\nArt: You\nMusic: You\n\nMade with Nebulon Engine"), k.body(), "text", "center"));
         pg[1].addChild(scrollBody(k, "credits_scroll", c)[0]);
         return pg[0];
     }

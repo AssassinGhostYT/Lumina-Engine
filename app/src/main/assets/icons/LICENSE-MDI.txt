@@ -1,9 +1,9 @@
-Lumina Engine built-in icon library
+Nebulon Engine built-in icon library
 ============================
 
 Most icons are from Material Design Icons by the Pictogrammers group (https://pictogrammers.com/library/mdi/,
 https://github.com/Templarian/MaterialDesign), used under the Apache License 2.0. A few extra game icons
-(coin, coin-stack, gem, joystick, potion, ...) were drawn for Lumina Engine. The icons are changed only by rounding
+(coin, coin-stack, gem, joystick, potion, ...) were drawn for Nebulon Engine. The icons are changed only by rounding
 path coordinates to two decimals.
 
 ---- Pictogrammers Free License (LICENSE of @mdi/svg) ----

@@ -56,7 +56,7 @@ public final class GitRepo implements AutoCloseable {
 
     /** What the editor never wants in a repository: build output, caches and files regenerated from the scenes. */
     public static final String DEFAULT_IGNORE =
-            "# Lumina Engine: generated or machine-local files\n"
+            "# Nebulon Engine: generated or machine-local files\n"
                     + "/dex/*\n"
                     + "!/dex/scenes.dex\n"
                     + "/bin/\n"
@@ -126,7 +126,7 @@ public final class GitRepo implements AutoCloseable {
     private final Repository repo;
     private final Git git;
     private CredentialsProvider creds;
-    private String authorName = "Lumina Engine", authorEmail = "lumina@users.noreply.github.com";
+    private String authorName = "Nebulon Engine", authorEmail = "lumina@users.noreply.github.com";
 
     private GitRepo(Repository repo, String token) {
         this.repo = repo;

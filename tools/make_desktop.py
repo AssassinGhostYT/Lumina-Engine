@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the Lumina Engine desktop templates (Windows + Linux). macOS is intentionally not supported.
+"""Builds the Nebulon Engine desktop templates (Windows + Linux). macOS is intentionally not supported.
 
 Nothing produced here is committed to the repository: the zips go to build/desktop-dist.
 
@@ -23,21 +23,21 @@ MAIN = "com.lumina.engine.desktop.DesktopLauncher"
 JRE_MODULES = "java.base,java.desktop,java.logging,java.management,java.naming,java.prefs,java.sql,java.xml,jdk.unsupported,jdk.crypto.ec"
 
 RUN_SH = """#!/bin/sh
-# Lumina Engine desktop launcher (Linux)
+# Nebulon Engine desktop launcher (Linux)
 DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -x "$DIR/jre/bin/java" ]; then JAVA="$DIR/jre/bin/java"; else JAVA="${JAVA_HOME:+$JAVA_HOME/bin/}java"; fi
 exec "$JAVA" -Xmx1g -jar "$DIR/lib/lumina-desktop.jar" "$@"
 """
 
 RUN_BAT = """@echo off
-rem Lumina Engine desktop launcher (Windows)
+rem Nebulon Engine desktop launcher (Windows)
 setlocal
 set "DIR=%~dp0"
 if exist "%DIR%jre\\bin\\javaw.exe" (set "JAVA=%DIR%jre\\bin\\javaw.exe") else (set "JAVA=javaw")
 start "" "%JAVA%" -Xmx1g -jar "%DIR%lib\\lumina-desktop.jar" %*
 """
 
-README = """Lumina Engine desktop build ({os})
+README = """Nebulon Engine desktop build ({os})
 ================================
 Run:   {run}
 Needs: {needs}
@@ -128,7 +128,7 @@ def package(target, jar, args):
             run = "./run.sh   (chmod +x run.sh if needed)"
         else:
             add_text(z, name + "/run.bat", RUN_BAT, 0o755, crlf=True)
-            data = "%APPDATA%\\Lumina Engine"
+            data = "%APPDATA%\\Nebulon Engine"
             run = "run.bat"
         needs = "nothing (Java is bundled)" if jre else "Java 17 or newer installed"
         add_text(z, name + "/README.txt", README.format(os=target, run=run, needs=needs, data=data),

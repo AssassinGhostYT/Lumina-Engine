@@ -1,6 +1,6 @@
 # Fonts: the `fonts` tool (.lmf)
 
-A TEXT element normally uses the small built-in font (ASCII only). A **.lmf** file is a Lumina Engine font: a tiny JSON that points at a TTF/OTF and says how to draw it. The game builds the bitmap font with FreeType when the TEXT loads it, so there are no generated glyph files. You make one with the `fonts` tool, then give the TEXT element `font: "/fonts/<name>.lmf"`.
+A TEXT element normally uses the small built-in font (ASCII only). A **.lmf** file is a Nebulon Engine font: a tiny JSON that points at a TTF/OTF and says how to draw it. The game builds the bitmap font with FreeType when the TEXT loads it, so there are no generated glyph files. You make one with the `fonts` tool, then give the TEXT element `font: "/fonts/<name>.lmf"`.
 
 ## Quick start
 

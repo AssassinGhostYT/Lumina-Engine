@@ -29,11 +29,11 @@ final class Locator {
         }
     }
 
-    /** Default user data dir of this game: %APPDATA%/Lumina Engine/<id> (Windows), $XDG_DATA_HOME or ~/.local/share/lumina/<id> (Linux). */
+    /** Default user data dir of this game: %APPDATA%/Nebulon Engine/<id> (Windows), $XDG_DATA_HOME or ~/.local/share/lumina/<id> (Linux). */
     static File defaultDataDir(String id) {
         String os = System.getProperty("os.name", "").toLowerCase();
         File base;
-        if (os.contains("win") && System.getenv("APPDATA") != null) base = new File(System.getenv("APPDATA"), "Lumina Engine");
+        if (os.contains("win") && System.getenv("APPDATA") != null) base = new File(System.getenv("APPDATA"), "Nebulon Engine");
         else if (System.getenv("XDG_DATA_HOME") != null && !System.getenv("XDG_DATA_HOME").isEmpty()) base = new File(System.getenv("XDG_DATA_HOME"), "lumina");
         else base = new File(System.getProperty("user.home", "."), ".local/share/lumina");
         return new File(base, id.replaceAll("[^A-Za-z0-9._-]", "_"));
@@ -83,7 +83,7 @@ final class Locator {
             for (File k : kids) if (new File(k, "configs").isDirectory()) return k;
             if (kids.length > 0) return kids[0];
         }
-        throw new IOException("This is not a Lumina Engine project (no configs/ folder): " + f);
+        throw new IOException("This is not a Nebulon Engine project (no configs/ folder): " + f);
     }
 
     static File findGameJar(Args a, File project) {

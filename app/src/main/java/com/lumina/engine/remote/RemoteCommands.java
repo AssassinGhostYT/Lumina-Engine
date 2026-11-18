@@ -39,16 +39,16 @@ public final class RemoteCommands {
     }
 
     /**
-     * The short prompt for Claude when the Lumina Engine connector is attached to the chat: the connector already delivers every rule
+     * The short prompt for Claude when the Nebulon Engine connector is attached to the chat: the connector already delivers every rule
      * (MCP instructions + tool descriptions), so no link is needed.
      */
     public static String workCommand(Context c, String repoUrl) {
-        return Tr.t("rc_work", "Use the Lumina Engine connector. My request: ").trim() + " ";
+        return Tr.t("rc_work", "Use the Nebulon Engine connector. My request: ").trim() + " ";
     }
 
     /** The same request WITH the guide link, for chats where the connector is not attached (or an AI that ignores connector instructions). */
     public static String workCommandWithLink(Context c, String repoUrl) {
-        return "Lumina Engine: " + RemoteSettings.guideUrl(c) + "\n" + Tr.t("rc_my_request", "My request:").trim() + " ";
+        return "Nebulon Engine: " + RemoteSettings.guideUrl(c) + "\n" + Tr.t("rc_my_request", "My request:").trim() + " ";
     }
 
     /**
@@ -71,11 +71,11 @@ public final class RemoteCommands {
     /** Copyable instructions for an agent running in a terminal beside Lumina. */
     public static String terminalGuide(Context c) {
         return "LUMINA ENGINE + IA DE TERMINAL\n\n"
-                + "1. Mantén Lumina Engine abierto y activa IA remota.\n"
+                + "1. Mantén Nebulon Engine abierto y activa IA remota.\n"
                 + "2. Copia la configuración MCP de OpenCode desde esta pantalla y guárdala en opencode.json.\n"
                 + "3. En otra ventana ejecuta: opencode\n"
                 + "4. Dentro de OpenCode usa /connect y luego /models; elige un modelo gratuito.\n"
-                + "5. Escribe tu petición en la terminal. La IA usará las herramientas de Lumina y los cambios aparecerán en el editor.\n\n"
+                + "5. Escribe tu petición en la terminal. La IA usará las herramientas de Nebulon y los cambios aparecerán en el editor.\n\n"
                 + "Conector privado: " + RemoteSettings.connectorUrl(c) + "\n"
                 + "También funciona con cualquier cliente MCP compatible. No cierres Lumina mientras trabaja.";
     }

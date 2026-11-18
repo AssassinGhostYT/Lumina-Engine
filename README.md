@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="./assets/icon.png" width="96" height="96" alt="Icono de Lumina Engine" />
+<img src="./assets/icon.png" width="96" height="96" alt="Icono de Nebulon Engine" />
 
-# ⭐ Lumina Engine
+# ⭐ Nebulon Engine
 
 **Un estudio completo de juegos 2D que vive en tu teléfono Android.**
 Bloques visuales, editor de código real, asistente de IA y sincronización con GitHub, impulsado por LibGDX + Box2D.
@@ -32,7 +32,7 @@ Bloques visuales, editor de código real, asistente de IA y sincronización con 
 >
 > **Opción 2 — página de versiones:** abre la [última versión](https://github.com/AssassinGhostYT/Lumina-Engine/releases/latest) y descarga el `.apk` desde **Assets**.
 >
-> **Opción 3 — GitHub lo construye:** cada push a `main` ejecuta **Actions → Build APK**. Abre la ejecución más reciente en verde, baja hasta **Artifacts** y descarga **LuminaEngine-apk**.
+> **Opción 3 — GitHub lo construye:** cada push a `main` ejecuta **Actions → Build APK**. Abre la ejecución más reciente en verde, baja hasta **Artifacts** y descarga **NebulonEngine-apk**.
 >
 > En Android tendrás que permitir la instalación desde el navegador o administrador de archivos la primera vez.
 >
@@ -49,9 +49,9 @@ Bloques visuales, editor de código real, asistente de IA y sincronización con 
 
 ---
 
-## ✨ ¿Qué es Lumina Engine?
+## ✨ ¿Qué es Nebulon Engine?
 
-Lumina Engine es un **motor y editor de juegos 2D de código abierto que funciona completamente en un teléfono**.
+Nebulon Engine es un **motor y editor de juegos 2D de código abierto que funciona completamente en un teléfono**.
 Diseñas escenas, conectas la jugabilidad con bloques, Java o C++, ejecutas el juego y exportas un APK, todo sin computadora.
 
 Internamente usa **LibGDX** para los gráficos y **Box2D** para la física, con un editor Android nativo.
@@ -102,7 +102,7 @@ El workflow **Build APK** se ejecuta en cada push a `main`, en pull requests y m
 
 1. Abre **Actions → Build APK**.
 2. Pulsa la ejecución más reciente.
-3. Descarga **LuminaEngine-apk** desde **Artifacts**.
+3. Descarga **NebulonEngine-apk** desde **Artifacts**.
 
 El workflow **Aab & Apk Build** genera el APK y el AAB release y puede publicar el APK en GitHub Releases.
 
@@ -112,7 +112,7 @@ Todas las contribuciones son bienvenidas: corregir errores, mejorar el rendimien
 
 ## 💖 Apoyar el proyecto
 
-Lumina Engine es gratuito y de código abierto. Marca el repositorio con una estrella ⭐, compártelo o abre un issue para reportar errores y sugerir funciones.
+Nebulon Engine es gratuito y de código abierto. Marca el repositorio con una estrella ⭐, compártelo o abre un issue para reportar errores y sugerir funciones.
 
 ## 🌐 Comunidad
 

@@ -41,8 +41,8 @@ android {
         applicationId "com.lumina.engine"
         minSdk 24
         targetSdk 36
-        versionCode 105
-        versionName "1.0.5"
+        versionCode 106
+        versionName "1.0.6"
         // AdMob: the app id must be declared before the Mobile Ads SDK is initialized.
         manifestPlaceholders["admobAppId"] = "ca-app-pub-5858301436237272~5737636624"
         buildConfigField "String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-5858301436237272/3433751966\""
@@ -119,7 +119,7 @@ dependencies {
     implementation(fileTree(dir: "libs", include: ["*.jar","*.aar"]))
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.code.gson:gson:2.10.1")
-    // AI remote control: WebSocket to the Lumina Engine Remote server
+    // AI remote control: WebSocket to the Nebulon Engine Remote server
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     // Git (HTTPS only): JGit 5.13 is the last line that runs on Java 8 / Android
     implementation("org.eclipse.jgit:org.eclipse.jgit:5.13.3.202401111512-r") {

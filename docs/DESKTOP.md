@@ -1,6 +1,6 @@
 # Desktop templates (Windows + Linux)
 
-Experimental desktop runner for games exported from Lumina Engine. macOS is **not** supported.
+Experimental desktop runner for games exported from Nebulon Engine. macOS is **not** supported.
 Nothing built here is stored in the repository: the zips are produced on demand and live only as GitHub Action artifacts.
 
 ## How it works

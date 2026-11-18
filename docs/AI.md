@@ -1,6 +1,6 @@
 # AI: built-in assistant and full editor control
 
-Lumina Engine has two different AI paths. They solve different problems:
+Nebulon Engine has two different AI paths. They solve different problems:
 
 | | Built-in assistant | Remote MCP (Claude / OpenCode) |
 | --- | --- | --- |
@@ -76,11 +76,11 @@ opencode
 /models           # pick a FREE model
 ```
 
-Ask in plain language ("make a 2D platformer with 3 levels", "add a main menu", "fix the jump"). OpenCode calls the Lumina tools and the plan appears in the phone editor. Keep the editor on screen; split-screen next to the chat works.
+Ask in plain language ("make a 2D platformer with 3 levels", "add a main menu", "fix the jump"). OpenCode calls the Nebulon tools and the plan appears in the phone editor. Keep the editor on screen; split-screen next to the chat works.
 
 ## 3. IA de terminal (OpenCode, Codex u otro cliente MCP)
 
-Sí: debes mantener Lumina abierto y ejecutar el agente en otra ventana de terminal. En Lumina abre **IA remota**, despliega el servidor `server/`, activa la conexión y copia la guía de terminal. Guarda la configuración MCP en `opencode.json` y ejecuta:
+Sí: debes mantener Nebulon abierto y ejecutar el agente en otra ventana de terminal. En Nebulon abre **IA remota**, despliega el servidor `server/`, activa la conexión y copia la guía de terminal. Guarda la configuración MCP en `opencode.json` y ejecuta:
 
 ```bash
 opencode
@@ -88,7 +88,7 @@ opencode
 /models
 ```
 
-El agente de terminal verá las herramientas de Lumina y podrá crear escenas, elementos, UI y archivos mientras la app permanece abierta. La misma conexión sirve para cualquier cliente que soporte MCP; si el cliente solo acepta HTTP, usa el comando de API plana que copia Lumina. No cierres la app mientras el agente trabaja.
+El agente de terminal verá las herramientas de Nebulon y podrá crear escenas, elementos, UI y archivos mientras la app permanece abierta. La misma conexión sirve para cualquier cliente que soporte MCP; si el cliente solo acepta HTTP, usa el comando de API plana que copia Nebulon. No cierres la app mientras el agente trabaja.
 
 ## 4. Full editor control with Claude or GPT
 

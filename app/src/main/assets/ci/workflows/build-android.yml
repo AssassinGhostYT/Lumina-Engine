@@ -1,7 +1,7 @@
 name: Build Android APK
 
 # Builds the game as a signed APK. Run it from the Actions tab (or push a tag like v1.0).
-# Before pushing: run the game ONCE in the Lumina Engine editor (it writes dex/scenes.dex) and commit that file.
+# Before pushing: run the game ONCE in the Nebulon Engine editor (it writes dex/scenes.dex) and commit that file.
 on:
   workflow_dispatch:
     inputs:
@@ -16,7 +16,7 @@ on:
       version_code:
         default: "1"
       engine_ref:
-        description: "Lumina Engine engine branch / tag used to build"
+        description: "Nebulon Engine branch / tag used to build"
         default: "master"
   push:
     tags: ["v*"]
@@ -44,7 +44,7 @@ jobs:
           ndk-version: r28c
       - run: pip install pyzipper
       - name: Check the compiled scenes
-        run: test -f dex/scenes.dex || { echo "::error::dex/scenes.dex is missing. Run the game once in the Lumina Engine editor, then commit dex/scenes.dex"; exit 1; }
+        run: test -f dex/scenes.dex || { echo "::error::dex/scenes.dex is missing. Run the game once in the Nebulon Engine editor, then commit dex/scenes.dex"; exit 1; }
       - name: Build APK
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

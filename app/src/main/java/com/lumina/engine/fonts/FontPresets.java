@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Font presets and the parameter model of the Lumina Engine bitmap font (.lmf).
+ * Font presets and the parameter model of the Nebulon Engine bitmap font (.lmf).
  *
  * A .lmf file is a flat JSON object (a PropertySet): {"name":..., "rtl":"true|false", "font":"/Some.ttf" (TTF/OTF relative to the .lmf's folder),
  * and any of the FreeTypeFontParameter fields listed in {@link #specs()} as STRINGS}. The game generates the bitmap font from the TTF with

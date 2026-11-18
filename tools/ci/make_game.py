@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds a game from a Lumina Engine PROJECT folder on a CI machine (GitHub Actions). Mirrors what "Export APK" does on the phone.
+"""Builds a game from a Nebulon Engine PROJECT folder on a CI machine (GitHub Actions). Mirrors what "Export APK" does on the phone.
 
   python3 tools/ci/make_game.py zip --project . --out build/project.zip
   python3 tools/ci/make_game.py apk --project . --out build/game.apk [--name "My Game"] [--package com.me.game]
@@ -193,7 +193,7 @@ def build_apk(a):
     else:
         pw, alias = "android", "game"
         run("keytool", "-genkeypair", "-keystore", ks, "-storepass", pw, "-keypass", pw, "-alias", alias,
-            "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "CN=Lumina Engine Game")
+            "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "CN=Nebulon Engine Game")
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     run(tool("apksigner"), "sign", "--ks", ks, "--ks-pass", "pass:" + pw, "--ks-key-alias", alias, "--out", a.out, aligned)
     run(tool("apksigner"), "verify", a.out)
@@ -203,7 +203,7 @@ def build_apk(a):
 def build_jar(a):
     dex = os.path.join(a.project, "dex/scenes.dex")
     if not os.path.isfile(dex):
-        sys.exit("dex/scenes.dex not found: run the game once in the Lumina Engine editor and commit dex/scenes.dex")
+        sys.exit("dex/scenes.dex not found: run the game once in the Nebulon Engine editor and commit dex/scenes.dex")
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     run("d2j-dex2jar.sh" if shutil.which("d2j-dex2jar.sh") else "d2j-dex2jar", "-f", "-o", a.out, dex)
 

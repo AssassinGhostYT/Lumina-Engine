@@ -83,7 +83,7 @@ def fat = { String name, List<String> excludes ->
         manifest {
             attributes(
                     'Main-Class': 'com.lumina.engine.desktop.DesktopLauncher',
-                    'Implementation-Title': 'Lumina Engine desktop template',
+                    'Implementation-Title': 'Nebulon Engine desktop template',
                     'Implementation-Version': project.version == 'unspecified' ? '1' : project.version,
                     'Multi-Release': 'false'
             )

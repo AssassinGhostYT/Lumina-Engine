@@ -414,11 +414,11 @@ public class PropertiesPanel implements PanelHost.Panel {
         return l;
     }
 
-    static final String SHADER_TEMPLATE = "// Lumina Engine 3D shader. Write the color of every pixel:\n"
+    static final String SHADER_TEMPLATE = "// Nebulon Engine 3D shader. Write the color of every pixel:\n"
             + "//   color = the element color (x texture), uv = texture position, normal, worldPos.\n"
             + "// Ready to use: u_time, u_cameraPos, u_lightDir, u_lightColor, u_ambient, lambert(normal), hasTexture().\n"
             + "// Values of \"Shader Params\" (speed=2;tint=#ff0000) become u_speed (float) / u_tint (vec4).\n"
-            + "// \u0634\u064a\u062f\u0631 Lumina Engine: \u0627\u0643\u062a\u0628 \u0644\u0648\u0646 \u0643\u0644 \u0628\u0643\u0633\u0644 \u0641\u064a effect().\n\n"
+            + "// \u0634\u064a\u062f\u0631 Nebulon Engine: \u0627\u0643\u062a\u0628 \u0644\u0648\u0646 \u0643\u0644 \u0628\u0643\u0633\u0644 \u0641\u064a effect().\n\n"
             + "vec4 effect(vec4 color, vec2 uv, vec3 normal, vec3 worldPos) {\n"
             + "    float pulse = 0.5 + 0.5 * sin(u_time * 2.0);\n"
             + "    return vec4(color.rgb * lambert(normal) + color.rgb * pulse * 0.2, color.a);\n"

@@ -1,7 +1,7 @@
 import type { Env } from "./hub";
 
 /**
- * Lumina Store API (free assets).
+ * Nebulon Store API (free assets).
  *
  * Public:
  *   GET    /store/health
@@ -390,7 +390,7 @@ async function publish(request: Request, env: Env, a: Auth): Promise<Response> {
 
     const tags = Array.isArray(manifest.tags) ? manifest.tags.map((x: unknown) => String(x)).filter(Boolean).slice(0, 12) : [];
     const ownerId = old ? old.owner_id : a.admin ? null : String(a.user!.id);
-    const author = String(manifest.author || "Lumina creator").slice(0, 120);
+    const author = String(manifest.author || "Nebulon creator").slice(0, 120);
     await env.STORE_DB.prepare(
       `INSERT INTO assets (id, name, type, description, author, version, price, tags, previews, video, license, size, downloads, object_key, owner_id, status, created, updated)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'published', ?, ?)

@@ -1,4 +1,4 @@
-[    ] Hearthvale RPG (web game by the user) -> rebuild as a Lumina Engine example, short version (5-7 scenes, under 1 MB)
+[    ] Hearthvale RPG (web game by the user) -> rebuild as a Nebulon Engine example, short version (5-7 scenes, under 1 MB)
 [    ] Hearthvale: only art with a license that allows it (Miku removed: protected character)
 [    ] Hearthvale: grid walk by tap (TapToWalk behavior with A*), chop / mine / farm / fish
 [    ] Hearthvale: dialogues with choices and conditions (.dlg.json + DialogueRunner + blocks)

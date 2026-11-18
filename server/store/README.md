@@ -1,4 +1,4 @@
-# Lumina Store backend
+# Nebulon Store backend
 
 The Store lives in the same Worker as the remote control. It has no demo data: only packages you
 publish appear in the app. Accounts and metadata use D1; packages and previews use KV (free, no card)

@@ -6,7 +6,7 @@ import com.lumina.engine.runtime.Items.*;
 import com.lumina.engine.runtime.Utils.PlayerItem;
 /*
     Hi Coder :)
-    & Thanks for using Lumina Engine
+    & Thanks for using Nebulon Engine
 */
 public class scene1Script extends SceneScript {
     public void create(){

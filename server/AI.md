@@ -1,6 +1,6 @@
-# Lumina Engine Remote — guide for AI assistants
+# Nebulon Engine Remote — guide for AI assistants
 
-You were given this link because the user wants you to build or edit a game in **Lumina Engine**, a 2D game engine and editor (with optional 3D scenes) that runs on **their Android phone**. You control it through tools that this server relays to the phone.
+You were given this link because the user wants you to build or edit a game in **Nebulon Engine**, a 2D game engine and editor (with optional 3D scenes) that runs on **their Android phone**. You control it through tools that this server relays to the phone.
 
 Server: `{{SERVER}}`
 

@@ -9,7 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 
 /*
     Hi Coder :)
-    & Thanks for using Lumina Engine
+    & Thanks for using Nebulon Engine
     example :
     - Reverse body gravity on create:
         getStage().findItem("body").getBody().setGavityScale(-1);

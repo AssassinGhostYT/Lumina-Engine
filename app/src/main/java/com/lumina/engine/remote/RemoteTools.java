@@ -78,7 +78,7 @@ public final class RemoteTools {
             }
             // from here on a project must be open
             if (!projectOpen()) {
-                return ToolResult.error("No project is open in the Lumina Engine editor. Ask the user to open (or create) the project, keeping the editor on screen, then call status.");
+                return ToolResult.error("No project is open in the Nebulon Engine editor. Ask the user to open (or create) the project, keeping the editor on screen, then call status.");
             }
             switch (tool) {
                 case "project_info": return CoreTools.projectInfo();

@@ -1,4 +1,4 @@
-// The tools Claude (or any MCP client) sees. The server only describes them; the Lumina Engine app on the phone runs them.
+// The tools Claude (or any MCP client) sees. The server only describes them; the Nebulon Engine app on the phone runs them.
 // Keep the descriptions short: they are sent to the model in every conversation.
 
 type Json = Record<string, unknown>;
@@ -45,13 +45,13 @@ export const TOOLS: ToolDef[] = [
   {
     name: "status",
     description:
-      "Is the Lumina Engine app connected, and what is open (project, scenes, open scene, element count, scene_rev = changes whenever the scene changes, playing)? Call this first. If the app is not connected, tell the user to open the Lumina Engine editor and keep it open, then use wait_for_app.",
+      "Is the Nebulon Engine app connected, and what is open (project, scenes, open scene, element count, scene_rev = changes whenever the scene changes, playing)? Call this first. If the app is not connected, tell the user to open the Nebulon Engine editor and keep it open, then use wait_for_app.",
     inputSchema: obj({}),
   },
   {
     name: "wait_for_app",
     description:
-      "Wait (up to 25 s per call) until the user's Lumina Engine app connects. Use after asking the user to open the editor. Call again if it times out.",
+      "Wait (up to 25 s per call) until the user's Nebulon Engine app connects. Use after asking the user to open the editor. Call again if it times out.",
     inputSchema: obj({ seconds: num("1-25, default 20") }),
     local: true,
   },
@@ -628,9 +628,9 @@ export const TOOLS: ToolDef[] = [
 export const TOOL_BY_NAME: Map<string, ToolDef> = new Map(TOOLS.map((t) => [t.name, t]));
 
 /** The rules every AI needs from the first message (also inserted into AI.md). Keep it short: it is paid for on every conversation. */
-export const CORE_RULES = `You control the user's Lumina Engine game-engine editor on THEIR ANDROID PHONE through these tools. The engine exists only there: never compile, run or test the game in your own sandbox or server.
+export const CORE_RULES = `You control the user's Nebulon Engine game-engine editor on THEIR ANDROID PHONE through these tools. The engine exists only there: never compile, run or test the game in your own sandbox or server.
 
-Start: call status. If app_not_connected, tell the user in their language "Open the Lumina Engine editor now and keep it open on screen, Claude works in the background", then wait_for_app. Next set_plan (title and tasks in the user's language), work with update_task, end with finish_work. The user watches the plan and cannot edit meanwhile.
+Start: call status. If app_not_connected, tell the user in their language "Open the Nebulon Engine editor now and keep it open on screen, Claude works in the background", then wait_for_app. Next set_plan (title and tasks in the user's language), work with update_task, end with finish_work. The user watches the plan and cannot edit meanwhile.
 
 FIRST read status.frame (orientation + size, e.g. PORTRAIT 720 wide x 1280 tall). Design only for that frame, never assume 1280x720. A new scene copies the project orientation; pass scenes create orientation:portrait when the user wants a vertical game. For common game types call templates {action:'list'} first and apply one instead of building from scratch.
 

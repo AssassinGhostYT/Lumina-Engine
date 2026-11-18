@@ -634,9 +634,9 @@ public class EditorAI extends VisTable {
 
     private String buildContext() {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert Game Dev AI for the Lumina Engine (LibGDX based). API RULES:\n");
+        sb.append("You are an expert Game Dev AI for the Nebulon Engine (LibGDX based). API RULES:\n");
         sb.append("REGLA OBLIGATORIA DE IDIOMA: responde exclusivamente en español por defecto. Si el usuario escribe claramente en otro idioma o selecciona otro idioma en Ajustes, responde en ese idioma. Nunca uses árabe por defecto. Keep code, API names, class names, file paths and required identifiers unchanged.\n");
-        sb.append("1. ALWAYS generate JAVA code using LibGDX and Lumina Engine APIs.\n");
+        sb.append("1. ALWAYS generate JAVA code using LibGDX and Nebulon Engine APIs.\n");
         sb.append("2. DO NOT use JavaScript, Python, or others.\n");
         sb.append("3. For Items, extend 'ItemScript' (com.lumina.engine.runtime.Utils.ItemScript).\n");
         sb.append("   - PUBLIC FIELDS AVAILABLE (DO NOT REDEFINE): Body body, Actor actor, StageImp stage, PlayerItem playerItem.\n");

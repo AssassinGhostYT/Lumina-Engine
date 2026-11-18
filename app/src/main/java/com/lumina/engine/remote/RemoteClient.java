@@ -22,7 +22,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
 /**
- * The phone's side of the connection: one WebSocket to the Lumina Engine Remote server (server/ in the repo).
+ * The phone's side of the connection: one WebSocket to the Nebulon Engine Remote server (server/ in the repo).
  * It lives only while the editor is on screen (no foreground service): the AI is told to ask the user to keep
  * the editor open. Calls from the AI arrive as {"t":"call","id","tool","args"}; the answer goes back as {"t":"res",...}.
  */
@@ -195,7 +195,7 @@ public final class RemoteClient {
                 setState(State.CONNECTED, "");
                 JsonObject hello = new JsonObject();
                 hello.addProperty("t", "hello");
-                hello.addProperty("app", "Lumina Engine");
+                hello.addProperty("app", "Nebulon Engine");
                 hello.addProperty("ver", versionName(a));
                 hello.addProperty("device", Build.MANUFACTURER + " " + Build.MODEL);
                 ws.send(hello.toString());

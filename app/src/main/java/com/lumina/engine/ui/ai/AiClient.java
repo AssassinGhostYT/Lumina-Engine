@@ -212,7 +212,7 @@ public class AiClient {
             if (!key.isEmpty()) c.setRequestProperty("Authorization", "Bearer " + key);
             if (p.id.equals("openrouter")) {
                 c.setRequestProperty("HTTP-Referer", "https://github.com/lumina-engine/LuminaEngine");
-                c.setRequestProperty("X-Title", "Lumina Engine");
+                c.setRequestProperty("X-Title", "Nebulon Engine");
             }
             try (OutputStream os = c.getOutputStream()) {
                 os.write(body.toString().getBytes(StandardCharsets.UTF_8));

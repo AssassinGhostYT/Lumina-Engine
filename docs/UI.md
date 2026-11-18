@@ -54,7 +54,7 @@ Everything in `com.lumina.engine.runtime.ui` is pure Java + libGDX (no `android.
 ```
 
 * `id` – unique in the file, only letters, digits, `_` (it is used in generated Java and in event file names). `UIDocument.cleanId`.
-* `x`, `y` – extra offset in px added after anchoring; **y points up** (like the rest of Lumina Engine).
+* `x`, `y` – extra offset in px added after anchoring; **y points up** (like the rest of Nebulon Engine).
 * `w`, `h` – a number (px), `"50%"` (of the parent's content box), `"wrap"` (content size), `"fill"` (the rest of the parent's content box; inside a `Linear` it is a flexible share, see `weight`). Missing = the default of the type (Button 160×56, Icon 32, Image 64, Switch 56×32, TextField 240×48, Progress 200×thickness, Slider 200×max(32, knob+8), containers fill).
 * `weight` – flexible share inside a `Linear` (0 = no share).
 * `visible=false` – node and children are not drawn and **take no room** in layouts.

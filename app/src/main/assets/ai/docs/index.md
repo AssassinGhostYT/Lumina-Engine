@@ -1,6 +1,6 @@
-# Lumina Engine docs: map
+# Nebulon Engine docs: map
 
-Lumina Engine is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT read everything. The rules below are all you need to start; read only the part you are about to use: `read_docs {topic:'blocks'}`, `{topic:'elements', section:'JOYSTICK'}`, `{search:'sensor pickup'}`. A long topic answers with its table of contents first.
+Nebulon Engine is a 2D game-engine editor on an Android phone (LibGDX + Box2D). Do NOT read everything. The rules below are all you need to start; read only the part you are about to use: `read_docs {topic:'blocks'}`, `{topic:'elements', section:'JOYSTICK'}`, `{search:'sensor pickup'}`. A long topic answers with its table of contents first.
 
 ## Rules
 1. The engine runs ONLY on the phone. Never compile/run/test anywhere else. The editor must stay open on screen.

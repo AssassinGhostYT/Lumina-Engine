@@ -1388,11 +1388,11 @@ def main(argv):
 
 
 def write_license(mdi):
-    parts = ["Lumina Engine built-in icon library\n"
+    parts = ["Nebulon Engine built-in icon library\n"
              "============================\n\n"
              "Most icons are from Material Design Icons by the Pictogrammers group (https://pictogrammers.com/library/mdi/,\n"
              "https://github.com/Templarian/MaterialDesign), used under the Apache License 2.0. A few extra game icons\n"
-             "(coin, coin-stack, gem, joystick, potion, ...) were drawn for Lumina Engine. The icons are changed only by rounding\n"
+             "(coin, coin-stack, gem, joystick, potion, ...) were drawn for Nebulon Engine. The icons are changed only by rounding\n"
              "path coordinates to two decimals.\n\n"
              "---- Pictogrammers Free License (LICENSE of @mdi/svg) ----\n\n"]
     lic = os.path.join(mdi, "LICENSE")
@@ -1423,7 +1423,7 @@ def write_game_license(gi):
         "  name:    %s\n"
         "  author:  %s (%s)\n"
         "  license: %s (%s) %s\n\n"
-        "Changes made by Lumina Engine (adaptation notice required by CC BY 3.0): only a selection of the icons is included; the SVG path\n"
+        "Changes made by Nebulon Engine (adaptation notice required by CC BY 3.0): only a selection of the icons is included; the SVG path\n"
         "data is kept, with numbers rounded to two decimals; the shapes are drawn as plain single-colour PNG images (white by default,\n"
         "or tinted with the colour chosen when importing), optionally on a coloured badge or with a shadow.\n\n"
         "You may use these icons in your games, including commercial ones, as long as you give credit, for example in the credits\n"

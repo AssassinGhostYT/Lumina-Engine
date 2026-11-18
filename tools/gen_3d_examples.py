@@ -610,7 +610,7 @@ def credits_md(title, keys, files, notes=""):
     out += [CREDIT_ROWS[k] for k in keys]
     out += ["", "## Files", "", "| File | From |", "|---|---|"]
     out += ["| %s | %s |" % (f, s) for f, s in files]
-    out += ["", "Button, joystick and icon images (images/) were drawn for Lumina Engine by tools/gen_3d_examples.py (CC0).",
+    out += ["", "Button, joystick and icon images (images/) were drawn for Nebulon Engine by tools/gen_3d_examples.py (CC0).",
             "Kenney car models were re-packed with a 180 degree turn baked into their root nodes so they face -Z (the engine's forward);"
             " the geometry is unchanged."]
     if notes:

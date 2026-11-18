@@ -61,7 +61,7 @@ final class CoreTools {
         final Activity act = RemoteClient.get().activity();
         JsonObject o = new JsonObject();
         o.addProperty("connected", true);
-        o.addProperty("app", "Lumina Engine");
+        o.addProperty("app", "Nebulon Engine");
         o.addProperty("working", RemoteSession.isWorking());
         // write the plan, task notes and finish_work summary in the language the user writes to you in (this is the app's language)
         o.addProperty("app_language", com.lumina.engine.ui.Tr.lang());

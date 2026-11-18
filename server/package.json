@@ -2,7 +2,7 @@
   "name": "lumina-remote-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Cloudflare Worker that lets Claude (or any MCP client) control the Lumina Engine editor running on a phone.",
+  "description": "Cloudflare Worker that lets Claude (or any MCP client) control the Nebulon Engine editor running on a phone.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --local",

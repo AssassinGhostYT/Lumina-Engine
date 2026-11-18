@@ -15,7 +15,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Desktop launcher of an exported Lumina Engine game (Windows / Linux).
+ * Desktop launcher of an exported Nebulon Engine game (Windows / Linux).
  *
  *   run.sh                         -> game/project.zip (or game/project/) next to the launcher
  *   run.sh --project <folder|zip>  -> any project
@@ -30,7 +30,7 @@ public final class DesktopLauncher {
     private DesktopLauncher() {}
 
     static final String USAGE =
-            "Lumina Engine desktop " + VERSION + "\n"
+            "Nebulon Engine desktop " + VERSION + "\n"
                     + "Usage: run.sh [--project <folder|project.zip>] [--scene scene1] [--game-jar <file>] [--data-dir <dir>]\n"
                     + "              [--fullscreen] [--exit-after <seconds>] | --demo [--demo-orientation portrait|landscape]\n"
                     + "              [--demo-logic LONGxSHORT] | --selftest | --version\n"
@@ -98,7 +98,7 @@ public final class DesktopLauncher {
         Lwjgl3ApplicationConfiguration cfgApp = baseConfig(a, dataDir, project.getName(), size);
         File icon = Locator.findIcon(project);
         if (icon != null) cfgApp.setWindowIcon(Files.FileType.Absolute, icon.getAbsolutePath());
-        System.out.println("Lumina Engine: " + project.getName() + " scene=" + a.scene + " or=" + (or.isEmpty() ? "landscape" : or)
+        System.out.println("Nebulon Engine: " + project.getName() + " scene=" + a.scene + " or=" + (or.isEmpty() ? "landscape" : or)
                 + " logic=" + lw + "x" + lh + " window=" + size[0] + "x" + size[1] + " monitor=" + monitor[0] + "x" + monitor[1]);
         new Lwjgl3Application(new Guard(stage, a.exitAfterSeconds, dataDir), cfgApp);
     }
@@ -109,7 +109,7 @@ public final class DesktopLauncher {
         int[] monitor = monitorSize();
         int[] size = WindowSizing.compute(a.demoOrientation, a.demoLong, a.demoShort, monitor[0], monitor[1]);
         float[] view = WindowSizing.viewportSize(a.demoOrientation, a.demoLong, a.demoShort);
-        Lwjgl3ApplicationConfiguration cfg = baseConfig(a, dataDir, "Lumina Engine demo", size);
+        Lwjgl3ApplicationConfiguration cfg = baseConfig(a, dataDir, "Nebulon Engine demo", size);
         new Lwjgl3Application(new Guard(new DemoApp(a.demoOrientation, view[0], view[1]), a.exitAfterSeconds, dataDir), cfg);
     }
 

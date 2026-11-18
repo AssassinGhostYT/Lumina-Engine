@@ -1,9 +1,9 @@
-# Lumina Engine Remote server
+# Nebulon Engine Remote server
 
-A tiny Cloudflare Worker that lets an AI (Claude, OpenCode or any MCP client) control the Lumina Engine editor running on a phone. The phone connects *out* to this server with a WebSocket; the AI calls tools over MCP; the server relays each call to the phone and returns the answer. Nothing runs on the server except the relay.
+A tiny Cloudflare Worker that lets an AI (Claude, OpenCode or any MCP client) control the Nebulon Engine editor running on a phone. The phone connects *out* to this server with a WebSocket; the AI calls tools over MCP; the server relays each call to the phone and returns the answer. Nothing runs on the server except the relay.
 
 ```
-AI client ──MCP (HTTPS)──▶ Worker ──RPC──▶ Durable Object (one per user) ◀──WebSocket── Lumina Engine app
+AI client ──MCP (HTTPS)──▶ Worker ──RPC──▶ Durable Object (one per user) ◀──WebSocket── Nebulon Engine app
                         /mcp/<secret>                          /ws/<secret>
 ```
 
@@ -16,7 +16,7 @@ npx wrangler login          # once
 npx wrangler deploy         # prints https://lumina-remote.<you>.workers.dev
 ```
 
-Then in the Lumina Engine app: open **AI remote control** (the Claude/remote icon) → paste the `https://....workers.dev` URL in **Server URL** → **Save** → turn the switch on. The app shows the private connector link (`https://<server>/v1/mcp/<secret>`).
+Then in the Nebulon Engine app: open **AI remote control** (the Claude/remote icon) → paste the `https://....workers.dev` URL in **Server URL** → **Save** → turn the switch on. The app shows the private connector link (`https://<server>/v1/mcp/<secret>`).
 
 * **Claude:** Settings → Connectors → Add custom connector → paste the link (no login). **Copy command for Claude** gives you the text to paste into a chat.
 * **OpenCode:** press **Copy OpenCode MCP config** and paste it into `opencode.json` (see below).
@@ -41,7 +41,7 @@ OpenCode is the recommended way to get free/cheap AI control, because its free Z
 }
 ```
 
-Start OpenCode with `opencode`, run `/connect` (OpenCode Zen) or `opencode auth login`, then `/models` and pick a **FREE** model (Big Pickle, DeepSeek V4.1 Flash Free, GLM-5.3-Flash Free...). Keep the Lumina editor open and ask it to build or edit the game; it uses the same tools Claude uses.
+Start OpenCode with `opencode`, run `/connect` (OpenCode Zen) or `opencode auth login`, then `/models` and pick a **FREE** model (Big Pickle, DeepSeek V4.1 Flash Free, GLM-5.3-Flash Free...). Keep the Nebulon editor open and ask it to build or edit the game; it uses the same tools Claude uses.
 
 > The secret in the URL is the only credential. Anyone with the link can control the editor, so keep `opencode.json` private.
 

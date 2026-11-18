@@ -126,7 +126,7 @@ public class Utils {
 	
 	private static com.badlogic.gdx.scenes.scene2d.utils.Drawable defaultImage;
 
-	/** The picture an element shows when its `image` is empty (the Lumina Engine logo): what "reset image" goes back to. */
+	/** The picture an element shows when its `image` is empty (the Nebulon Engine logo): what "reset image" goes back to. */
 	public static void setDefaultImage(Image image){
 		try {
 			if(defaultImage==null) defaultImage = new TextureRegionDrawable(new Texture(Gdx.files.internal("images/logo.png")));

@@ -111,9 +111,9 @@ public class ProjectsHomeView extends FrameLayout {
         blocksBtn.setOnClickListener(v -> com.lumina.engine.ui.blocks.BlockCreatorActivity.open(activity));
         androidx.appcompat.widget.TooltipCompat.setTooltipText(blocksBtn, T("home_block_creator", "Block creator"));
         View storeBtn = findViewById(R.id.home_store);
-        storeBtn.setContentDescription(T("store_title", "Lumina Store"));
+        storeBtn.setContentDescription(T("store_title", "Nebulon Store"));
         storeBtn.setOnClickListener(v -> activity.startActivity(new Intent(activity, com.lumina.engine.store.StoreActivity.class)));
-        androidx.appcompat.widget.TooltipCompat.setTooltipText(storeBtn, T("store_title", "Lumina Store"));
+        androidx.appcompat.widget.TooltipCompat.setTooltipText(storeBtn, T("store_title", "Nebulon Store"));
         View cloneBtn = findViewById(R.id.home_clone);
         cloneBtn.setContentDescription(T("gh_clone_title", "Clone from GitHub"));
         cloneBtn.setOnClickListener(v -> com.lumina.engine.git.ui.CloneDialog.show(activity, projectsDir, dir -> {
@@ -139,8 +139,8 @@ public class ProjectsHomeView extends FrameLayout {
             {"New project", "home_new_project"}, {"Search projects...", "home_search"}, {"No projects yet", "home_no_projects"},
             {"Templates & Examples", "home_templates_title"}, {"Jumpstart your game with ready-to-run starter projects and engine features", "home_templates_sub"},
             {"Learn by making games", "home_learn_title"}, {"(Experimental)", "home_experimental"}, {"Interactive tutorials guide every tap, step by step", "home_learn_sub"},
-            {"Community & Support", "home_community_title"}, {"Connect with the Lumina Engine developer community across the globe", "home_community_sub"},
-            {"💖 Support Engine Development", "home_support"}, {"Lumina Engine is developed with passion. Help keep updates and features coming!", "home_support_sub"},
+            {"Community & Support", "home_community_title"}, {"Connect with the Nebulon Engine developer community across the globe", "home_community_sub"},
+            {"💖 Support Engine Development", "home_support"}, {"Nebulon Engine is developed with passion. Help keep updates and features coming!", "home_support_sub"},
             {"Donate", "home_donate"}, {"Engine Settings", "home_settings_title"}, {"Configure editor behaviors, code generation, and preferences", "home_settings_sub"},
             {"EDITOR & COMPILER", "home_editor_compiler"}, {"Interface Language", "home_language"}, {"Java Compiler Backend", "home_compiler"},
             {"Script Code Completion", "codeCompletion"}, {"Automatic Scene Saving", "autoSave"}, {"Persist Undo/Redo History", "saveUndoRedo"},
@@ -638,7 +638,7 @@ public class ProjectsHomeView extends FrameLayout {
     private void askRestart() {
         new AlertDialog.Builder(activity)
                 .setTitle(T("ui_restart", "Restart required"))
-                .setMessage(T("langNextTime", "The new language will be applied after restarting Lumina Engine."))
+                .setMessage(T("langNextTime", "The new language will be applied after restarting Nebulon Engine."))
                 .setPositiveButton(T("ui_restart_now", "Restart now"), (d, w) -> restartApp())
                 .setNegativeButton(T("cancel", "Later"), null)
                 .show();

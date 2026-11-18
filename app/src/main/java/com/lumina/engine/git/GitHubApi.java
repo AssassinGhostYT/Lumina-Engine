@@ -239,7 +239,7 @@ public final class GitHubApi {
             if (method.equals("PATCH")) c.setRequestProperty("X-HTTP-Method-Override", "PATCH");
             c.setRequestProperty("Accept", "application/vnd.github+json");
             c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
-            c.setRequestProperty("User-Agent", "Lumina Engine-Editor");
+            c.setRequestProperty("User-Agent", "Nebulon Engine-Editor");
             if (token != null && !token.isEmpty()) c.setRequestProperty("Authorization", "Bearer " + token);
             if (body != null) {
                 c.setDoOutput(true);
@@ -273,7 +273,7 @@ public final class GitHubApi {
             c.setDoOutput(true);
             c.setRequestProperty("Accept", "application/json");
             c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            c.setRequestProperty("User-Agent", "Lumina Engine-Editor");
+            c.setRequestProperty("User-Agent", "Nebulon Engine-Editor");
             try (OutputStream os = c.getOutputStream()) {
                 os.write(form.getBytes("UTF-8"));
             }

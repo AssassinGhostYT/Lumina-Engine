@@ -41,7 +41,7 @@ TEXT, PROGRESS, JOYSTICK, PARTICLE: `type: UI` = screen layer (default for TEXT/
 
 ## BOX and CIRCLE (and CUSTOM)
 
-- `image`: path relative to `images/`, with a leading slash: `/hero.png` (subfolders: `/tiles/grass.png`). Do NOT write `images/hero.png` or `/images/hero.png`. If the file does not exist, the Lumina Engine logo is drawn instead (a sure sign of a wrong path). Images are drawn stretched to `width x height` with nearest-neighbor filtering (crisp pixels).
+- `image`: path relative to `images/`, with a leading slash: `/hero.png` (subfolders: `/tiles/grass.png`). Do NOT write `images/hero.png` or `/images/hero.png`. If the file does not exist, the Nebulon Engine logo is drawn instead (a sure sign of a wrong path). Images are drawn stretched to `width x height` with nearest-neighbor filtering (crisp pixels).
 - `Pressed Image`, `Touch Start Image`, `Touch End Image` (BOX only, all empty by default, same path format as `image`, `.9.png` works): `Pressed Image` is shown while the finger is down on the element and restored on release / drag-out / cancel; `Touch Start Image` / `Touch End Image` are applied at touch start / end and stay until something changes the image. They do not replace `onClick`/`onTouchStart`/`onTouchEnd` events, which still fire. Ignored while an animation plays; `tileX/tileY` only apply to `image`.
 - Reset: `image` (and `Pad Image`, `Button Image`, the touch images) set to `""` or `"reset"` go back to the default picture; or in a `set` op: `"reset":["image","Pressed Image"]` puts any listed property back to its default.
 - To get a plain colored rectangle: create a white PNG with `create_image` and color it with `Tint`.

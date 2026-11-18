@@ -138,7 +138,7 @@ public class DonateActivity extends AppCompatActivity implements PurchasesUpdate
         for (ObjectAnimator o : new ObjectAnimator[]{sx, sy}) {
             o.setDuration(1500); o.setRepeatCount(ObjectAnimator.INFINITE); o.start();
         }
-        TextView title = text(T("support_title", "Support Lumina Engine"), 26, Color.WHITE, true);
+        TextView title = text(T("support_title", "Support Nebulon Engine"), 26, Color.WHITE, true);
         title.setGravity(Gravity.CENTER);
         hero.addView(title);
         TextView sub = text(T("support_sub", "Your support keeps the engine growing. Thank you for being part of the journey!"), 14, 0xFFC9C9E6, false);

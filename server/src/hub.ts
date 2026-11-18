@@ -28,8 +28,8 @@ interface Pending {
 const text = (t: string, isError = false): ToolResult => ({ content: [{ type: "text", text: t }], ...(isError ? { isError: true } : {}) });
 
 const NOT_CONNECTED =
-  "app_not_connected: the Lumina Engine app on the user's phone is not connected right now. " +
-  "Tell the user (in their language): open the Lumina Engine editor now and keep it open and visible on screen; you will work in the background. " +
+  "app_not_connected: the Nebulon Engine app on the user's phone is not connected right now. " +
+  "Tell the user (in their language): open the Nebulon Engine editor now and keep it open and visible on screen; you will work in the background. " +
   "Then call wait_for_app (repeat it a few times) until it says connected.";
 
 const day = () => new Date().toISOString().slice(0, 10);
@@ -152,7 +152,7 @@ export class Hub extends DurableObject<Env> {
         this.pending.delete(id);
         resolve(
           text(
-            "timeout: the app did not answer in time. It may be in the background or the screen is off. Ask the user to open the Lumina Engine editor and keep it on screen, then call status.",
+            "timeout: the app did not answer in time. It may be in the background or the screen is off. Ask the user to open the Nebulon Engine editor and keep it on screen, then call status.",
             true,
           ),
         );

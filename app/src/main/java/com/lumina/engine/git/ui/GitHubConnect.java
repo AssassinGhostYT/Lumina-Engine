@@ -315,7 +315,7 @@ public final class GitHubConnect {
         void tokenBody(LinearLayout body) {
             body.addView(Ui.text(a, T("gh_token_intro", "Create an access token on GitHub and paste it here. Choose the “repo” permission (or, for a fine-grained token, read and write access to Contents and Administration for your repositories)."), 13.5f, Ui.TEXT_2));
             View create = Ui.button(a, R.drawable.ic_lumina_open_in_new, T("gh_create_token", "Create a token on GitHub"), false,
-                    v -> open("https://github.com/settings/tokens/new?scopes=repo&description=Lumina Engine"));
+                    v -> open("https://github.com/settings/tokens/new?scopes=repo&description=Nebulon Engine"));
             body.addView(create, gap());
             final EditText input = Ui.input(a, "", "ghp_…");
             input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);

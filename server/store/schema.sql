@@ -1,4 +1,4 @@
--- Lumina Store D1 schema. Run once (and again after updates):
+-- Nebulon Store D1 schema. Run once (and again after updates):
 --   wrangler d1 execute lumina-store --remote --file=store/schema.sql
 CREATE TABLE IF NOT EXISTS users (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,

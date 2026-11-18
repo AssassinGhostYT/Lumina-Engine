@@ -259,7 +259,7 @@ final class GameTools {
                 return null;
             });
         }
-        if (bmp == null) return ToolResult.error("Could not capture the screen. Is the Lumina Engine app visible on the phone? Ask the user to keep the editor open.");
+        if (bmp == null) return ToolResult.error("Could not capture the screen. Is the Nebulon Engine app visible on the phone? Ask the user to keep the editor open.");
         return image(bmp, maxW, q, label);
     }
 

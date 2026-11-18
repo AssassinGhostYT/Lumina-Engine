@@ -35,7 +35,7 @@ Read once before the first build. Each item says what happens and what to do.
 
 ## Elements and assets
 
-23. **Wrong image path shows the Lumina Engine logo.** Use `/hero.png` (relative to `images/`), not `images/hero.png` or `/images/hero.png`. Use the `use_as` value returned by `create_image`.
+23. **Wrong image path shows the Nebulon Engine logo.** Use `/hero.png` (relative to `images/`), not `images/hero.png` or `/images/hero.png`. Use the `use_as` value returned by `create_image`.
 24. **Size mirrors**: setting `width`/`height`/`radius` also sets the collider size. Check `get_elements`. A CIRCLE uses `radius` (the square `2*radius`), not `width/height`.
 25. **`x`,`y` are the bottom-left corner**, y up. `x of ___`/`y of ___` and `goTo`/`spawnCopy` use the CENTER. An element at `y: 0` is on the bottom edge.
 26. **Property spelling is exact**: `Fixed Rotation`, `Gravity Scale`, `isSensor`, `Collider Width`, `Text Color`, `Font Scale`. Body type `KINAMATIC` is spelled that way.

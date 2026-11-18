@@ -32,5 +32,5 @@ Kenney asks, but does not require, for a credit to "Kenney" / www.kenney.nl).
 | sounds/footstep_2.ogg | GboxMikeFozzy |
 | images/sky_kloofendal_puresky_1024x512.jpg | Poly Haven |
 
-Button, joystick and icon images (images/) were drawn for Lumina Engine by tools/gen_3d_examples.py (CC0).
+Button, joystick and icon images (images/) were drawn for Nebulon Engine by tools/gen_3d_examples.py (CC0).
 Kenney car models were re-packed with a 180 degree turn baked into their root nodes so they face -Z (the engine's forward); the geometry is unchanged.

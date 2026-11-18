@@ -1,6 +1,6 @@
-# Lumina Engine Scripting & Engine Guide
+# Nebulon Engine Scripting & Engine Guide
 
-This document is the **Master Reference** for AI Agents and Developers to understand the Lumina Engine engine architecture and generate game scripts.
+This document is the **Master Reference** for AI Agents and Developers to understand the Nebulon Engine architecture and generate game scripts.
 
 ## 1. Project Directory Structure
 
@@ -19,7 +19,7 @@ This document is the **Master Reference** for AI Agents and Developers to unders
 ## 2. Engine Logic & Architecture
 
 ### The Stage System
-Lumina Engine uses two stages:
+Nebulon Engine uses two stages:
 1.  **`GameStage`**: For world entities. Affected by Camera zoom/pan.
 2.  **`UiStage`**: For UI elements (`type="UI"`). Fixed camera.
 

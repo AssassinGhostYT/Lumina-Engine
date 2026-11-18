@@ -5,7 +5,7 @@ The AI needs no uploads: make sprites with `create_image` and sounds with `creat
 ## Images (`images/`)
 
 - Formats: PNG, JPG. Referenced from elements as `/name.png` (relative to `images/`, leading slash; subfolders `/tiles/grass.png`). Blocks `setImage` accept `name.png` or `/name.png`.
-- The engine draws the picture stretched to the element's `width x height` with nearest-neighbor filtering. A missing or misspelled image shows the Lumina Engine logo instead.
+- The engine draws the picture stretched to the element's `width x height` with nearest-neighbor filtering. A missing or misspelled image shows the Nebulon Engine logo instead.
 - `create_image` returns `use_as`: the exact string to put in the element's `image`.
 
 ### `create_image` kinds

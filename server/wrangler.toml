@@ -23,7 +23,7 @@ DAILY_CALLS = "4000"
 # How long (hours) an idle user's data is kept after the phone disconnects.
 IDLE_PURGE_HOURS = "24"
 
-# --- Lumina Store -----------------------------------------------------------------
+# --- Nebulon Store -----------------------------------------------------------------
 # Create them first (see store/README.md), then uncomment and set the real database_id.
 [[d1_databases]]
 binding = "STORE_DB"
