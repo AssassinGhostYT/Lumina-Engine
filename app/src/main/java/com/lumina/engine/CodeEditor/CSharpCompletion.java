@@ -30,8 +30,14 @@ public final class CSharpCompletion {
             "Application.Quit", "SceneManager"
     };
     private static final String[] NEBULON = {
-            "Engine", "Engine.Version", "Engine.Log", "Engine.LogWarning",
-            "Engine.LogError"
+            "Engine", "Engine.Version", "Engine.Log", "Engine.LogWarning", "Engine.LogError",
+            "Engine.IsGameRunning", "Engine.SceneName", "Engine.DeltaTime", "Engine.Find",
+            "Engine.ChangeScene", "Engine.Destroy", "Engine.PlaySound", "Engine.StopSound",
+            "Engine.PauseSound", "Engine.LoopSound", "Engine.Input", "Entity", "Entity.X",
+            "Entity.Y", "Entity.Z", "Entity.Position", "Entity.Rotation", "Entity.Scale",
+            "Entity.Visible", "Entity.Alpha", "Entity.Exists", "Entity.Destroy",
+            "Vector2", "Vector3", "Input.IsKeyDown", "Input.IsKeyJustPressed",
+            "Input.IsTouched", "Input.JustTouched", "Input.TouchX", "Input.TouchY"
     };
     private static final Pattern TYPE = Pattern.compile(
             "\\b(?:class|struct|interface|enum|record)\\s+([A-Za-z_]\\w*)");

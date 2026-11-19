@@ -58,6 +58,8 @@ public class StageImp extends ApplicationAdapter {
 	Color backgroundColorGdx= Color.WHITE;
 	public Project project;
 	public PropertySet<String,Object> propertySet;
+	/** Scene name used to open this stage (available to scripts as Engine.SceneName). */
+	public String sceneName = "";
 	public java.util.LinkedHashSet<StageImp> previousStages= new java.util.LinkedHashSet<>();
 	HashMap<String,Object> collisionMap= new HashMap<>();
 	//Image background;
@@ -1002,6 +1004,7 @@ public class StageImp extends ApplicationAdapter {
 			}
 			java.lang.reflect.Constructor<?> constructor = playerClass.getConstructor();
 			StageImp imp = ((StageImp)constructor.newInstance()).setAssetsLoader(projectAssetLoader).setProject(project).setSpriteSheetLoader(spriteSheetLoader).setPropertySet(set);
+			imp.sceneName = scene == null ? "" : scene;
 			file.setWritable(true);
 			return imp;
 		} catch(Throwable e){

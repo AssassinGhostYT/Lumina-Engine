@@ -28,6 +28,7 @@ constexpr const char* HOST_EXECUTE = "Execute";
 constexpr const char* INTERNAL_PING =
         "Nebulon.ScriptHost.ScriptHost::NativePing";
 constexpr const char* INTERNAL_LOG = "Nebulon.Engine::NativeLog";
+constexpr const char* INTERNAL_CALL = "Nebulon.Engine::NativeCall";
 
 using MonoDomain = void;
 using MonoAssembly = void;
@@ -86,6 +87,7 @@ JavaVM* g_vm = nullptr;
 jclass g_runtime_class = nullptr;
 jmethodID g_ping_method = nullptr;
 jmethodID g_log_method = nullptr;
+jmethodID g_call_method = nullptr;
 bool g_initialized = false;
 std::string g_last_error;
 
@@ -343,6 +345,53 @@ extern "C" void NebulonCSharpLog(MonoString* level, MonoString* message) {
     if (attached) g_vm->DetachCurrentThread();
 }
 
+extern "C" MonoString* NebulonCSharpCall(
+        MonoString* command, MonoString* a, MonoString* b, float value) {
+    if (!g_initialized || api.string_new == nullptr || g_domain == nullptr) {
+        return nullptr;
+    }
+    if (g_vm == nullptr || g_runtime_class == nullptr || g_call_method == nullptr) {
+        return api.string_new(g_domain, "ERR:callback Java no disponible");
+    }
+
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        if (g_vm->AttachCurrentThread(&env, nullptr) != JNI_OK) {
+            return api.string_new(g_domain, "ERR:no se pudo adjuntar el hilo Java");
+        }
+        attached = true;
+    }
+
+    const std::string command_text = take_string(command);
+    const std::string a_text = take_string(a);
+    const std::string b_text = take_string(b);
+    jstring command_value = env->NewStringUTF(command_text.c_str());
+    jstring a_value = env->NewStringUTF(a_text.c_str());
+    jstring b_value = env->NewStringUTF(b_text.c_str());
+    jstring result_value = static_cast<jstring>(env->CallStaticObjectMethod(
+            g_runtime_class, g_call_method, command_value, a_value, b_value,
+            static_cast<jfloat>(value)));
+
+    std::string result_text;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        result_text = "ERR:excepcion en la API Java";
+    } else if (result_value != nullptr) {
+        result_text = jstring_to_string(env, result_value);
+        env->DeleteLocalRef(result_value);
+    } else {
+        result_text = "ERR:la API Java devolvio null";
+    }
+    env->DeleteLocalRef(command_value);
+    env->DeleteLocalRef(a_value);
+    env->DeleteLocalRef(b_value);
+    if (attached) g_vm->DetachCurrentThread();
+
+    return api.string_new(g_domain, result_text.c_str());
+}
+
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     g_vm = vm;
     return JNI_VERSION_1_6;
@@ -389,6 +438,13 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
         env->ExceptionClear();
         return env->NewStringUTF("Error: callback onNativeLog no encontrado");
     }
+    g_call_method = env->GetStaticMethodID(
+            g_runtime_class, "onNativeCall",
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;F)Ljava/lang/String;");
+    if (g_call_method == nullptr) {
+        env->ExceptionClear();
+        return env->NewStringUTF("Error: callback onNativeCall no encontrado");
+    }
 
     if (!load_mono()) {
         return env->NewStringUTF(("Error: " + g_last_error).c_str());
@@ -413,6 +469,8 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
                           reinterpret_cast<const void*>(&NebulonCSharpPing));
     api.add_internal_call(INTERNAL_LOG,
                           reinterpret_cast<const void*>(&NebulonCSharpLog));
+    api.add_internal_call(INTERNAL_CALL,
+                          reinterpret_cast<const void*>(&NebulonCSharpCall));
 
     const std::string host_path = managed + "/" + HOST_DLL;
     MonoAssembly* host = api.domain_assembly_open(g_domain, host_path.c_str());

@@ -220,7 +220,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 				String lowerPath = path == null ? "" : path.toLowerCase();
 				if(lowerPath.endsWith(".cpp")) FileUtil.writeFile(path, "#include \"lumina_game.h\"\n\nvoid update() {\n    // Escribe aquí la lógica de tu juego\n}\n");
 				else if(lowerPath.endsWith(".h") || lowerPath.endsWith(".hpp")) FileUtil.writeFile(path, "#pragma once\n\n// Declaraciones de tu juego\n");
-				else if(lowerPath.endsWith(".cs")) FileUtil.writeFile(path, "using System;\nusing Nebulon;\n\npublic class Player\n{\n    void Start()\n    {\n        Engine.Log(\"Hola desde C#\");\n    }\n\n    void Update()\n    {\n    }\n}\n");
+				else if(lowerPath.endsWith(".cs")) FileUtil.writeFile(path, "using System;\nusing Nebulon;\n\npublic class Player\n{\n    void Start()\n    {\n        Engine.Log(\"Hola desde C# \" + Engine.Version);\n        if (Engine.IsGameRunning)\n        {\n            Entity player = Engine.Find(\"Player\");\n            if (player != null) player.Y += 10;\n        }\n    }\n\n    void Update()\n    {\n        if (Engine.Input.IsKeyDown(\"A\")) Engine.Log(\"izquierda\");\n    }\n}\n");
 				else if(lowerPath.endsWith(".json")) FileUtil.writeFile(path, "{\n  \"name\": \"Nebulon Project\",\n  \"version\": 1\n}\n");
 			}
 			if(getIntent().hasExtra("scene") && !getIntent().getStringExtra("scene").equals("")){

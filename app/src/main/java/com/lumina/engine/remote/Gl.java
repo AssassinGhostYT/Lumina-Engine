@@ -11,38 +11,45 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Run code on the GL thread (the editor and the game live there) or the UI thread, and wait for it. */
-final class Gl {
+public final class Gl {
     private Gl() {}
 
     /** A tool failed with a message meant for the AI. */
-    static final class ToolError extends RuntimeException {
+    public static final class ToolError extends RuntimeException {
         ToolError(String m) {
             super(m);
         }
     }
 
-    interface Work<T> {
+    public interface Work<T> {
         T run() throws Exception;
     }
 
     private static final Handler UI = new Handler(Looper.getMainLooper());
+    private static final ThreadLocal<Boolean> ON_GL = new ThreadLocal<>();
 
     /** Blocks the calling (worker) thread until {@code w} ran on the GL thread. */
-    static <T> T run(Work<T> w) throws Exception {
+    public static <T> T run(Work<T> w) throws Exception {
         return run(w, 30_000);
     }
 
-    static <T> T run(Work<T> w, long timeoutMs) throws Exception {
+    public static <T> T run(Work<T> w, long timeoutMs) throws Exception {
+        if (Boolean.TRUE.equals(ON_GL.get())
+                || Thread.currentThread().getName().startsWith("GLThread")) {
+            return w.run();
+        }
         if (Gdx.app == null) throw new ToolError("The editor is not ready yet (no graphics). Ask the user to open the project in the editor.");
         final AtomicReference<Object> out = new AtomicReference<>();
         final AtomicReference<Throwable> err = new AtomicReference<>();
         final CountDownLatch done = new CountDownLatch(1);
         Gdx.app.postRunnable(() -> {
+            ON_GL.set(Boolean.TRUE);
             try {
                 out.set(w.run());
             } catch (Throwable t) {
                 err.set(t);
             } finally {
+                ON_GL.remove();
                 done.countDown();
             }
         });

@@ -189,6 +189,11 @@ public final class CSharpRuntime {
         lastPing = message == null ? "" : message;
     }
 
+    /** Called by Mono for every Nebulon.Engine.NativeCall invocation. */
+    static String onNativeCall(String command, String a, String b, float value) {
+        return CSharpApi.call(command, a, b, value);
+    }
+
     static void onNativeLog(String level, String message) {
         String text = message == null ? "" : message;
         synchronized (lastLogs) {
