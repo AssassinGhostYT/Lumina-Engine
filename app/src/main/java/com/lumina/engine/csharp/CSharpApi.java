@@ -23,88 +23,104 @@ public final class CSharpApi {
     public static String call(String command, String a, String b, float value) {
         if (command == null) return "ERR:comando vacio";
         try {
+            if (!"running".equals(command)) requireGame();
             switch (command) {
                 case "running":
-                    return Gl.run(() -> TestApp.getCurrentApp() != null
-                            && TestApp.getCurrentApp().getPlayingStage() != null) ? "1" : "0";
+                    return gameRunning() ? "1" : "0";
                 case "scene":
-                    return Gl.run(() -> active().sceneName == null ? "" : active().sceneName);
+                    return onGame(() -> active().sceneName == null ? "" : active().sceneName);
                 case "delta":
-                    return Gl.run(() -> String.valueOf(active().getDelta()));
+                    return onGame(() -> String.valueOf(active().getDelta()));
                 case "find":
-                    return Gl.run(() -> find(a) ? "1" : "0");
+                    return onGame(() -> find(a) ? "1" : "0");
                 case "changeScene":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         String name = trim(a);
                         if (name.isEmpty()) throw new IllegalArgumentException("falta el nombre de la escena");
                         active().openScene(name);
                         return "OK";
                     });
                 case "destroy":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         item(a).destroy();
                         return "OK";
                     });
                 case "playSound":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         String sound = sound(a);
                         active().releaseSound(sound);
                         active().startSound(sound);
                         return "OK";
                     });
                 case "stopSound":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         active().releaseSound(sound(a));
                         return "OK";
                     });
                 case "pauseSound":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         active().pauseSound(sound(a));
                         return "OK";
                     });
                 case "loopSound":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         active().loopSound(sound(a), value != 0f);
                         return "OK";
                     });
                 case "getFloat":
-                    return Gl.run(() -> String.valueOf(getFloat(a, b)));
+                    return onGame(() -> String.valueOf(getFloat(a, b)));
                 case "setFloat":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         setFloat(a, b, value);
                         return "OK";
                     });
                 case "getBool":
-                    return Gl.run(() -> getBool(a, b) ? "1" : "0");
+                    return onGame(() -> getBool(a, b) ? "1" : "0");
                 case "setBool":
-                    return Gl.run(() -> {
+                    return onGame(() -> {
                         setBool(a, b, value != 0f);
                         return "OK";
                     });
                 case "key":
-                    return Gl.run(() -> isKeyDown(a) ? "1" : "0");
+                    return onGame(() -> isKeyDown(a) ? "1" : "0");
                 case "keyPressed":
-                    return Gl.run(() -> isKeyJustPressed(a) ? "1" : "0");
+                    return onGame(() -> isKeyJustPressed(a) ? "1" : "0");
                 case "keyCode":
-                    return Gl.run(() -> Gdx.input.isKeyPressed((int) value) ? "1" : "0");
+                    return onGame(() -> Gdx.input.isKeyPressed((int) value) ? "1" : "0");
                 case "keyCodePressed":
-                    return Gl.run(() -> Gdx.input.isKeyJustPressed((int) value) ? "1" : "0");
+                    return onGame(() -> Gdx.input.isKeyJustPressed((int) value) ? "1" : "0");
                 case "button":
-                    return Gl.run(() -> Gdx.input.isButtonPressed((int) value) ? "1" : "0");
+                    return onGame(() -> Gdx.input.isButtonPressed((int) value) ? "1" : "0");
                 case "touched":
-                    return Gl.run(() -> Gdx.input.isTouched() ? "1" : "0");
+                    return onGame(() -> Gdx.input.isTouched() ? "1" : "0");
                 case "justTouched":
-                    return Gl.run(() -> Gdx.input.justTouched() ? "1" : "0");
+                    return onGame(() -> Gdx.input.justTouched() ? "1" : "0");
                 case "touchX":
-                    return Gl.run(() -> String.valueOf(Gdx.input.getX()));
+                    return onGame(() -> String.valueOf(Gdx.input.getX()));
                 case "touchY":
-                    return Gl.run(() -> String.valueOf(Gdx.input.getY()));
+                    return onGame(() -> String.valueOf(Gdx.input.getY()));
                 default:
                     return "ERR:comando desconocido: " + command;
             }
         } catch (Throwable t) {
             return "ERR:" + message(t);
         }
+    }
+
+    /** Fast, non-blocking check so scripts in the code editor fail before waiting for a paused GL thread. */
+    private static boolean gameRunning() {
+        TestApp app = TestApp.getCurrentApp();
+        return app != null && app.getPlayingStage() != null;
+    }
+
+    private static void requireGame() {
+        TestApp app = TestApp.getCurrentApp();
+        if (app == null) throw new IllegalStateException("el editor no esta listo");
+        if (app.getPlayingStage() == null) throw new IllegalStateException("el juego no esta en ejecucion");
+    }
+
+    private static <T> T onGame(Gl.Work<T> work) throws Exception {
+        return Gl.run(work, 5000);
     }
 
     private static StageImp active() {

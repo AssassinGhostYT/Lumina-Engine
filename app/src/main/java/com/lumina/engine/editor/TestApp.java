@@ -33,7 +33,7 @@ import static com.lumina.engine.editor.utils.Lang.*;
 
 public class TestApp implements ApplicationListener {
 	LibgdxEditor editor;
-	public static TestApp currentApp;
+	public static volatile TestApp currentApp;
 	NodeEditorApp visualScripting;
 	Project project;
 	ToastManager toastManager;
@@ -42,7 +42,7 @@ public class TestApp implements ApplicationListener {
 	boolean landscape = true;
 	Runnable whenEditorReady,whenAppReady;
 	ProjectAssetLoader projectAssetLoader;
-	StageImp stageImp;
+	volatile StageImp stageImp;
 	LoadingStage loadingStage;
 	int width=-1,height = -1,currentEditorPos = 0;
 	Stage UiStage;
