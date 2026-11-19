@@ -369,9 +369,13 @@ extern "C" MonoString* NebulonCSharpCall(
     jstring command_value = env->NewStringUTF(command_text.c_str());
     jstring a_value = env->NewStringUTF(a_text.c_str());
     jstring b_value = env->NewStringUTF(b_text.c_str());
-    jstring result_value = static_cast<jstring>(env->CallStaticObjectMethod(
-            g_runtime_class, g_call_method, command_value, a_value, b_value,
-            static_cast<jfloat>(value)));
+    jvalue args[4];
+    args[0].l = command_value;
+    args[1].l = a_value;
+    args[2].l = b_value;
+    args[3].f = value;
+    jstring result_value = static_cast<jstring>(
+            env->CallStaticObjectMethodA(g_runtime_class, g_call_method, args));
 
     std::string result_text;
     if (env->ExceptionCheck()) {
