@@ -216,11 +216,10 @@ public class SettingsPanel implements PanelHost.Panel {
                 Ui.toast(c, Tr.t("ui_csharp_unavailable", "C# is not available on this CPU architecture."));
                 return;
             }
-            Ui.toast(c, Tr.t("ui_csharp_starting", "Starting C#..."));
-            new Thread(() -> {
-                String result = CSharpRuntime.test(c.getApplicationContext());
-                shell.post(() -> Dialogs.longText(c, Tr.t("ui_csharp_result", "C# runtime"), result));
-            }, "nebulon-csharp").start();
+            // The test loads Mono; keep it out of the editor process.
+            Intent test = new Intent(shell.activity(), com.lumina.engine.csharp.CSharpRunActivity.class);
+            test.putExtra(com.lumina.engine.csharp.CSharpRunActivity.EXTRA_TEST, true);
+            shell.activity().startActivity(test);
         }), new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));
 
         col.addView(Ui.sectionLabel(c, Tr.t("ui_help", "Help")));

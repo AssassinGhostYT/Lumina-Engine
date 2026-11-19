@@ -403,8 +403,10 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_lumina_engine_csharp_CSharpRuntime_nativeIsAvailable(JNIEnv*, jclass) {
-    std::lock_guard<std::mutex> lock(g_mutex);
-    return load_mono() ? JNI_TRUE : JNI_FALSE;
+    // Do not dlopen Mono here: this runs on the UI thread when a .cs file is
+    // opened. The real load and mono_jit_init happen on the :csharp process
+    // worker, so a slow or broken runtime can never freeze the editor.
+    return JNI_TRUE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL

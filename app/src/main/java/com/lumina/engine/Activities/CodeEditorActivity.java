@@ -141,16 +141,15 @@ public class CodeEditorActivity extends AppCompatActivity {
 			runCs.setVisibility(View.VISIBLE);
 			runCs.setOnClickListener(v->{
 				FileUtil.writeFile(path, editor.getText().toString());
-				runCs.setEnabled(false);
-				final File[] sources = csharpSources();
-				new Thread(()->{
-					String result = com.lumina.engine.csharp.CSharpRuntime.compileAndRun(
-							this, sources);
-					runOnUiThread(()->{
-						runCs.setEnabled(true);
-						com.lumina.engine.ui.Dialogs.longText(this, "C# / .NET", result);
-					});
-				}, "nebulon-csharp-run").start();
+				File[] sources = csharpSources();
+				String[] paths = new String[sources.length];
+				for(int i=0;i<sources.length;i++) paths[i] = sources[i].getAbsolutePath();
+				// Mono/Roslyn run in their own process: a native crash or a long
+				// stop-the-world pause cannot close the editor or the running game.
+				android.content.Intent intent = new android.content.Intent(
+						this, com.lumina.engine.csharp.CSharpRunActivity.class);
+				intent.putExtra(com.lumina.engine.csharp.CSharpRunActivity.EXTRA_FILES, paths);
+				startActivity(intent);
 			});
 		}
 
