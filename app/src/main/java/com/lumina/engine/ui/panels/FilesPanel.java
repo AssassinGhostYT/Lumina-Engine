@@ -232,13 +232,15 @@ public class FilesPanel implements PanelHost.Panel {
         reload();
     }
 
-    /** C++ projects still contain the engine's generated Java bridge internally,
+    /** C++ and C# projects still contain the engine's generated Java bridge internally,
      * but keep that implementation detail out of the user's project tree. */
     private boolean hideJavaBackend(File f) {
         if (logsMode || projectPath == null) return false;
         try {
             File cfg = new File(projectPath, "configs/project.json");
-            if (!cfg.isFile() || !com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath()).contains("\"language\": \"cpp\"")) return false;
+            if (!cfg.isFile()) return false;
+            String raw = com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath());
+            if (!raw.contains("\"language\": \"cpp\"") && !raw.contains("\"language\": \"csharp\"")) return false;
             String rel = f.getAbsolutePath().substring(new File(projectPath).getAbsolutePath().length()).replace(File.separatorChar, '/');
             return rel.equals("/java") || rel.startsWith("/java/") || f.getName().toLowerCase(Locale.ROOT).endsWith(".java");
         } catch (Throwable ignored) { return false; }

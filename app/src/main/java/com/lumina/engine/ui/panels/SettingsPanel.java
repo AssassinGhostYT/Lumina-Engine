@@ -119,14 +119,16 @@ public class SettingsPanel implements PanelHost.Panel {
             if (Bridge.ready()) {
                 String root = Bridge.editor().getProject().getPath();
                 java.io.File cfg = new java.io.File(root, "configs/project.json");
-                if (cfg.isFile() && cfg.getName().equals("project.json") && cfg.length() > 0
-                        && com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath()).contains("\"compiler\": \"ndk-clang\""))
-                    compilerValue = "ndk-clang";
+                if (cfg.isFile() && cfg.getName().equals("project.json") && cfg.length() > 0) {
+                    String raw = com.lumina.engine.Helpers.FileUtil.readFile(cfg.getAbsolutePath());
+                    if (raw.contains("\"compiler\": \"ndk-clang\"")) compilerValue = "ndk-clang";
+                    else if (raw.contains("\"compiler\": \"roslyn\"")) compilerValue = "roslyn";
+                }
             }
         } catch (Throwable ignored) {}
         TextView comp = chooser(c, compilerValue);
-        comp.setOnClickListener(v -> Dialogs.choose(c, Tr.t("ui_compiler", "Compilador del proyecto"), new String[]{"javac (Java)", "ecj (Java)", "ndk-clang (C++)"}, i -> {
-            String s = i == 0 ? "javac" : (i == 1 ? "ecj" : "ndk-clang");
+        comp.setOnClickListener(v -> Dialogs.choose(c, Tr.t("ui_compiler", "Compilador del proyecto"), new String[]{"javac (Java)", "ecj (Java)", "ndk-clang (C++)", "roslyn (C#)"}, i -> {
+            String s = i == 0 ? "javac" : (i == 1 ? "ecj" : (i == 2 ? "ndk-clang" : "roslyn"));
             p.edit().putString("compiler", s).apply();
             comp.setText(s);
         }));

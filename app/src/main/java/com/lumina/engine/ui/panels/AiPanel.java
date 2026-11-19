@@ -348,7 +348,9 @@ public class AiPanel implements PanelHost.Panel {
             String projectLanguage = AiContext.projectLanguage();
             String languageGuide = projectLanguage.equals("cpp")
                     ? "\nMODO C++ OBLIGATORIO (ndk-clang): este proyecto eligió C++. Para lógica del juego escribe únicamente en cpp/*.cpp y cpp/*.h, usando namespace lumina y void update(float deltaSeconds). Nunca generes, guardes ni propongas archivos .java, scripts Java o rutas java/ para la lógica del usuario. No afirmes que el juego está hecho en Java. Las acciones visuales (escenas, elementos, propiedades, UI y comportamientos) siguen usando el puente interno del motor; si el usuario pide lógica nativa, crea un archivo C++ y explica que se compilará en GitHub Actions. Si la petición no puede hacerse todavía desde C++, dilo claramente.\n"
-                    : "\nEste proyecto seleccionó Java. Usa el flujo Java del motor.\n";
+                    : (projectLanguage.equals("csharp")
+                    ? "\nMODO C# OBLIGATORIO: este proyecto eligió C#. Para lógica del juego escribe únicamente archivos .cs (por ejemplo scripts/Player.cs) usando using Nebulon y la API Engine.Find, Entity, Engine.Input, Engine.PlaySound y Engine.ChangeScene. Nunca generes archivos .java, .cpp o rutas java/ o cpp/ para la lógica del usuario. Las acciones visuales (escenas, elementos, propiedades, UI y comportamientos) siguen usando el puente interno del motor. Si una función todavía no existe en la API C#, dilo claramente.\n"
+                    : "\nEste proyecto seleccionó Java. Usa el flujo Java del motor.\n");
             msgs.add(new AiClient.Msg("system", AiContext.ENGINE_GUIDE
                     + languageGuide
                     + (prefs().getBoolean(AiContext.PRO_PREF, true) ? "\n" + AiContext.proGuide() + "\n" : "")
@@ -459,6 +461,8 @@ public class AiPanel implements PanelHost.Panel {
             String scene = Bridge.editor().getScene();
             if ("cpp".equals(AiContext.projectLanguage()) || "cpp".equalsIgnoreCase(lang) || "c++".equalsIgnoreCase(lang))
                 return "cpp/ai_" + scene.toLowerCase(Locale.ROOT) + (code.contains("#include") ? ".cpp" : ".h");
+            if ("csharp".equals(AiContext.projectLanguage()) || "csharp".equalsIgnoreCase(lang) || "cs".equalsIgnoreCase(lang) || "c#".equalsIgnoreCase(lang))
+                return "scripts/ai_" + scene.toLowerCase(Locale.ROOT) + ".cs";
             String cls = null;
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("class\\s+(\\w+)").matcher(code);
             if (m.find()) cls = m.group(1);

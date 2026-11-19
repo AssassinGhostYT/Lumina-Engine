@@ -114,7 +114,9 @@ public final class AiContext {
             File f = new File(ed.getProject().getPath(), "configs/project.json");
             if (!f.exists()) return "java";
             String raw = Gdx.files.absolute(f.getAbsolutePath()).readString("UTF-8");
-            return raw.contains("cpp") ? "cpp" : "java";
+            if (raw.contains("\"language\": \"csharp\"") || raw.contains("\"language\":\"csharp\"")) return "csharp";
+            if (raw.contains("\"language\": \"cpp\"") || raw.contains("\"language\":\"cpp\"")) return "cpp";
+            return "java";
         } catch (Throwable ignored) { return "java"; }
     }
 

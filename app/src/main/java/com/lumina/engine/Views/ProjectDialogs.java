@@ -98,12 +98,17 @@ public final class ProjectDialogs {
         try {
             File cfg = new File(project, "configs/project.json");
             cfg.getParentFile().mkdirs();
-            com.lumina.engine.Helpers.FileUtil.writeFile(cfg.getAbsolutePath(), "{\n  \"language\": \"" + language + "\",\n  \"compiler\": \"" + ("cpp".equals(language) ? "ndk-clang" : "javac") + "\"\n}\n");
+            String compiler = "cpp".equals(language) ? "ndk-clang" : ("csharp".equals(language) ? "roslyn" : "javac");
+            com.lumina.engine.Helpers.FileUtil.writeFile(cfg.getAbsolutePath(), "{\n  \"language\": \"" + language + "\",\n  \"compiler\": \"" + compiler + "\"\n}\n");
             if ("cpp".equals(language)) {
                 File cpp = new File(project, "cpp");
                 cpp.mkdirs();
                 com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.cpp").getAbsolutePath(), "#include \"lumina_game.h\"\n\nnamespace lumina {\nvoid update(float deltaSeconds) {\n    (void)deltaSeconds;\n    // Escribe aquí la lógica de tu juego\n}\n}\n");
                 com.lumina.engine.Helpers.FileUtil.writeFile(new File(cpp, "main.h").getAbsolutePath(), "#pragma once\n\n// Declaraciones del juego\n");
+            } else if ("csharp".equals(language)) {
+                File scripts = new File(project, "scripts");
+                scripts.mkdirs();
+                com.lumina.engine.Helpers.FileUtil.writeFile(new File(scripts, "Player.cs").getAbsolutePath(), "using System;\nusing Nebulon;\n\npublic class Player\n{\n    void Start()\n    {\n        Engine.Log(\"Hola desde C# \" + Engine.Version);\n    }\n\n    void Update()\n    {\n    }\n}\n");
             }
         } catch (Throwable ignored) {
         }
@@ -164,9 +169,9 @@ public final class ProjectDialogs {
         languageChoice.setGravity(Gravity.CENTER_VERTICAL);
         languageChoice.setPadding(Ui.dp(a, 14), Ui.dp(a, 12), Ui.dp(a, 14), Ui.dp(a, 12));
         languageChoice.setBackground(Ui.toggleBg(a));
-        languageChoice.setOnClickListener(v -> Dialogs.choose(a, T("project_language", "Lenguaje del proyecto"), new String[]{"Java", "C++"}, i -> {
-            projectLanguage[0] = i == 0 ? "java" : "cpp";
-            languageChoice.setText(i == 0 ? "Java" : "C++");
+        languageChoice.setOnClickListener(v -> Dialogs.choose(a, T("project_language", "Lenguaje del proyecto"), new String[]{"Java", "C++", "C#"}, i -> {
+            projectLanguage[0] = i == 0 ? "java" : (i == 1 ? "cpp" : "csharp");
+            languageChoice.setText(i == 0 ? "Java" : (i == 1 ? "C++" : "C#"));
         }));
         col.addView(languageChoice, Ui.matchWrap());
         TextView tip = Ui.text(a, T("home_orientation_tip", "You can change it later from Edit project."), 11.5f, Ui.TEXT_3);
