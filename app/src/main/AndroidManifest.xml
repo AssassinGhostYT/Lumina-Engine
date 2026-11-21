@@ -90,6 +90,8 @@
 		<activity
 			android:name="com.lumina.engine.csharp.CSharpRunActivity"
 			android:process=":csharp"
+			android:taskAffinity="com.lumina.engine.csharp"
+			android:excludeFromRecents="true"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 			android:theme="@style/AppTheme.FullScreen"
 			android:screenOrientation="portrait"

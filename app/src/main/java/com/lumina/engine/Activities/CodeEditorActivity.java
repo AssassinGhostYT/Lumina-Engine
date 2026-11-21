@@ -149,6 +149,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 				android.content.Intent intent = new android.content.Intent(
 						this, com.lumina.engine.csharp.CSharpRunActivity.class);
 				intent.putExtra(com.lumina.engine.csharp.CSharpRunActivity.EXTRA_FILES, paths);
+				intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(intent);
 			});
 		}

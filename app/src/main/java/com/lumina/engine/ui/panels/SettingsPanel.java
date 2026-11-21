@@ -219,6 +219,7 @@ public class SettingsPanel implements PanelHost.Panel {
             // The test loads Mono; keep it out of the editor process.
             Intent test = new Intent(shell.activity(), com.lumina.engine.csharp.CSharpRunActivity.class);
             test.putExtra(com.lumina.engine.csharp.CSharpRunActivity.EXTRA_TEST, true);
+            test.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             shell.activity().startActivity(test);
         }), new LinearLayout.LayoutParams(-2, Ui.dp(c, 38)));
 
