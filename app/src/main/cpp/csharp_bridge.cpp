@@ -417,6 +417,12 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     if (g_initialized) {
         return env->NewStringUTF("OK:ya iniciado");
     }
+    if (g_domain != nullptr) {
+        // mono_jit_init already ran in this process. Calling it again after a
+        // partial host failure corrupts Mono's GC mutexes on Android.
+        return env->NewStringUTF(
+                "Error: el runtime C# quedo a medio iniciar; reinicia la app");
+    }
 
     g_last_error.clear();
     g_assets = AAssetManager_fromJava(env, asset_manager);
@@ -464,10 +470,16 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     api.set_assemblies_path(managed.c_str());
     api.install_assembly_preload_hook(preload_assembly, nullptr);
 
+    __android_log_print(ANDROID_LOG_INFO, TAG,
+                        "Iniciando mono_jit_init en el proceso C#");
     g_domain = api.jit_init("Nebulon");
     if (g_domain == nullptr) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+                            "mono_jit_init devolvio null");
         return env->NewStringUTF("Error: mono_jit_init devolvio null");
     }
+    __android_log_print(ANDROID_LOG_INFO, TAG,
+                        "mono_jit_init OK; cargando host C#");
 
     // Keep the initializing thread attached for the lifetime of the runtime;
     // CSharpRuntime serializes all calls on one dedicated worker thread.
@@ -483,6 +495,7 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeInit(
     if (host == nullptr) {
         g_last_error = "no se pudo abrir ";
         g_last_error += host_path;
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "%s", g_last_error.c_str());
         return env->NewStringUTF(("Error: " + g_last_error).c_str());
     }
 
