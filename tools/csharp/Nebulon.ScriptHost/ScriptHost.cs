@@ -67,6 +67,7 @@ namespace Nebulon.ScriptHost
                                 optimizationLevel: OptimizationLevel.Release,
                                 allowUnsafe: true,
                                 deterministic: true,
+                                concurrentBuild: false,
                                 nullableContextOptions: NullableContextOptions.Disable));
 
                 using (MemoryStream stream = new MemoryStream())

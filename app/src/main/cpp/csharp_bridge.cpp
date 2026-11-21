@@ -247,11 +247,10 @@ public:
     }
 
     ~MonoThreadScope() {
-        if (attached_ != nullptr && api.thread_detach != nullptr) {
-            api.thread_detach(attached_);
-            __android_log_print(ANDROID_LOG_INFO, TAG,
-                                "Hilo Java separado de Mono");
-        }
+        // Keep the worker attached for the lifetime of the process. Detaching
+        // destroys Mono's per-thread state while its GC can still touch that
+        // mutex, which Android reports as "pthread_mutex_lock ... destroyed".
+        (void) attached_;
     }
 
     MonoThreadScope(const MonoThreadScope&) = delete;
