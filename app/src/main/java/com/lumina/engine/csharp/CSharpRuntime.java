@@ -111,11 +111,14 @@ public final class CSharpRuntime {
 
     private static String testOnWorker(Context context) {
         try {
+            CSharpTrace.append(context, "test start");
             String init = ensureInitialized(context);
             if (init != null) return init;
 
             lastPing = "";
+            CSharpTrace.append(context, "nativeRun start");
             String result = nativeRun("Nebulon");
+            CSharpTrace.append(context, "nativeRun end: " + firstLine(result));
             if (lastPing.isEmpty()) {
                 return result;
             }
@@ -128,10 +131,13 @@ public final class CSharpRuntime {
 
     private static String compileOnWorker(Context context, File[] files) {
         try {
+            CSharpTrace.append(context, "compile start");
             String init = ensureInitialized(context);
             if (init != null) return init;
 
+            CSharpTrace.append(context, "extract Managed");
             File managed = CSharpAssets.ensureManaged(context);
+            CSharpTrace.append(context, "extract Managed ok");
             File outDir = new File(context.getCacheDir(), "nebula-scripts");
             if (!outDir.isDirectory() && !outDir.mkdirs()) {
                 return "No se pudo crear la carpeta de scripts C#.";
@@ -147,8 +153,10 @@ public final class CSharpRuntime {
             if (joined.length() == 0) return "No hay archivos C# validos.";
 
             File refs = new File(managed, "refs");
+            CSharpTrace.append(context, "nativeCompile start");
             String compiled = nativeCompile(output.getAbsolutePath(),
                     joined.toString(), (refs.isDirectory() ? refs : managed).getAbsolutePath());
+            CSharpTrace.append(context, "nativeCompile end: " + firstLine(compiled));
             if (compiled == null || !compiled.startsWith("OK:")) {
                 return compiled == null ? "Error C#: compilacion sin respuesta" : compiled;
             }
@@ -157,7 +165,9 @@ public final class CSharpRuntime {
                 lastLogs.clear();
             }
             lastPing = "";
+            CSharpTrace.append(context, "nativeExecute start");
             String executed = nativeExecute(output.getAbsolutePath(), "", "", "");
+            CSharpTrace.append(context, "nativeExecute end: " + firstLine(executed));
             StringBuilder logs = new StringBuilder();
             synchronized (lastLogs) {
                 for (String line : lastLogs) {
@@ -176,13 +186,24 @@ public final class CSharpRuntime {
 
     private static String ensureInitialized(Context context) throws Exception {
         if (initialized) return null;
+        CSharpTrace.append(context, "extract Managed");
         File managed = CSharpAssets.ensureManaged(context);
+        CSharpTrace.append(context, "extract Managed ok");
+        CSharpTrace.append(context, "nativeInit start");
         String init = nativeInit(managed.getAbsolutePath(), context.getAssets());
+        CSharpTrace.append(context, "nativeInit end: " + firstLine(init));
         if (init == null || !init.startsWith("OK:")) {
             return "No se pudo iniciar C#: " + init;
         }
         initialized = true;
         return null;
+    }
+
+    private static String firstLine(String text) {
+        if (text == null) return "null";
+        int end = text.indexOf('\n');
+        String line = end < 0 ? text : text.substring(0, end);
+        return line.length() > 300 ? line.substring(0, 300) + "..." : line;
     }
 
     static void onNativePing(String message) {

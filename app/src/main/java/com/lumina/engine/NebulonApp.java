@@ -41,6 +41,7 @@ public class NebulonApp extends Application {
 			// editor task and drop the user on the projects home screen.
 			Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
 				Log.e("NebulonCSharp", "Fallo en el proceso C#", throwable);
+				com.lumina.engine.csharp.CSharpTrace.crash(this, throwable);
 				Process.killProcess(Process.myPid());
 				System.exit(10);
 			});

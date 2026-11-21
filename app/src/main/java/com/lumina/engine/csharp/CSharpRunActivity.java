@@ -40,7 +40,19 @@ public final class CSharpRunActivity extends AppCompatActivity {
         Utils.setLanguage(this);
         setContentView(loadingView());
 
+        String previous = CSharpTrace.incomplete(this);
+        if (previous != null) {
+            AlertDialog dialog = Dialogs.longText(this,
+                    "La ejecucion C# anterior se cerro", previous);
+            dialog.setOnDismissListener(d -> beginRun());
+            return;
+        }
+        beginRun();
+    }
+
+    private void beginRun() {
         Intent intent = getIntent();
+        CSharpTrace.begin(this, "activity start test=" + intent.getBooleanExtra(EXTRA_TEST, false));
         if (intent.getBooleanExtra(EXTRA_TEST, false)) {
             startTask(() -> CSharpRuntime.test(getApplicationContext()));
             return;
@@ -68,6 +80,7 @@ public final class CSharpRunActivity extends AppCompatActivity {
             } catch (Throwable error) {
                 result = "Error C#: " + error;
             }
+            CSharpTrace.done(getApplicationContext());
             final String text = result;
             runOnUiThread(() -> showResult(text));
         }, "nebulon-csharp-run").start();
