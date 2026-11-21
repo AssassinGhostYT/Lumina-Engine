@@ -26,6 +26,7 @@ public final class CSharpRuntime {
     private static final boolean AVAILABLE;
 
     private static volatile boolean initialized;
+    private static volatile Context appContext;
     private static volatile String lastPing = "";
     private static final List<String> lastLogs = new ArrayList<>();
 
@@ -186,6 +187,7 @@ public final class CSharpRuntime {
 
     private static String ensureInitialized(Context context) throws Exception {
         if (initialized) return null;
+        appContext = context.getApplicationContext();
         CSharpTrace.append(context, "extract Managed");
         File managed = CSharpAssets.ensureManaged(context);
         CSharpTrace.append(context, "extract Managed ok");
@@ -217,6 +219,8 @@ public final class CSharpRuntime {
 
     static void onNativeLog(String level, String message) {
         String text = message == null ? "" : message;
+        Context context = appContext;
+        if (context != null) CSharpTrace.append(context, "csharp " + text);
         synchronized (lastLogs) {
             lastLogs.add(text);
         }

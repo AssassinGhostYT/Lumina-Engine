@@ -27,6 +27,7 @@ namespace Nebulon.ScriptHost
 
         public static string Compile(string outputPath, string filesList, string referenceDir)
         {
+            Engine.Log("compile: enter");
             if (string.IsNullOrEmpty(outputPath)) return "ERR:falta la ruta de salida";
             if (string.IsNullOrEmpty(referenceDir)) return "ERR:falta la carpeta de referencias";
 
@@ -43,6 +44,7 @@ namespace Nebulon.ScriptHost
 
             try
             {
+                Engine.Log("compile: parse");
                 CSharpParseOptions parse = new CSharpParseOptions(
                         LanguageVersion.CSharp12, DocumentationMode.None);
                 SyntaxTree[] trees = files
@@ -50,9 +52,12 @@ namespace Nebulon.ScriptHost
                                 File.ReadAllText(file), parse, file))
                         .ToArray();
 
+                Engine.Log("compile: references");
                 List<MetadataReference> references = BuildReferences(referenceDir);
+                Engine.Log("compile: references=" + references.Count);
                 if (references.Count == 0) return "ERR:no se encontraron ensamblados de referencia";
 
+                Engine.Log("compile: create");
                 CSharpCompilation compilation = CSharpCompilation.Create(
                         "NebulonUserScripts_" + Guid.NewGuid().ToString("N"),
                         trees,
@@ -66,7 +71,9 @@ namespace Nebulon.ScriptHost
 
                 using (MemoryStream stream = new MemoryStream())
                 {
+                    Engine.Log("compile: emit");
                     EmitResult result = compilation.Emit(stream);
+                    Engine.Log("compile: emitted success=" + result.Success);
                     string diagnostics = FormatDiagnostics(result.Diagnostics, files);
                     if (!result.Success)
                     {
