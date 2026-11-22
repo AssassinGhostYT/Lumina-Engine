@@ -189,6 +189,7 @@ public final class CSharpRuntime {
         if (initialized) return null;
         appContext = context.getApplicationContext();
         nativeSetCrashPath(CSharpTrace.filePath(context));
+        CSharpTrace.append(context, "native crash handler instalado");
         CSharpTrace.append(context, "extract Managed");
         File managed = CSharpAssets.ensureManaged(context);
         CSharpTrace.append(context, "extract Managed ok");

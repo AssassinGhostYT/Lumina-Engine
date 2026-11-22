@@ -59,17 +59,21 @@ public final class CSharpTrace {
     public static String incomplete(Context context) {
         synchronized (LOCK) {
             try (FileInputStream in = new FileInputStream(file(context))) {
+                long size = file(context).length();
+                long skip = Math.max(0, size - 131072);
+                while (skip > 0) {
+                    long moved = in.skip(skip);
+                    if (moved <= 0) break;
+                    skip -= moved;
+                }
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 byte[] chunk = new byte[4096];
                 int read;
-                while ((read = in.read(chunk)) != -1) {
-                    buffer.write(chunk, 0, read);
-                    if (buffer.size() > 65536) break;
-                }
+                while ((read = in.read(chunk)) != -1) buffer.write(chunk, 0, read);
                 String text = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
                 String trimmed = text.trim();
                 if (trimmed.isEmpty() || trimmed.endsWith(DONE)) return null;
-                return text;
+                return skip > 0 ? "… (inicio del log omitido)\n" + text : text;
             } catch (Throwable ignored) {
                 return null;
             }

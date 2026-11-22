@@ -42,6 +42,9 @@ public final class CSharpRunActivity extends AppCompatActivity {
 
         String previous = CSharpTrace.incomplete(this);
         if (previous != null) {
+            if (previous.length() > 18000) {
+                previous = "…\n" + previous.substring(previous.length() - 18000);
+            }
             AlertDialog dialog = Dialogs.longText(this,
                     "La ejecucion C# anterior se cerro", previous);
             dialog.setOnDismissListener(d -> beginRun());
