@@ -188,6 +188,7 @@ public final class CSharpRuntime {
     private static String ensureInitialized(Context context) throws Exception {
         if (initialized) return null;
         appContext = context.getApplicationContext();
+        nativeSetCrashPath(CSharpTrace.filePath(context));
         CSharpTrace.append(context, "extract Managed");
         File managed = CSharpAssets.ensureManaged(context);
         CSharpTrace.append(context, "extract Managed ok");
@@ -234,6 +235,7 @@ public final class CSharpRuntime {
     }
 
     private static native boolean nativeIsAvailable();
+    private static native void nativeSetCrashPath(String path);
     private static native String nativeInit(String managedDir, AssetManager assets);
     private static native String nativeRun(String argument);
     private static native String nativeCompile(String output, String files, String references);

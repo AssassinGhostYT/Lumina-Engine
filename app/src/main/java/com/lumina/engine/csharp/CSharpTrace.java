@@ -25,6 +25,10 @@ public final class CSharpTrace {
         return new File(dir, "last-run.txt");
     }
 
+    public static String filePath(Context context) {
+        return file(context).getAbsolutePath();
+    }
+
     public static void begin(Context context, String text) {
         synchronized (LOCK) {
             try (FileOutputStream out = new FileOutputStream(file(context), false)) {

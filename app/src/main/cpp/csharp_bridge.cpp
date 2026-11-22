@@ -4,8 +4,13 @@
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -83,11 +88,88 @@ MonoMethod* g_run_method = nullptr;
 MonoMethod* g_compile_method = nullptr;
 MonoMethod* g_execute_method = nullptr;
 AAssetManager* g_assets = nullptr;
+char g_crash_path[PATH_MAX] = {};
+bool g_crash_handler_installed = false;
 JavaVM* g_vm = nullptr;
 jclass g_runtime_class = nullptr;
 jmethodID g_ping_method = nullptr;
 jmethodID g_log_method = nullptr;
 jmethodID g_call_method = nullptr;
+
+using BacktraceFn = int (*)(void**, int);
+using BacktraceSymbolsFdFn = void (*)(void* const*, int, int);
+BacktraceFn g_backtrace = nullptr;
+BacktraceSymbolsFdFn g_backtrace_symbols_fd = nullptr;
+
+void write_all(int fd, const char* text, size_t size) {
+    while (size > 0) {
+        ssize_t written = write(fd, text, size);
+        if (written <= 0) return;
+        text += written;
+        size -= static_cast<size_t>(written);
+    }
+}
+
+void crash_handler(int signal, siginfo_t* info, void*) {
+    int fd = open(g_crash_path, O_WRONLY | O_CREAT | O_APPEND, 0600);
+    if (fd >= 0) {
+        char header[256];
+        int length = snprintf(header, sizeof(header),
+                              "\n--- NATIVE CRASH signal=%d code=%d addr=%p ---\n",
+                              signal, info == nullptr ? 0 : info->si_code,
+                              info == nullptr ? nullptr : info->si_addr);
+        if (length > 0) write_all(fd, header, static_cast<size_t>(length));
+
+        int maps = open("/proc/self/maps", O_RDONLY);
+        if (maps >= 0) {
+            char buffer[4096];
+            ssize_t read_bytes;
+            while ((read_bytes = read(maps, buffer, sizeof(buffer))) > 0) {
+                write_all(fd, buffer, static_cast<size_t>(read_bytes));
+            }
+            close(maps);
+        }
+
+        void* frames[80];
+        int count = g_backtrace == nullptr ? 0 : g_backtrace(frames, 80);
+        char frame[32];
+        for (int i = 0; i < count; ++i) {
+            int length = snprintf(frame, sizeof(frame), "%p\n", frames[i]);
+            if (length > 0) write_all(fd, frame, static_cast<size_t>(length));
+        }
+        if (count > 0 && g_backtrace_symbols_fd != nullptr) {
+            g_backtrace_symbols_fd(frames, count, fd);
+        }
+        fsync(fd);
+        close(fd);
+    }
+    struct sigaction action = {};
+    action.sa_handler = SIG_DFL;
+    sigemptyset(&action.sa_mask);
+    sigaction(signal, &action, nullptr);
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, signal);
+    sigprocmask(SIG_UNBLOCK, &set, nullptr);
+    raise(signal);
+    _exit(128 + signal);
+}
+
+void install_crash_handler() {
+    if (g_crash_handler_installed) return;
+    g_backtrace = reinterpret_cast<BacktraceFn>(
+            dlsym(RTLD_DEFAULT, "backtrace"));
+    g_backtrace_symbols_fd = reinterpret_cast<BacktraceSymbolsFdFn>(
+            dlsym(RTLD_DEFAULT, "backtrace_symbols_fd"));
+    struct sigaction action = {};
+    action.sa_sigaction = crash_handler;
+    action.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigemptyset(&action.sa_mask);
+    for (int signal : {SIGABRT, SIGSEGV, SIGBUS, SIGILL, SIGFPE}) {
+        sigaction(signal, &action, nullptr);
+    }
+    g_crash_handler_installed = true;
+}
 bool g_initialized = false;
 std::string g_last_error;
 
@@ -398,6 +480,15 @@ extern "C" MonoString* NebulonCSharpCall(
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     g_vm = vm;
     return JNI_VERSION_1_6;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_lumina_engine_csharp_CSharpRuntime_nativeSetCrashPath(
+        JNIEnv* env, jclass, jstring path) {
+    const std::string value = jstring_to_string(env, path);
+    if (value.empty() || value.size() >= sizeof(g_crash_path)) return;
+    std::memcpy(g_crash_path, value.c_str(), value.size() + 1);
+    install_crash_handler();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
