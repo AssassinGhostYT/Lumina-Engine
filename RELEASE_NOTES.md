@@ -6,6 +6,7 @@
 - La app se llama **Nebulon Engine** en todos los textos visibles.
 - Eliminados los restos de la marca Lumina de la tienda y de los textos de publicación.
 - El paquete sigue siendo `com.lumina.engine` para no perder la ficha de Play Store.
+- Corregida la declaración de orientación para ampliar la disponibilidad en tablets, escritorio y Android XR.
 - Correcciones y traducciones.
 
 ### Versión
