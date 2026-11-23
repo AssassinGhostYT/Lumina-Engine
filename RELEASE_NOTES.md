@@ -1,3 +1,17 @@
+## Nebulon Engine 1.0.7
+
+### Nueva marca
+
+- Nuevo logo **N** en el icono de la app, la pantalla de carga y la cabecera del editor.
+- La app se llama **Nebulon Engine** en todos los textos visibles.
+- Eliminados los restos de la marca Lumina de la tienda y de los textos de publicación.
+- El paquete sigue siendo `com.lumina.engine` para no perder la ficha de Play Store.
+- Correcciones y traducciones.
+
+### Versión
+
+- Versión Android `1.0.7`, código `107`.
+
 ## Nebulon Engine 1.0.6
 
 ### Nombre
