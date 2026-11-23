@@ -107,7 +107,7 @@ public class PublishActivity extends AppCompatActivity {
         form.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 28));
 
         form.addView(Ui.sectionLabel(this, T("store_publish_package", "Package")));
-        LinearLayout pick = Ui.button(this, R.drawable.ic_lumina_upload, T("store_choose_package", "Choose .luminaasset"), false,
+        LinearLayout pick = Ui.button(this, R.drawable.ic_lumina_upload, T("store_choose_package", "Choose an asset package"), false,
                 v -> packagePicker.launch("*/*"));
         form.addView(pick, Ui.matchWrap());
         packageName = Ui.text(this, T("store_no_package", "No package selected"), 12, Ui.TEXT_3);
@@ -196,7 +196,7 @@ public class PublishActivity extends AppCompatActivity {
         String assetId = id.getText().toString().trim().toLowerCase(java.util.Locale.US);
         String tk = StoreAccount.apiKey(this);
         if (packageUri == null) {
-            status.setText(T("store_need_package", "Choose a .luminaasset package first."));
+            status.setText(T("store_need_package", "Choose an asset package first."));
             return;
         }
         if (nm.isEmpty()) {
