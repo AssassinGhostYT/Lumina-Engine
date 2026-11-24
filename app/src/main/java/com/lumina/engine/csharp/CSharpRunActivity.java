@@ -42,6 +42,8 @@ public final class CSharpRunActivity extends AppCompatActivity {
 
         String previous = CSharpTrace.incomplete(this);
         if (previous != null) {
+            String exit = CSharpTrace.exitInfo(this);
+            if (exit != null) previous = previous + "\n\n" + exit;
             if (previous.length() > 18000) {
                 previous = "…\n" + previous.substring(previous.length() - 18000);
             }

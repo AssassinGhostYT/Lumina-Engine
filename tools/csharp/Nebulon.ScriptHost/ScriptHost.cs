@@ -72,9 +72,10 @@ namespace Nebulon.ScriptHost
 
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    Engine.Log("compile: emit");
+                    Engine.Log("compile: emit memory=" + GC.GetTotalMemory(false));
                     EmitResult result = compilation.Emit(stream);
-                    Engine.Log("compile: emitted success=" + result.Success);
+                    Engine.Log("compile: emitted success=" + result.Success
+                            + " memory=" + GC.GetTotalMemory(false));
                     string diagnostics = FormatDiagnostics(result.Diagnostics, files);
                     if (!result.Success)
                     {

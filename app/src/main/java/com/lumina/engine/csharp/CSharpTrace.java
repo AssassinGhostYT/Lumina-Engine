@@ -1,15 +1,20 @@
 package com.lumina.engine.csharp;
 
+import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /** Persistent breadcrumbs for the isolated C# process, which can die without a dialog. */
@@ -78,6 +83,43 @@ public final class CSharpTrace {
                 return null;
             }
         }
+    }
+
+    /** Why Android killed the isolated C# process, plus its native trace when available. */
+    public static String exitInfo(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null;
+        try {
+            ActivityManager manager =
+                    (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            if (manager == null) return null;
+            String process = context.getPackageName() + ":csharp";
+            List<ApplicationExitInfo> exits = manager.getHistoricalProcessExitReasons(
+                    context.getPackageName(), 0, 10);
+            for (ApplicationExitInfo exit : exits) {
+                if (!process.equals(exit.getProcessName())) continue;
+                StringBuilder out = new StringBuilder();
+                out.append("Android exit: reason=").append(exit.getReason())
+                        .append(" status=").append(exit.getStatus())
+                        .append(" importance=").append(exit.getImportance())
+                        .append(" desc=").append(exit.getDescription());
+                try (InputStream in = exit.getTraceInputStream()) {
+                    if (in != null) {
+                        out.append("\n--- ANDROID TRACE ---\n");
+                        byte[] buffer = new byte[8192];
+                        int total = 0;
+                        int read;
+                        while (total < 131072 && (read = in.read(buffer)) != -1) {
+                            out.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
+                            total += read;
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                return out.toString();
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static String format(String text) {
