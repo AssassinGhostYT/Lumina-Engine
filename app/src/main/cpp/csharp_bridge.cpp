@@ -155,12 +155,20 @@ void crash_handler(int signal, siginfo_t* info, void*) {
     _exit(128 + signal);
 }
 
+void capture_backtrace_symbols() {
+    if (g_backtrace == nullptr) {
+        g_backtrace = reinterpret_cast<BacktraceFn>(
+                dlsym(RTLD_DEFAULT, "backtrace"));
+    }
+    if (g_backtrace_symbols_fd == nullptr) {
+        g_backtrace_symbols_fd = reinterpret_cast<BacktraceSymbolsFdFn>(
+                dlsym(RTLD_DEFAULT, "backtrace_symbols_fd"));
+    }
+}
+
 void install_crash_handler() {
     if (g_crash_handler_installed) return;
-    g_backtrace = reinterpret_cast<BacktraceFn>(
-            dlsym(RTLD_DEFAULT, "backtrace"));
-    g_backtrace_symbols_fd = reinterpret_cast<BacktraceSymbolsFdFn>(
-            dlsym(RTLD_DEFAULT, "backtrace_symbols_fd"));
+    capture_backtrace_symbols();
     struct sigaction action = {};
     action.sa_sigaction = crash_handler;
     action.sa_flags = SA_SIGINFO | SA_RESTART;
@@ -169,6 +177,18 @@ void install_crash_handler() {
         sigaction(signal, &action, nullptr);
     }
     g_crash_handler_installed = true;
+}
+
+// mono_jit_init installs its own SIGABRT handler, which hides the abort that
+// Roslyn hits during Emit. Reinstall only SIGABRT after Mono is up: Mono's
+// SIGSEGV handling (used by the GC) stays untouched.
+void install_abort_handler() {
+    capture_backtrace_symbols();
+    struct sigaction action = {};
+    action.sa_sigaction = crash_handler;
+    action.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigemptyset(&action.sa_mask);
+    sigaction(SIGABRT, &action, nullptr);
 }
 bool g_initialized = false;
 std::string g_last_error;
@@ -629,6 +649,7 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_lumina_engine_csharp_CSharpRuntime_nativeCompile(
         JNIEnv* env, jclass, jstring output, jstring files, jstring references) {
     std::lock_guard<std::mutex> lock(g_mutex);
+    install_abort_handler();
     const std::string output_path = jstring_to_string(env, output);
     const std::string file_list = jstring_to_string(env, files);
     const std::string reference_dir = jstring_to_string(env, references);
@@ -642,6 +663,7 @@ Java_com_lumina_engine_csharp_CSharpRuntime_nativeExecute(
         JNIEnv* env, jclass, jstring assembly, jstring type, jstring method,
         jstring argument) {
     std::lock_guard<std::mutex> lock(g_mutex);
+    install_abort_handler();
     const std::string assembly_path = jstring_to_string(env, assembly);
     const std::string type_name = jstring_to_string(env, type);
     const std::string method_name = jstring_to_string(env, method);
