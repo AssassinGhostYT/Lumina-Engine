@@ -35,19 +35,19 @@ public final class Ui {
     private Ui() {}
 
     // ---- palette (dark, matches the projects home screen) ----
-    public static final int BG = 0xFF17191D;
-    public static final int SURFACE = 0xFF202328;
-    public static final int SURFACE_2 = 0xFF292D33;
-    public static final int SURFACE_3 = 0xFF333840;
-    public static final int BORDER = 0xFF3A4048;
-    public static final int ACCENT = 0xFF2196F3;
-    public static final int ACCENT_DARK = 0xFF1976D2;
-    public static final int ACCENT_SOFT = 0x332196F3;
-    public static final int TEXT = 0xFFF2F4F7;
-    public static final int TEXT_2 = 0xFFB0B6BF;
-    public static final int TEXT_3 = 0xFF7D8590;
+    public static final int BG = 0xFF050D0A;
+    public static final int SURFACE = 0xFF0A1711;
+    public static final int SURFACE_2 = 0xFF102219;
+    public static final int SURFACE_3 = 0xFF173326;
+    public static final int BORDER = 0xFF245A40;
+    public static final int ACCENT = 0xFF42E6A0;
+    public static final int ACCENT_DARK = 0xFF159765;
+    public static final int ACCENT_SOFT = 0x3342E6A0;
+    public static final int TEXT = 0xFFF0FFF6;
+    public static final int TEXT_2 = 0xFFB0D2BF;
+    public static final int TEXT_3 = 0xFF789987;
     public static final int DANGER = 0xFFEF5350;
-    public static final int SUCCESS = 0xFF4CAF50;
+    public static final int SUCCESS = 0xFF42E6A0;
     public static final int WARNING = 0xFFFFB300;
 
     public static final String PREF_ICON_SIZE = "icon_size";
@@ -133,7 +133,7 @@ public final class Ui {
     /** Selected / normal state background for toggle buttons. */
     public static Drawable toggleBg(Context c) {
         StateListDrawable s = new StateListDrawable();
-        s.addState(new int[]{android.R.attr.state_selected}, rounded(ACCENT_SOFT, dp(c, 8), ACCENT, dp(c, 1)));
+        s.addState(new int[]{android.R.attr.state_selected}, rounded(ACCENT_SOFT, dp(c, 10), ACCENT, dp(c, 1)));
         s.addState(new int[]{}, rounded(0x00000000, dp(c, 8)));
         return new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), s, rounded(Color.WHITE, dp(c, 8)));
     }
@@ -232,8 +232,8 @@ public final class Ui {
         b.setMinimumHeight(h);
         b.setPadding(dp(c, 12), 0, dp(c, 14), 0);
         b.setBackground(primary
-                ? new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), rounded(ACCENT, dp(c, 8)), null)
-                : new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), rounded(SURFACE_2, dp(c, 8), BORDER, dp(c, 1)), null));
+                ? new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFF159765, 0xFF42E6A0}), null)
+                : new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), rounded(SURFACE_2, dp(c, 12), ACCENT_DARK, dp(c, 1)), null));
         if (icon != 0) {
             ImageView i = smallIcon(c, icon, TEXT, 18);
             LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) i.getLayoutParams();
