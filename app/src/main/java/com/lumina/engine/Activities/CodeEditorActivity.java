@@ -22,6 +22,8 @@ import com.lumina.engine.Helpers.FileUtil;
 import com.lumina.engine.Items.Editor;
 import com.lumina.engine.editor.TestApp;
 import com.lumina.engine.R;
+import com.lumina.engine.team.TeamSession;
+import com.lumina.engine.ui.Tr;
 import com.lumina.engine.Utils;
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme;
 import io.github.rosemoe.sora.langs.textmate.TextMateLanguage;
@@ -32,6 +34,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel;
 import io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry;
 import io.github.rosemoe.sora.text.ContentIO;
 import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.event.ContentChangeEvent;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.SelectionMovement;
 import java.io.File;
@@ -94,6 +97,16 @@ public class CodeEditorActivity extends AppCompatActivity {
 	String path;
 	View save;
 	TextView save_info;
+	private boolean teamReady;
+	private boolean applyingRemote;
+	private final TeamSession.Listener teamListener = new TeamSession.Listener() {
+		@Override public void onText(TeamSession session, String changed, String text) {
+			if (path != null && path.equals(changed)) applyRemote(text);
+		}
+		@Override public void onError(TeamSession session, String message) {
+			runOnUiThread(() -> android.widget.Toast.makeText(CodeEditorActivity.this, message, android.widget.Toast.LENGTH_SHORT).show());
+		}
+	};
 	@Override
 	protected void onCreate(Bundle arg0) {
 		super.onCreate(arg0);
@@ -237,6 +250,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 		} catch(Error | Exception ex){
 			
 		}
+		setupTeam();
 		findViewById(R.id.rotate).setOnClickListener(new View.OnClickListener(){
 			@Override
 			public void onClick(View arg0) {
@@ -291,7 +305,59 @@ public class CodeEditorActivity extends AppCompatActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		TeamSession.get().removeListener(teamListener);
 		if(smart != null) smart.destroy();
+	}
+
+	private void setupTeam() {
+		if (path == null || editor == null) return;
+		String root = com.lumina.engine.CodeEditor.SmartProject.rootOf(path);
+		if (root == null) return;
+		TeamSession.get().init(this);
+		TeamSession.get().addListener(teamListener);
+		editor.setEditable(false);
+		TeamSession.get().load(this, root, () -> {
+			if (TeamSession.get().membership() == null) {
+				editor.setEditable(true);
+				return;
+			}
+			final boolean canEdit = TeamSession.get().canEdit();
+			if (!canEdit) {
+				android.widget.Toast.makeText(this, Tr.t("team_read_only", "Read only: your permission in this team is viewer"), android.widget.Toast.LENGTH_SHORT).show();
+			}
+			String local = editor.getText().toString();
+			TeamSession.get().openFile(path, local, text -> {
+				if (text != null && !text.equals(editor.getText().toString())) applyRemote(text);
+				teamReady = true;
+				editor.setEditable(canEdit);
+			});
+		});
+		editor.subscribeEvent(ContentChangeEvent.class, (event, unsubscribe) -> {
+			if (!teamReady || applyingRemote) return;
+			int action = event.getAction();
+			if (action == ContentChangeEvent.ACTION_INSERT) {
+				TeamSession.get().localInsert(path, event.getChangeStart().index, event.getChangedText().toString());
+			} else if (action == ContentChangeEvent.ACTION_DELETE) {
+				TeamSession.get().localDelete(path, event.getChangeStart().index, event.getChangeEnd().index);
+			} else if (action == ContentChangeEvent.ACTION_SET_NEW_TEXT) {
+				TeamSession.get().localReplace(path, editor.getText().toString());
+			}
+		});
+	}
+
+	private void applyRemote(String text) {
+		if (text == null || editor == null) return;
+		if (text.equals(editor.getText().toString())) return;
+		int left = editor.getCursor().getLeft();
+		int right = editor.getCursor().getRight();
+		applyingRemote = true;
+		try {
+			editor.getText().replace(0, editor.getText().length(), text);
+			int len = editor.getText().length();
+			editor.setSelection(Math.min(left, len), Math.min(right, len));
+		} catch (Throwable ignored) {
+		}
+		editor.post(() -> applyingRemote = false);
 	}
 	
 	/*@Override

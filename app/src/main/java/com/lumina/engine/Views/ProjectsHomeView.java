@@ -36,6 +36,7 @@ import com.lumina.engine.Helpers.EngineSettings;
 import com.lumina.engine.MainActivity;
 import com.lumina.engine.editor.ui.sub.EditorField;
 import com.lumina.engine.R;
+import com.lumina.engine.team.TeamSettings;
 import com.lumina.engine.ui.Ui;
 import android.view.ViewGroup;
 
@@ -256,6 +257,30 @@ public class ProjectsHomeView extends FrameLayout {
         SimpleDateFormat format = new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.ENGLISH);
         LayoutInflater inflater = LayoutInflater.from(activity);
         int shown = 0;
+        boolean sharedHeader = false;
+        for (TeamSettings.Membership team : TeamSettings.shared(activity)) {
+            if (team == null || team.projectPath == null) continue;
+            if (team.ownerId != null && team.ownerId.equals(team.memberId)) continue;
+            File dir = new File(team.projectPath);
+            if (!dir.isDirectory()) continue;
+            String label = (team.roomName == null || team.roomName.isEmpty() ? dir.getName() : team.roomName) + " · " + dir.getName();
+            if (!label.toLowerCase(Locale.ROOT).contains(query)) continue;
+            if (!sharedHeader) {
+                TextView header = Ui.text(activity, T("home_shared_with_me", "Compartidos conmigo"), 13, Ui.TEXT_2);
+                header.setTypeface(null, android.graphics.Typeface.BOLD);
+                header.setPadding(Ui.dp(activity, 6), Ui.dp(activity, 10), Ui.dp(activity, 6), Ui.dp(activity, 4));
+                projectsList.addView(header);
+                sharedHeader = true;
+            }
+            View row = inflater.inflate(R.layout.home_item_project, projectsList, false);
+            ((TextView) row.findViewById(R.id.project_name)).setText(label);
+            ((TextView) row.findViewById(R.id.project_date)).setText(T("team_shared", "Equipo compartido"));
+            row.setOnClickListener(v -> openProject(dir));
+            View menu = row.findViewById(R.id.project_menu);
+            menu.setOnClickListener(v -> showProjectMenu(dir, menu));
+            projectsList.addView(row);
+            shown++;
+        }
         for (File project : all) {
             if (!project.getName().toLowerCase(Locale.ROOT).contains(query)) continue;
             View row = inflater.inflate(R.layout.home_item_project, projectsList, false);

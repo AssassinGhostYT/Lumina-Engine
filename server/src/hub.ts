@@ -1,8 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
 import { TOOL_BY_NAME } from "./tools";
+import type { Room } from "./room";
 
 export interface Env {
   HUB: DurableObjectNamespace<Hub>;
+  ROOM: DurableObjectNamespace<Room>;
   DAILY_CALLS?: string;
   IDLE_PURGE_HOURS?: string;
   /** D1 database with the published assets (optional until the store is configured). */

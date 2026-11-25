@@ -33,6 +33,7 @@ import com.lumina.engine.ui.panels.FilesPanel;
 import com.lumina.engine.ui.panels.JointsPanel;
 import com.lumina.engine.ui.panels.PropertiesPanel;
 import com.lumina.engine.ui.panels.SettingsPanel;
+import com.lumina.engine.ui.panels.TeamPanel;
 import com.lumina.engine.ui.panels.VariablesPanel;
 
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     public final AddItemPanel addItem;
     public final com.lumina.engine.ui.panels.RemotePanel remote;
     public final com.lumina.engine.ui.panels.AiHubPanel aiHub;
+    public final TeamPanel team;
     private RemoteOverlay remoteOverlay;
     /** Dimming layers over the editing bars; shown while an AI works (see applyRemoteLock). */
     private final ArrayList<View> shields = new ArrayList<>();
@@ -140,7 +142,8 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         addItem = new AddItemPanel(this);
         remote = new com.lumina.engine.ui.panels.RemotePanel(this);
         aiHub = new com.lumina.engine.ui.panels.AiHubPanel(this, remote, ai);
-        panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, files, aiHub, git, settings),
+        team = new TeamPanel(this);
+        panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, files, aiHub, git, team, settings),
                 p -> { if (com.lumina.engine.remote.RemoteSession.isLocked() && p != files && p != aiHub) togglePanel(p); else panels.show(p); });
         com.lumina.engine.remote.RemoteSession.addListener(sessionListener);
         com.lumina.engine.remote.RemoteClient.get().addListener((st, d) -> applyRemoteLock());
@@ -502,6 +505,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         addRail(c, rail, files);
         addRail(c, rail, aiHub);
         addRail(c, rail, git);
+        addRail(c, rail, team);
         return rail;
     }
 
@@ -1365,7 +1369,10 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (current == this && activity.isFinishing()) current = null;
+        if (current == this && activity.isFinishing()) {
+            current = null;
+            if (team != null) team.dispose();
+        }
     }
 
     /** True when the Gdx context is alive. */
