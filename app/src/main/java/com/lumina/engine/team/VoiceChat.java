@@ -13,19 +13,34 @@ import android.os.Process;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public final class VoiceChat {
     private static final int RATE = 16000;
     private static final int IN_CHANNEL = AudioFormat.CHANNEL_IN_MONO;
     private static final int OUT_CHANNEL = AudioFormat.CHANNEL_OUT_MONO;
     private static final int ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int FRAME_BYTES = RATE / 50 * 2;
+    private static final int PREBUFFER = 3;
+    private static final float GAIN = 2.0f;
+    private static final byte[] SILENCE = new byte[FRAME_BYTES];
+
+    private static final class CallTrack {
+        final AudioTrack track;
+        final ArrayBlockingQueue<byte[]> queue = new ArrayBlockingQueue<>(32);
+        volatile boolean running = true;
+        Thread thread;
+        CallTrack(AudioTrack track) { this.track = track; }
+    }
 
     private final ExecutorService playback = Executors.newSingleThreadExecutor();
-    private final Map<String, AudioTrack> callTracks = new HashMap<>();
+    private final Map<String, CallTrack> callTracks = new HashMap<>();
     private final Map<String, Long> speakingAt = new ConcurrentHashMap<>();
+    private final AudioManager audio;
     private AudioTrack track;
     private AudioRecord record;
     private AcousticEchoCanceler aec;
@@ -38,8 +53,12 @@ public final class VoiceChat {
     private volatile boolean playing;
     private volatile boolean capturing;
     private volatile long localSpokeAt;
+    private int previousMode = AudioManager.MODE_NORMAL;
+    private boolean previousSpeaker;
+    private boolean audioConfigured;
 
     public VoiceChat(Context context) {
+        audio = (AudioManager) context.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
     }
 
     public synchronized boolean startPlayback() {
@@ -93,9 +112,11 @@ public final class VoiceChat {
         localSpokeAt = 0;
         inCall = true;
         muted = false;
+        configureAudio();
         if (!startCapture()) {
             inCall = false;
             stopCapture();
+            restoreAudio();
             return false;
         }
         return true;
@@ -109,6 +130,7 @@ public final class VoiceChat {
         stopCapture();
         releaseCallTracks();
         stopPlayback();
+        restoreAudio();
     }
 
     public synchronized boolean inCall() {
@@ -145,6 +167,7 @@ public final class VoiceChat {
         playing = false;
         releaseCallTracks();
         releaseTrack();
+        restoreAudio();
     }
 
     public synchronized boolean startTalking() {
@@ -182,26 +205,25 @@ public final class VoiceChat {
             playSingle(data);
             return;
         }
-        final AudioTrack target;
+        byte[] pcm = amplify(data);
+        final CallTrack target;
         final String key;
         synchronized (this) {
             if (!inCall) return;
             key = from == null || from.isEmpty() ? "unknown" : from;
-            AudioTrack existing = callTracks.get(key);
+            CallTrack existing = callTracks.get(key);
             if (existing == null) {
-                existing = newTrack();
+                existing = newCallTrack();
                 if (existing == null) return;
                 callTracks.put(key, existing);
             }
             target = existing;
-            if (loud(data, data.length)) speakingAt.put(key, System.currentTimeMillis());
+            if (loud(pcm, pcm.length)) speakingAt.put(key, System.currentTimeMillis());
         }
-        playback.execute(() -> {
-            try {
-                target.write(data, 0, data.length);
-            } catch (Throwable ignored) {
-            }
-        });
+        if (!target.queue.offer(pcm)) {
+            target.queue.poll();
+            target.queue.offer(pcm);
+        }
     }
 
     private void playSingle(byte[] data) {
@@ -346,39 +368,116 @@ public final class VoiceChat {
     private AudioTrack newTrack() {
         int min = AudioTrack.getMinBufferSize(RATE, OUT_CHANNEL, ENCODING);
         if (min <= 0) min = RATE;
-        int size = Math.max(min, RATE / 5 * 2);
+        int size = Math.max(min, RATE / 10 * 2);
         try {
             AudioTrack t = new AudioTrack(AudioManager.STREAM_MUSIC, RATE, OUT_CHANNEL, ENCODING, size, AudioTrack.MODE_STREAM);
             if (t.getState() != AudioTrack.STATE_INITIALIZED) {
                 t.release();
                 return null;
             }
-            t.play();
+            t.setVolume(1f);
             return t;
         } catch (Throwable ignored) {
             return null;
         }
     }
 
+    private CallTrack newCallTrack() {
+        AudioTrack t = newTrack();
+        if (t == null) return null;
+        CallTrack call = new CallTrack(t);
+        Thread thread = new Thread(() -> pump(call), "team-voice-speaker");
+        call.thread = thread;
+        thread.start();
+        return call;
+    }
+
+    private void pump(CallTrack call) {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
+        AudioTrack t = call.track;
+        try {
+            for (int i = 0; i < PREBUFFER; i++) t.write(SILENCE, 0, SILENCE.length);
+            t.play();
+            while (call.running && inCall) {
+                byte[] frame;
+                try {
+                    frame = call.queue.poll(20, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    break;
+                }
+                if (!call.running || !inCall) break;
+                byte[] out = frame == null ? SILENCE : frame;
+                if (t.write(out, 0, out.length) < 0) break;
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            try {
+                t.pause();
+                t.flush();
+            } catch (Throwable ignored) {
+            }
+            try {
+                t.release();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     public synchronized void drop(String from) {
         if (from == null) return;
         speakingAt.remove(from);
-        releaseOne(callTracks.remove(from));
+        stopCallTrack(callTracks.remove(from));
     }
 
     private void releaseCallTracks() {
-        for (AudioTrack t : callTracks.values()) releaseOne(t);
+        for (CallTrack call : callTracks.values()) stopCallTrack(call);
         callTracks.clear();
     }
 
-    private void releaseOne(AudioTrack t) {
-        if (t == null) return;
+    private void stopCallTrack(CallTrack call) {
+        if (call == null) return;
+        call.running = false;
+        call.queue.clear();
+        if (call.thread != null) call.thread.interrupt();
+    }
+
+    private void configureAudio() {
+        if (audio == null || audioConfigured) return;
         try {
-            t.pause();
-            t.flush();
-            t.release();
+            previousMode = audio.getMode();
+            previousSpeaker = audio.isSpeakerphoneOn();
+            audio.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            if (!audio.isWiredHeadsetOn() && !audio.isBluetoothA2dpOn() && !audio.isBluetoothScoOn()) {
+                audio.setSpeakerphoneOn(true);
+            }
+            audioConfigured = true;
+        } catch (Throwable ignored) {
+            audioConfigured = false;
+        }
+    }
+
+    private void restoreAudio() {
+        if (audio == null || !audioConfigured) return;
+        try {
+            audio.setSpeakerphoneOn(previousSpeaker);
+            audio.setMode(previousMode);
         } catch (Throwable ignored) {
         }
+        audioConfigured = false;
+    }
+
+    private static byte[] amplify(byte[] data) {
+        byte[] out = new byte[data.length];
+        for (int i = 0; i + 1 < data.length; i += 2) {
+            int sample = (short) ((data[i] & 0xff) | (data[i + 1] << 8));
+            int boosted = (int) (sample * GAIN);
+            if (boosted > 32767) boosted = 32767;
+            else if (boosted < -32768) boosted = -32768;
+            out[i] = (byte) (boosted & 0xff);
+            out[i + 1] = (byte) ((boosted >> 8) & 0xff);
+        }
+        if ((data.length & 1) == 1) out[data.length - 1] = data[data.length - 1];
+        return out;
     }
 
     private void releaseRecord() {
