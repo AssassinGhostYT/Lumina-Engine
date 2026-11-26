@@ -17,6 +17,7 @@ import com.lumina.engine.team.TeamSettings.Membership;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,12 +33,14 @@ import java.util.concurrent.Executors;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 public final class TeamSession {
     public interface Listener {
         default void onState(TeamSession session) {}
         default void onMembers(TeamSession session) {}
         default void onChat(TeamSession session, Chat message) {}
+        default void onVoice(TeamSession session) {}
         default void onText(TeamSession session, String path, String text) {}
         default void onError(TeamSession session, String message) {}
     }
@@ -59,11 +62,17 @@ public final class TeamSession {
     private Context app;
     private String projectPath;
     private String site;
-    private String state = "idle";
-    private Membership membership;
+    private volatile String state = "idle";
+    private volatile Membership membership;
     private Info info;
-    private WebSocket socket;
+    private volatile WebSocket socket;
     private int generation;
+    private VoiceChat voice;
+    private final CopyOnWriteArrayList<String> voiceMembers = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<String> voiceMutedMembers = new CopyOnWriteArrayList<>();
+    private volatile boolean inVoice;
+    private volatile boolean voiceMuted;
+    private volatile boolean wantVoice;
 
     private TeamSession() {}
 
@@ -73,6 +82,7 @@ public final class TeamSession {
 
     public void init(Context context) {
         if (app == null) app = context.getApplicationContext();
+        if (voice == null) voice = new VoiceChat(app);
     }
 
     public void addListener(Listener listener) {
@@ -115,6 +125,86 @@ public final class TeamSession {
         return "connected".equals(state);
     }
 
+    public VoiceChat voice() {
+        return voice;
+    }
+
+    public List<String> voiceMembers() {
+        return new ArrayList<>(voiceMembers);
+    }
+
+    public boolean inVoice() {
+        return inVoice;
+    }
+
+    public boolean wantsVoice() {
+        return wantVoice;
+    }
+
+    public boolean voiceMuted() {
+        return voiceMuted;
+    }
+
+    public boolean voiceMutedFor(String memberId) {
+        if (memberId == null) return false;
+        if (membership != null && memberId.equals(membership.memberId)) return voiceMuted;
+        return voiceMutedMembers.contains(memberId);
+    }
+
+    public boolean isSpeaking(String memberId) {
+        if (voice == null || memberId == null) return false;
+        if (membership != null && memberId.equals(membership.memberId)) return voice.localSpeaking();
+        return voice.remoteSpeaking(memberId);
+    }
+
+    public void joinVoice() {
+        if (membership == null) return;
+        wantVoice = true;
+        if (!isConnected() || socket == null) {
+            notifyVoice();
+            return;
+        }
+        if (voice == null || !voice.startCall()) {
+            wantVoice = false;
+            voiceMuted = false;
+            notifyVoice();
+            notifyError("voice_unavailable");
+            return;
+        }
+        inVoice = true;
+        voiceMuted = false;
+        sendVoiceState(true);
+        notifyVoice();
+    }
+
+    public void leaveVoice() {
+        wantVoice = false;
+        if (voice != null) voice.stopCall();
+        inVoice = false;
+        voiceMuted = false;
+        sendVoiceState(false);
+        if (membership != null) {
+            voiceMembers.remove(membership.memberId);
+            voiceMutedMembers.remove(membership.memberId);
+        }
+        notifyVoice();
+    }
+
+    public void toggleVoiceMute() {
+        if (!inVoice || voice == null) return;
+        boolean next = !voiceMuted;
+        if (voice.setMuted(next)) {
+            voiceMuted = next;
+            sendVoiceMute();
+            notifyVoice();
+        } else {
+            voiceMuted = true;
+            sendVoiceMute();
+            notifyVoice();
+            notifyError("voice_unavailable");
+        }
+    }
+
     public List<Member> members() {
         return info == null || info.members == null ? Collections.emptyList() : info.members;
     }
@@ -131,6 +221,7 @@ public final class TeamSession {
             return;
         }
         projectPath = path;
+        wantVoice = false;
         closeSocket();
         outbox.clear();
         membership = TeamSettings.get(app, path);
@@ -178,6 +269,7 @@ public final class TeamSession {
             if (done != null) done.on("no_project");
             return;
         }
+        wantVoice = false;
         closeSocket();
         outbox.clear();
         state = "connecting";
@@ -222,6 +314,7 @@ public final class TeamSession {
             if (done != null) done.on("no_project");
             return;
         }
+        wantVoice = false;
         closeSocket();
         outbox.clear();
         state = "connecting";
@@ -262,7 +355,9 @@ public final class TeamSession {
 
     public void leave() {
         generation++;
+        wantVoice = false;
         closeSocket();
+        if (voice != null) voice.release();
         files.clear();
         outbox.clear();
         if (app != null && projectPath != null) TeamSettings.clear(app, projectPath);
@@ -356,6 +451,14 @@ public final class TeamSession {
         if (newEnd > start) for (TeamCrdt.Op op : crdt.insert(start, text.substring(start, newEnd))) sendOp(path, op);
     }
 
+    public void sendVoice(byte[] data, int length) {
+        WebSocket ws = socket;
+        if (ws == null || !isConnected() || !inVoice || data == null || length <= 0) return;
+        byte[] copy = new byte[length];
+        System.arraycopy(data, 0, copy, 0, length);
+        ws.send(ByteString.of(copy));
+    }
+
     public void sendChat(String text) {
         if (membership == null || text == null || text.trim().isEmpty()) return;
         String value = text.trim();
@@ -377,21 +480,26 @@ public final class TeamSession {
         });
     }
 
-    public void translate(String text, String target, Callback<String> done) {
-        if (membership == null) {
+    public void translate(String text, String source, String target, Callback<String> done) {
+        final Membership m = membership;
+        if (m == null) {
             done.on(null);
             return;
         }
         io.execute(() -> {
+            String translated = null;
             try {
-                String translated = client.translate(membership, text, target);
-                main.post(() -> done.on(translated));
-            } catch (IOException e) {
-                main.post(() -> {
-                    notifyError(message(e));
-                    done.on(null);
-                });
+                translated = client.translate(m, text, source, target);
+            } catch (IOException ignored) {
             }
+            if (translated == null || translated.trim().isEmpty()) {
+                try {
+                    translated = client.translatePublic(text, source, target);
+                } catch (IOException ignored) {
+                }
+            }
+            final String value = translated;
+            main.post(() -> done.on(value));
         });
     }
 
@@ -509,7 +617,9 @@ public final class TeamSession {
                     state = "connected";
                     flush();
                     reloadFiles();
+                    if (wantVoice) joinVoice();
                     notifyState();
+                    notifyVoice();
                 });
             }
 
@@ -529,10 +639,27 @@ public final class TeamSession {
             }
 
             @Override
+            public void onMessage(WebSocket webSocket, ByteString bytes) {
+                if (webSocket != socket || voice == null) return;
+                byte[] raw = bytes.toByteArray();
+                if (raw.length < 2) return;
+                int idLength = raw[0] & 0xff;
+                if (idLength <= 0 || 1 + idLength >= raw.length) {
+                    voice.play("", raw);
+                    return;
+                }
+                String from = new String(raw, 1, idLength, StandardCharsets.UTF_8);
+                byte[] pcm = new byte[raw.length - 1 - idLength];
+                System.arraycopy(raw, 1 + idLength, pcm, 0, pcm.length);
+                voice.play(from, pcm);
+            }
+
+            @Override
             public void onFailure(WebSocket webSocket, Throwable t, Response response) {
                 if (webSocket != socket) return;
                 main.post(() -> {
                     if (webSocket != socket) return;
+                    resetVoiceCall();
                     state = "offline";
                     notifyState();
                     notifyError(message(t));
@@ -544,6 +671,7 @@ public final class TeamSession {
                 if (webSocket != socket) return;
                 main.post(() -> {
                     if (webSocket != socket) return;
+                    resetVoiceCall();
                     state = "offline";
                     notifyState();
                 });
@@ -558,8 +686,10 @@ public final class TeamSession {
             if (loaded != null) {
                 info = loaded;
                 syncMembership(loaded);
+                applyVoice(loaded.voice, loaded.voiceMuted);
                 notifyMembers();
                 notifyState();
+                notifyVoice();
             }
             return;
         }
@@ -568,6 +698,23 @@ public final class TeamSession {
                 info.members = GSON.fromJson(json.getAsJsonArray("members"), new com.google.gson.reflect.TypeToken<List<Member>>() {}.getType());
                 notifyMembers();
             }
+            return;
+        }
+        if ("voice".equals(type)) {
+            List<String> members = new ArrayList<>();
+            List<String> muted = new ArrayList<>();
+            if (json.has("members") && json.get("members").isJsonArray()) {
+                for (JsonElement e : json.getAsJsonArray("members")) {
+                    if (e != null && e.isJsonPrimitive()) members.add(e.getAsString());
+                }
+            }
+            if (json.has("muted") && json.get("muted").isJsonArray()) {
+                for (JsonElement e : json.getAsJsonArray("muted")) {
+                    if (e != null && e.isJsonPrimitive()) muted.add(e.getAsString());
+                }
+            }
+            applyVoice(members, muted);
+            notifyVoice();
             return;
         }
         if ("chat".equals(type)) {
@@ -689,9 +836,90 @@ public final class TeamSession {
         return m;
     }
 
+    private void applyVoice(List<String> members, List<String> muted) {
+        List<String> previous = new ArrayList<>(voiceMembers);
+        voiceMembers.clear();
+        if (members != null) {
+            for (String id : members) {
+                if (id != null && !id.isEmpty() && !voiceMembers.contains(id)) voiceMembers.add(id);
+            }
+        }
+        voiceMutedMembers.clear();
+        if (muted != null) {
+            for (String id : muted) {
+                if (id != null && voiceMembers.contains(id) && !voiceMutedMembers.contains(id)) voiceMutedMembers.add(id);
+            }
+        }
+        if (voice != null) {
+            for (String id : previous) {
+                if (!voiceMembers.contains(id)) voice.drop(id);
+            }
+        }
+        boolean present = membership != null && voiceMembers.contains(membership.memberId);
+        if (present) {
+            boolean active = wantVoice && present;
+            if (active && !ensureCall()) {
+                wantVoice = false;
+                sendVoiceState(false);
+                active = false;
+                notifyError("voice_unavailable");
+            }
+            inVoice = active;
+            voiceMuted = active && voice != null && voice.muted();
+        } else if (wantVoice) {
+            if (!ensureCall()) {
+                wantVoice = false;
+                inVoice = false;
+                voiceMuted = false;
+                notifyError("voice_unavailable");
+                return;
+            }
+            inVoice = true;
+            voiceMuted = voice != null && voice.muted();
+            sendVoiceState(true);
+        } else {
+            if (inVoice && voice != null) voice.stopCall();
+            inVoice = false;
+            voiceMuted = false;
+        }
+    }
+
+    private boolean ensureCall() {
+        if (voice == null) return false;
+        return voice.inCall() || voice.startCall();
+    }
+
+    private void sendVoiceState(boolean join) {
+        WebSocket ws = socket;
+        if (ws == null || !isConnected()) return;
+        JsonObject m = new JsonObject();
+        m.addProperty("t", join ? "voice_join" : "voice_leave");
+        ws.send(m.toString());
+    }
+
+    private void sendVoiceMute() {
+        WebSocket ws = socket;
+        if (ws == null || !isConnected()) return;
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "voice_mute");
+        m.addProperty("muted", voiceMuted);
+        ws.send(m.toString());
+    }
+
+    private void resetVoiceCall() {
+        if (voice != null) voice.stopCall();
+        inVoice = false;
+        voiceMuted = false;
+        voiceMembers.clear();
+        voiceMutedMembers.clear();
+        if (app != null) VoiceCallService.sync(app);
+    }
+
     private void closeSocket() {
         WebSocket old = socket;
         socket = null;
+        resetVoiceCall();
+        if (voice != null) voice.stopPlayback();
         if (old != null) {
             try {
                 old.close(1000, "bye");
@@ -706,6 +934,11 @@ public final class TeamSession {
 
     private void notifyMembers() {
         for (Listener listener : listeners) listener.onMembers(this);
+    }
+
+    private void notifyVoice() {
+        if (app != null) VoiceCallService.sync(app);
+        for (Listener listener : listeners) listener.onVoice(this);
     }
 
     private void notifyText(String path, String text) {

@@ -45,6 +45,8 @@ interface Meta {
 
 interface Attached {
   memberId: string;
+  voice?: boolean;
+  muted?: boolean;
 }
 
 const MAX_TEXT = 2000;
@@ -54,7 +56,9 @@ const MAX_SEED = 3_000_000;
 const FILE_PATH = /^[A-Za-z0-9_./ -]{1,300}$/;
 const OP_ID = /^[A-Za-z0-9_:.-]{1,200}$/;
 const MAX_OP_TEXT = 500_000;
+const MAX_VOICE_FRAME = 64_000;
 const TARGET_LANG = /^[a-z]{2}$/;
+const SOURCE_LANG = /^[a-z]{2}$/;
 
 const canEdit = (role: Role) => role === "owner" || role === "admin" || role === "editor";
 const canManage = (role: Role) => role === "owner" || role === "admin";
@@ -93,6 +97,41 @@ async function sha256(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function googleTranslate(value: string, source: string, target: string): Promise<string> {
+  try {
+    const url = new URL("https://translate.googleapis.com/translate_a/single");
+    url.searchParams.set("client", "gtx");
+    url.searchParams.set("sl", source || "auto");
+    url.searchParams.set("tl", target);
+    url.searchParams.set("dt", "t");
+    url.searchParams.set("q", value);
+    const response = await fetch(url.toString(), { headers: { "user-agent": "NebulonEngine/1.0" } });
+    if (!response.ok) return "";
+    const data = (await response.json()) as unknown;
+    const parts = Array.isArray(data) && Array.isArray((data as any)[0]) ? (data as any)[0] : [];
+    return parts.map((part: any) => (Array.isArray(part) ? String(part[0] ?? "") : "")).join("").trim();
+  } catch {
+    return "";
+  }
+}
+
+async function myMemoryTranslate(value: string, source: string, target: string): Promise<string> {
+  try {
+    const url = new URL("https://api.mymemory.translated.net/get");
+    url.searchParams.set("q", value);
+    url.searchParams.set("langpair", `${source}|${target}`);
+    const response = await fetch(url.toString(), { headers: { "user-agent": "NebulonEngine/1.0" } });
+    if (!response.ok) return "";
+    const data = (await response.json()) as any;
+    if (Number(data?.responseStatus) !== 200) return "";
+    const text = String(data?.responseData?.translatedText ?? "").trim();
+    if (!text || /MYMEMORY WARNING|INVALID SOURCE|PLEASE SELECT TWO DISTINCT/i.test(text)) return "";
+    return text;
+  } catch {
+    return "";
+  }
 }
 
 function publicMember(member: Member, online: boolean) {
@@ -233,28 +272,23 @@ export class Room extends DurableObject<Env> {
     return { msg: message };
   }
 
-  async translate(token: string, text: string, target: string) {
+  async translate(token: string, text: string, source: string, target: string) {
     const member = await this.auth(token);
     if (!member) return { error: "unauthorized" as const };
     const value = String(text ?? "").trim().slice(0, MAX_TEXT);
+    const src = SOURCE_LANG.test(String(source ?? "").toLowerCase()) ? String(source).toLowerCase() : "auto";
     const lang = String(target ?? "").slice(0, 2).toLowerCase();
     if (!value || !TARGET_LANG.test(lang)) return { error: "bad_request" as const };
-    try {
-      const url = new URL("https://translate.googleapis.com/translate_a/single");
-      url.searchParams.set("client", "gtx");
-      url.searchParams.set("sl", "auto");
-      url.searchParams.set("tl", lang);
-      url.searchParams.set("dt", "t");
-      url.searchParams.set("q", value);
-      const response = await fetch(url.toString(), { headers: { "user-agent": "NebulonEngine/1.0" } });
-      if (!response.ok) return { text: value, error: "translate_failed" as const };
-      const data = (await response.json()) as unknown;
-      const parts = Array.isArray(data) && Array.isArray((data as any)[0]) ? (data as any)[0] : [];
-      const translated = parts.map((part: any) => (Array.isArray(part) ? String(part[0] ?? "") : "")).join("");
-      return translated ? { text: translated } : { text: value, error: "translate_failed" as const };
-    } catch {
-      return { text: value, error: "translate_failed" as const };
-    }
+    if (src !== "auto" && src === lang) return { text: value };
+
+    const google = await googleTranslate(value, src, lang);
+    if (google) return { text: google };
+
+    // Google occasionally blocks datacenter IPs; MyMemory is a free fallback.
+    const memory = await myMemoryTranslate(value, src === "auto" ? "en" : src, lang);
+    if (memory) return { text: memory };
+
+    return { text: value, error: "translate_failed" as const };
   }
 
   async setRole(token: string, memberId: string, role: string) {
@@ -316,19 +350,44 @@ export class Room extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ memberId: member.id } satisfies Attached);
+    server.serializeAttachment({ memberId: member.id, voice: false } satisfies Attached);
     member.lastSeen = Date.now();
     await this.ctx.storage.put("member:" + member.id, member);
 
     const info = await this.infoFor(member);
     const chat = (await this.ctx.storage.get<ChatMessage[]>("chat")) ?? [];
-    server.send(JSON.stringify({ t: "welcome", ...info, chat }));
+    server.send(JSON.stringify({ t: "welcome", ...info, chat, voice: this.voiceMembers(), voiceMuted: this.voiceMuted() }));
     this.broadcastMembers();
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
-    if (typeof message !== "string") return;
+    if (typeof message !== "string") {
+      if (message.byteLength > MAX_VOICE_FRAME) return;
+      const attached = this.attachment(ws);
+      if (!attached || !attached.voice) return;
+      const member = await this.ctx.storage.get<Member>("member:" + attached.memberId);
+      if (!member) {
+        ws.close(4001, "removed");
+        return;
+      }
+      const from = new TextEncoder().encode(attached.memberId);
+      if (from.length > 255) return;
+      const frame = new Uint8Array(1 + from.length + message.byteLength);
+      frame[0] = from.length;
+      frame.set(from, 1);
+      frame.set(new Uint8Array(message), 1 + from.length);
+      for (const other of this.ctx.getWebSockets()) {
+        if (other === ws || other.readyState !== 1) continue;
+        if (!this.attachment(other)?.voice) continue;
+        try {
+          other.send(frame.buffer);
+        } catch {
+          /* closed */
+        }
+      }
+      return;
+    }
     let data: any;
     try {
       data = JSON.parse(message);
@@ -344,6 +403,21 @@ export class Room extends DurableObject<Env> {
     }
     if (data.t === "ping") {
       ws.send(JSON.stringify({ t: "pong" }));
+      return;
+    }
+    if (data.t === "voice_join" || data.t === "voice_leave") {
+      const wanted = data.t === "voice_join";
+      if (!!attached.voice === wanted) return;
+      ws.serializeAttachment({ ...attached, voice: wanted, muted: false } satisfies Attached);
+      this.broadcastVoice();
+      return;
+    }
+    if (data.t === "voice_mute") {
+      if (!attached.voice) return;
+      const muted = data.muted === true;
+      if (!!attached.muted === muted) return;
+      ws.serializeAttachment({ ...attached, muted } satisfies Attached);
+      this.broadcastVoice();
       return;
     }
     if (data.t === "op") {
@@ -384,15 +458,29 @@ export class Room extends DurableObject<Env> {
   }
 
   async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
+    const attached = this.attachment(ws);
+    try {
+      if (attached?.voice) ws.serializeAttachment({ ...attached, voice: false, muted: false } satisfies Attached);
+    } catch {
+      /* closed */
+    }
     try {
       ws.close(code, reason);
     } catch {
       /* ignore */
     }
+    this.broadcastVoice();
     this.broadcastMembers();
   }
 
   async webSocketError(ws: WebSocket): Promise<void> {
+    const attached = this.attachment(ws);
+    try {
+      if (attached?.voice) ws.serializeAttachment({ ...attached, voice: false, muted: false } satisfies Attached);
+    } catch {
+      /* closed */
+    }
+    this.broadcastVoice();
     this.broadcastMembers();
   }
 
@@ -438,6 +526,30 @@ export class Room extends DurableObject<Env> {
 
   private isOnline(memberId: string): boolean {
     return this.ctx.getWebSockets().some((ws) => this.attachment(ws)?.memberId === memberId);
+  }
+
+  private voiceMembers(): string[] {
+    const ids = new Set<string>();
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws.readyState !== 1) continue;
+      const attached = this.attachment(ws);
+      if (attached?.voice) ids.add(attached.memberId);
+    }
+    return Array.from(ids);
+  }
+
+  private voiceMuted(): string[] {
+    const ids = new Set<string>();
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws.readyState !== 1) continue;
+      const attached = this.attachment(ws);
+      if (attached?.voice && attached.muted) ids.add(attached.memberId);
+    }
+    return Array.from(ids);
+  }
+
+  private broadcastVoice() {
+    this.broadcast({ t: "voice", members: this.voiceMembers(), muted: this.voiceMuted() });
   }
 
   private broadcast(value: unknown) {

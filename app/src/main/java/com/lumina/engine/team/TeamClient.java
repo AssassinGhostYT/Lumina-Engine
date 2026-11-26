@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -69,6 +71,8 @@ public final class TeamClient {
         public Member me;
         public List<Member> members = new ArrayList<>();
         public List<Chat> chat = new ArrayList<>();
+        public List<String> voice = new ArrayList<>();
+        public List<String> voiceMuted = new ArrayList<>();
     }
 
     private final OkHttpClient http;
@@ -129,13 +133,36 @@ public final class TeamClient {
         return result.has("msg") ? GSON.fromJson(result.get("msg"), Chat.class) : null;
     }
 
-    public String translate(Membership m, String text, String target) throws IOException {
+    public String translate(Membership m, String text, String source, String target) throws IOException {
         JsonObject body = new JsonObject();
         body.addProperty("text", text);
+        body.addProperty("source", source == null ? "" : source);
         body.addProperty("target", target);
         JsonObject result = post(base(m) + "/" + m.roomId + "/translate", m.token, body);
         if (result.has("error")) return null;
         return result.has("text") ? result.get("text").getAsString() : null;
+    }
+
+    /** Fallback used when the deployed server does not have the translation route yet. */
+    public String translatePublic(String text, String source, String target) throws IOException {
+        String src = source == null ? "" : source.toLowerCase(Locale.ROOT);
+        String dst = target == null ? "" : target.toLowerCase(Locale.ROOT);
+        if (!src.matches("[a-z]{2}")) src = "en";
+        if (!dst.matches("[a-z]{2}") || src.equals(dst)) return text;
+        HttpUrl base = HttpUrl.parse("https://api.mymemory.translated.net/get");
+        if (base == null) return null;
+        HttpUrl url = base.newBuilder()
+                .addQueryParameter("q", text)
+                .addQueryParameter("langpair", src + "|" + dst)
+                .build();
+        JsonObject result = execute(new Request.Builder().url(url).get().build());
+        if (result.has("responseStatus") && !"200".equals(result.get("responseStatus").getAsString())) return null;
+        if (!result.has("responseData") || !result.get("responseData").isJsonObject()) return null;
+        JsonObject data = result.getAsJsonObject("responseData");
+        String translated = data.has("translatedText") ? data.get("translatedText").getAsString() : "";
+        translated = translated == null ? "" : translated.trim();
+        if (translated.isEmpty() || translated.toUpperCase(Locale.ROOT).contains("MYMEMORY WARNING")) return null;
+        return translated;
     }
 
     public Member setRole(Membership m, String memberId, String role) throws IOException {

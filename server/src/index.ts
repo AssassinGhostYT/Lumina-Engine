@@ -144,7 +144,7 @@ async function handleRooms(parts: string[], c: Ctx): Promise<Response> {
   if (action === "translate" && request.method === "POST") {
     const body = await readJson(request, 16_000);
     if (!body) return roomError(400, "bad_json");
-    const result = await stub.translate(token, String(body.text ?? ""), String(body.target ?? ""));
+    const result = await stub.translate(token, String(body.text ?? ""), String(body.source ?? ""), String(body.target ?? ""));
     if ((result as any).error && (result as any).error !== "translate_failed") return roomError(roomStatus((result as any).error), (result as any).error);
     return withCors(Response.json(result, { headers: { "cache-control": "no-store" } }));
   }
