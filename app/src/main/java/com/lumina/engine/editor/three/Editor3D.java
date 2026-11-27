@@ -875,6 +875,8 @@ public class Editor3D {
 			}
 		}
 		it.update();
+		com.lumina.engine.team.TeamSceneSync.touch(editor, it,
+				"ROTATE".equals(m) ? "rotate" : ("SCALE".equals(m) ? "scale" : "move"), false);
 	}
 
 	private float snapM(float v) {
@@ -911,6 +913,8 @@ public class Editor3D {
 		}
 		editor.getSaveState();
 		editor.afterEdit3D();
+		com.lumina.engine.team.TeamSceneSync.touch(editor, it,
+				"ROTATE".equals(m) ? "rotate" : ("SCALE".equals(m) ? "scale" : "move"), true);
 		startTransform = null;
 	}
 

@@ -222,6 +222,21 @@ public class TeamPanel implements PanelHost.Panel, TeamSession.Listener {
             }
         }
 
+        content.addView(Ui.sectionLabel(c, Tr.t("team_now", "Ahora en el proyecto")));
+        LinearLayout nowCard = card(c, content);
+        boolean anybody = false;
+        for (TeamClient.Member member : list) {
+            TeamClient.Presence p = member == null ? null : s.presenceFor(member.id);
+            if (p == null || (!"scene".equals(p.area) && !"code".equals(p.area))) continue;
+            if (p.scene == null || p.scene.isEmpty()) continue;
+            if ("code".equals(p.area) && (p.file == null || p.file.isEmpty())) continue;
+            nowCard.addView(presenceRow(c, member, p, s), Ui.margins(Ui.matchWrap(), c, 0, 0, 0, 4));
+            anybody = true;
+        }
+        if (!anybody) {
+            nowCard.addView(Ui.text(c, Tr.t("team_now_none", "Nadie está en una escena o archivo ahora."), 12.5f, Ui.TEXT_3), Ui.matchWrap());
+        }
+
         content.addView(Ui.sectionLabel(c, Tr.t("team_voice", "Voz")));
         LinearLayout voiceCard = card(c, content);
         List<String> inCall = s.voiceMembers();
@@ -349,6 +364,46 @@ public class TeamPanel implements PanelHost.Panel, TeamSession.Listener {
             row.setOnClickListener(v -> memberMenu(c, member, s));
         }
         return row;
+    }
+
+    private View presenceRow(Context c, TeamClient.Member member, TeamClient.Presence p, TeamSession s) {
+        LinearLayout row = Ui.row(c);
+        row.setPadding(Ui.dp(c, 4), Ui.dp(c, 5), Ui.dp(c, 4), Ui.dp(c, 5));
+        String memberName = member.name == null ? "" : member.name;
+        boolean meRow = member.id != null && member.id.equals(s.membership() == null ? null : s.membership().memberId);
+        TextView name = Ui.text(c, memberName + (meRow ? " (" + Tr.t("team_you", "tú") + ")" : ""), 13.5f, Ui.TEXT);
+        name.setTypeface(Typeface.DEFAULT_BOLD);
+        row.addView(name, Ui.weight(1));
+        String where;
+        if ("scene".equals(p.area)) where = Tr.t("team_now_scene", "Escena:") + " " + p.scene;
+        else where = Tr.t("team_now_file", "Archivo:") + " " + shortPath(p.file);
+        TextView location = Ui.text(c, where, 12, Ui.ACCENT);
+        location.setMaxLines(1);
+        location.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+        row.addView(location);
+        if (!meRow) {
+            row.setClickable(true);
+            row.setOnClickListener(v -> follow(c, p));
+        }
+        return row;
+    }
+
+    private void follow(Context c, TeamClient.Presence p) {
+        if (p == null) return;
+        if ("scene".equals(p.area) && p.scene != null && !p.scene.isEmpty()) {
+            Bridge.gl(() -> Bridge.controls().actionOpenScene(p.scene));
+            return;
+        }
+        if ("code".equals(p.area) && p.file != null && new File(p.file).isFile()) {
+            shell.host().openJava(p.file);
+        }
+    }
+
+    private String shortPath(String path) {
+        if (path == null) return "";
+        String p = path.replace('\\', '/');
+        int slash = p.lastIndexOf('/');
+        return slash >= 0 && slash + 1 < p.length() ? p.substring(slash + 1) : p;
     }
 
     private void memberMenu(Context c, TeamClient.Member member, TeamSession s) {
@@ -639,6 +694,13 @@ public class TeamPanel implements PanelHost.Panel, TeamSession.Listener {
 
     @Override
     public void onMembers(TeamSession session) {
+        Ui.ui(() -> {
+            if (shell.activity() != null) render(shell.activity());
+        });
+    }
+
+    @Override
+    public void onPresence(TeamSession session) {
         Ui.ui(() -> {
             if (shell.activity() != null) render(shell.activity());
         });

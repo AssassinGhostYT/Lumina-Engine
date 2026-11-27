@@ -55,9 +55,43 @@ public final class TeamClient {
         public long at;
     }
 
+    public static final class Presence {
+        public String id;
+        public String name;
+        public String area;
+        public String scene;
+        public String file;
+    }
+
+    public static final class SceneEdit {
+        public String from;
+        public String name;
+        public String scene;
+        public String object;
+        public String action;
+        public java.util.Map<String, String> props;
+        public List<Item> items;
+        @com.google.gson.annotations.SerializedName("final")
+        public boolean last;
+
+        public static final class Item {
+            public String object;
+            public java.util.Map<String, String> props;
+        }
+    }
+
     public static final class FileState {
         public int rev;
         public List<TeamCrdt.Op> ops = new ArrayList<>();
+    }
+
+    public static final class SceneSnapshot {
+        public String scene;
+        public int rev;
+        public String data;
+        public long updatedAt;
+        public String from;
+        public String name;
     }
 
     public static final class Auth {
@@ -73,6 +107,7 @@ public final class TeamClient {
         public List<Chat> chat = new ArrayList<>();
         public List<String> voice = new ArrayList<>();
         public List<String> voiceMuted = new ArrayList<>();
+        public List<Presence> presence = new ArrayList<>();
     }
 
     private final OkHttpClient http;
@@ -112,6 +147,21 @@ public final class TeamClient {
                 ? result.getAsJsonObject("files") : new JsonObject();
         Map<String, FileState> out = GSON.fromJson(files, FILES);
         return out == null ? new java.util.LinkedHashMap<>() : out;
+    }
+
+    public SceneSnapshot scene(Membership m, String scene) throws IOException {
+        HttpUrl base = HttpUrl.parse(base(m) + "/" + m.roomId + "/scene");
+        if (base == null) throw new IOException("bad_url");
+        HttpUrl url = base.newBuilder().addQueryParameter("scene", scene).build();
+        return GSON.fromJson(get(url.toString(), m.token), SceneSnapshot.class);
+    }
+
+    public int saveScene(Membership m, String scene, String data) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("scene", scene);
+        body.addProperty("data", data);
+        JsonObject result = post(base(m) + "/" + m.roomId + "/scene", m.token, body);
+        return result.has("rev") ? result.get("rev").getAsInt() : 0;
     }
 
     public List<String> seed(Membership m, Map<String, String> files) throws IOException {

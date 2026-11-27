@@ -72,13 +72,15 @@ function roomStatus(error: unknown): number {
     case "bad_name":
     case "bad_role":
     case "bad_request": return 400;
-    case "file_full": return 413;
+    case "file_full":
+    case "too_large": return 413;
+    case "bad_scene": return 400;
     default: return 400;
   }
 }
 
 async function handleRooms(parts: string[], c: Ctx): Promise<Response> {
-  const { request, env } = c;
+  const { request, env, url } = c;
   if (parts.length === 1) {
     if (request.method !== "POST") return withCors(new Response("Use POST", { status: 405 }));
     const body = await readJson(request, 16_000);
@@ -120,6 +122,20 @@ async function handleRooms(parts: string[], c: Ctx): Promise<Response> {
 
   if (action === "files" && request.method === "GET") {
     const result = await stub.files(token);
+    if ((result as any).error) return roomError(roomStatus((result as any).error), (result as any).error);
+    return withCors(Response.json(result, { headers: { "cache-control": "no-store" } }));
+  }
+
+  if (action === "scene" && request.method === "GET") {
+    const result = await stub.scene(token, url.searchParams.get("scene") ?? "");
+    if ((result as any).error) return roomError(roomStatus((result as any).error), (result as any).error);
+    return withCors(Response.json(result, { headers: { "cache-control": "no-store" } }));
+  }
+
+  if (action === "scene" && request.method === "POST") {
+    const body = await readJson(request, 2_200_000);
+    if (!body) return roomError(413, "too_large");
+    const result = await stub.saveScene(token, String(body.scene ?? ""), body.data);
     if ((result as any).error) return roomError(roomStatus((result as any).error), (result as any).error);
     return withCors(Response.json(result, { headers: { "cache-control": "no-store" } }));
   }

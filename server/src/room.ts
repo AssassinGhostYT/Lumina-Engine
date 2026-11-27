@@ -35,6 +35,14 @@ export interface FileState {
   updatedAt: number;
 }
 
+export interface SceneMeta {
+  rev: number;
+  chunks: number;
+  updatedAt: number;
+  from: string;
+  name: string;
+}
+
 interface Meta {
   id: string;
   name: string;
@@ -45,8 +53,20 @@ interface Meta {
 
 interface Attached {
   memberId: string;
+  name?: string;
   voice?: boolean;
   muted?: boolean;
+  area?: string;
+  scene?: string;
+  file?: string;
+}
+
+interface Presence {
+  id: string;
+  name: string;
+  area: string;
+  scene: string;
+  file: string;
 }
 
 const MAX_TEXT = 2000;
@@ -55,7 +75,10 @@ const MAX_OPS_PER_FILE = 50_000;
 const MAX_SEED = 3_000_000;
 const FILE_PATH = /^[A-Za-z0-9_./ -]{1,300}$/;
 const OP_ID = /^[A-Za-z0-9_:.-]{1,200}$/;
+const EDIT_KEY = /^[A-Za-z0-9 _.-]{1,40}$/;
 const MAX_OP_TEXT = 500_000;
+const MAX_SCENE_SNAPSHOT = 2_000_000;
+const SCENE_CHUNK = 64_000;
 const MAX_VOICE_FRAME = 64_000;
 const TARGET_LANG = /^[a-z]{2}$/;
 const SOURCE_LANG = /^[a-z]{2}$/;
@@ -76,6 +99,38 @@ function cleanPath(value: unknown): string {
   const path = String(value ?? "").replace(/\\/g, "/");
   if (!FILE_PATH.test(path) || path.includes("..") || path.startsWith("/")) return "";
   return path;
+}
+
+function cleanScene(value: unknown): string {
+  return String(value ?? "").replace(/[^A-Za-z0-9_. -]/g, "").trim().slice(0, 80);
+}
+
+function cleanEditorName(value: unknown): string {
+  return String(value ?? "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 80);
+}
+
+function cleanArea(value: unknown): string {
+  return value === "scene" || value === "code" || value === "team" ? value : "";
+}
+
+function cleanSceneData(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > MAX_SCENE_SNAPSHOT) return null;
+  const data = value.trim();
+  if (!data) return "";
+  if (!data.startsWith("[") || !data.endsWith("]")) return null;
+  return data;
+}
+
+function cleanEditProps(value: unknown): Record<string, string> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: Record<string, string> = {};
+  let count = 0;
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (++count > 24 || !EDIT_KEY.test(key)) continue;
+    if (typeof raw === "number" && Number.isFinite(raw)) out[key] = String(raw);
+    else if (typeof raw === "string" && raw.length <= 80) out[key] = raw;
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 function cleanOp(value: unknown): FileOp | null {
@@ -220,6 +275,65 @@ export class Room extends DurableObject<Env> {
     return { files };
   }
 
+  async scene(token: string, sceneName: string) {
+    const member = await this.auth(token);
+    if (!member) return { error: "unauthorized" as const };
+    const scene = cleanScene(sceneName);
+    if (!scene) return { error: "bad_scene" as const };
+    const meta = await this.ctx.storage.get<SceneMeta>("scene:" + scene);
+    if (!meta) return { scene, rev: 0, data: "", updatedAt: 0, from: "", name: "" };
+    const parts: string[] = [];
+    for (let i = 0; i < meta.chunks; i++) {
+      parts.push((await this.ctx.storage.get<string>("scene:" + scene + ":" + i)) ?? "");
+    }
+    return {
+      scene,
+      rev: meta.rev,
+      data: parts.join(""),
+      updatedAt: meta.updatedAt,
+      from: meta.from,
+      name: meta.name,
+    };
+  }
+
+  async saveScene(token: string, sceneName: string, rawData: unknown) {
+    const member = await this.auth(token);
+    if (!member) return { error: "unauthorized" as const };
+    if (!canEdit(member.role)) return { error: "forbidden" as const };
+    const scene = cleanScene(sceneName);
+    const data = cleanSceneData(rawData);
+    if (!scene) return { error: "bad_scene" as const };
+    if (data === null) return { error: "bad_scene" as const };
+    const key = "scene:" + scene;
+    const previous = await this.ctx.storage.get<SceneMeta>(key);
+    const chunks = Math.ceil(data.length / SCENE_CHUNK);
+    const writes: Record<string, string | SceneMeta> = {};
+    const meta: SceneMeta = {
+      rev: (previous?.rev ?? 0) + 1,
+      chunks,
+      updatedAt: Date.now(),
+      from: member.id,
+      name: member.name,
+    };
+    writes[key] = meta;
+    for (let i = 0; i < chunks; i++) {
+      writes[key + ":" + i] = data.slice(i * SCENE_CHUNK, (i + 1) * SCENE_CHUNK);
+    }
+    await this.ctx.storage.put(writes);
+    if (previous && previous.chunks > chunks) {
+      for (let i = chunks; i < previous.chunks; i++) await this.ctx.storage.delete(key + ":" + i);
+    }
+    this.broadcast({
+      t: "scene",
+      scene,
+      rev: meta.rev,
+      updatedAt: meta.updatedAt,
+      from: member.id,
+      name: member.name,
+    });
+    return { rev: meta.rev };
+  }
+
   async seed(token: string, input: Record<string, unknown>) {
     const member = await this.auth(token);
     if (!member) return { error: "unauthorized" as const };
@@ -350,14 +464,22 @@ export class Room extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ memberId: member.id, voice: false } satisfies Attached);
+    server.serializeAttachment({ memberId: member.id, name: member.name, voice: false } satisfies Attached);
     member.lastSeen = Date.now();
     await this.ctx.storage.put("member:" + member.id, member);
 
     const info = await this.infoFor(member);
     const chat = (await this.ctx.storage.get<ChatMessage[]>("chat")) ?? [];
-    server.send(JSON.stringify({ t: "welcome", ...info, chat, voice: this.voiceMembers(), voiceMuted: this.voiceMuted() }));
+    server.send(JSON.stringify({
+      t: "welcome",
+      ...info,
+      chat,
+      voice: this.voiceMembers(),
+      voiceMuted: this.voiceMuted(),
+      presence: this.presence(),
+    }));
     this.broadcastMembers();
+    this.broadcastPresence();
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -420,6 +542,47 @@ export class Room extends DurableObject<Env> {
       this.broadcastVoice();
       return;
     }
+    if (data.t === "here") {
+      const area = cleanArea(data.area);
+      const scene = area === "scene" ? cleanScene(data.scene) : "";
+      const file = area === "code" ? cleanPath(data.file) : "";
+      if (area === "scene" && !scene) return;
+      if (area === "code" && !file) return;
+      if ((attached.area ?? "") === area && (attached.scene ?? "") === scene && (attached.file ?? "") === file) return;
+      ws.serializeAttachment({ ...attached, area, scene, file } satisfies Attached);
+      this.broadcastPresence();
+      return;
+    }
+    if (data.t === "edit") {
+      if (!canEdit(member.role)) return;
+      const scene = cleanScene(data.scene);
+      if (!scene) return;
+      const items: Array<{ object: string; props: Record<string, string> }> = [];
+      if (Array.isArray(data.items)) {
+        for (const raw of data.items.slice(0, 60)) {
+          if (!raw || typeof raw !== "object") continue;
+          const object = cleanEditorName((raw as Record<string, unknown>).object);
+          const props = cleanEditProps((raw as Record<string, unknown>).props);
+          if (object && props) items.push({ object, props });
+        }
+      } else {
+        const object = cleanEditorName(data.object);
+        const props = cleanEditProps(data.props);
+        if (object && props) items.push({ object, props });
+      }
+      if (!items.length) return;
+      const action = data.action === "rotate" || data.action === "scale" ? data.action : "move";
+      this.broadcast({
+        t: "edit",
+        from: member.id,
+        name: member.name,
+        scene,
+        action,
+        items,
+        final: data.final === true,
+      }, ws);
+      return;
+    }
     if (data.t === "op") {
       if (!canEdit(member.role)) {
         ws.send(JSON.stringify({ t: "error", message: "read_only" }));
@@ -471,6 +634,7 @@ export class Room extends DurableObject<Env> {
     }
     this.broadcastVoice();
     this.broadcastMembers();
+    this.broadcastPresence();
   }
 
   async webSocketError(ws: WebSocket): Promise<void> {
@@ -482,6 +646,7 @@ export class Room extends DurableObject<Env> {
     }
     this.broadcastVoice();
     this.broadcastMembers();
+    this.broadcastPresence();
   }
 
   private async auth(token: string): Promise<Member | null> {
@@ -548,13 +713,37 @@ export class Room extends DurableObject<Env> {
     return Array.from(ids);
   }
 
+  private presence(): Presence[] {
+    const seen = new Set<string>();
+    const out: Presence[] = [];
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws.readyState !== 1) continue;
+      const attached = this.attachment(ws);
+      if (!attached || seen.has(attached.memberId)) continue;
+      seen.add(attached.memberId);
+      out.push({
+        id: attached.memberId,
+        name: attached.name ?? "",
+        area: attached.area ?? "",
+        scene: attached.scene ?? "",
+        file: attached.file ?? "",
+      });
+    }
+    return out;
+  }
+
   private broadcastVoice() {
     this.broadcast({ t: "voice", members: this.voiceMembers(), muted: this.voiceMuted() });
   }
 
-  private broadcast(value: unknown) {
+  private broadcastPresence() {
+    this.broadcast({ t: "presence", members: this.presence() });
+  }
+
+  private broadcast(value: unknown, skip?: WebSocket) {
     const text = JSON.stringify(value);
     for (const ws of this.ctx.getWebSockets()) {
+      if (ws === skip) continue;
       try {
         ws.send(text);
       } catch {

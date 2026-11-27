@@ -13,6 +13,7 @@ import com.lumina.engine.team.TeamClient.Chat;
 import com.lumina.engine.team.TeamClient.FileState;
 import com.lumina.engine.team.TeamClient.Info;
 import com.lumina.engine.team.TeamClient.Member;
+import com.lumina.engine.team.TeamClient.SceneSnapshot;
 import com.lumina.engine.team.TeamSettings.Membership;
 
 import java.io.File;
@@ -42,6 +43,9 @@ public final class TeamSession {
         default void onChat(TeamSession session, Chat message) {}
         default void onVoice(TeamSession session) {}
         default void onText(TeamSession session, String path, String text) {}
+        default void onPresence(TeamSession session) {}
+        default void onEdit(TeamSession session, TeamClient.SceneEdit edit) {}
+        default void onScene(TeamSession session, SceneSnapshot snapshot) {}
         default void onError(TeamSession session, String message) {}
     }
 
@@ -57,6 +61,8 @@ public final class TeamSession {
     private final TeamClient client = new TeamClient();
     private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
     private final Map<String, TeamCrdt> files = new ConcurrentHashMap<>();
+    private final Map<String, Integer> sceneRevs = new ConcurrentHashMap<>();
+    private final Map<String, Long> sceneRequests = new ConcurrentHashMap<>();
     private final Deque<JsonObject> outbox = new ArrayDeque<>();
 
     private Context app;
@@ -70,6 +76,10 @@ public final class TeamSession {
     private VoiceChat voice;
     private final CopyOnWriteArrayList<String> voiceMembers = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<String> voiceMutedMembers = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<TeamClient.Presence> presence = new CopyOnWriteArrayList<>();
+    private volatile String hereArea = "";
+    private volatile String hereScene = "";
+    private volatile String hereFile = "";
     private volatile boolean inVoice;
     private volatile boolean voiceMuted;
     private volatile boolean wantVoice;
@@ -151,6 +161,26 @@ public final class TeamSession {
         return voiceMutedMembers.contains(memberId);
     }
 
+    public List<TeamClient.Presence> presence() {
+        return new ArrayList<>(presence);
+    }
+
+    public TeamClient.Presence presenceFor(String memberId) {
+        if (memberId == null) return null;
+        for (TeamClient.Presence p : presence) {
+            if (p != null && memberId.equals(p.id)) return p;
+        }
+        return null;
+    }
+
+    /** Tells the team what this member is looking at (scene, code file or the team panel). */
+    public void here(String area, String scene, String file) {
+        hereArea = area == null ? "" : area;
+        hereScene = scene == null ? "" : scene;
+        hereFile = file == null ? "" : file;
+        sendHere();
+    }
+
     public boolean isSpeaking(String memberId) {
         if (voice == null || memberId == null) return false;
         if (membership != null && memberId.equals(membership.memberId)) return voice.localSpeaking();
@@ -227,6 +257,12 @@ public final class TeamSession {
         membership = TeamSettings.get(app, path);
         site = TeamSettings.site(app);
         files.clear();
+        sceneRevs.clear();
+        sceneRequests.clear();
+        presence.clear();
+        hereArea = "";
+        hereScene = "";
+        hereFile = "";
         info = null;
         final int gen = ++generation;
         if (membership == null) {
@@ -359,6 +395,8 @@ public final class TeamSession {
         closeSocket();
         if (voice != null) voice.release();
         files.clear();
+        sceneRevs.clear();
+        sceneRequests.clear();
         outbox.clear();
         if (app != null && projectPath != null) TeamSettings.clear(app, projectPath);
         membership = null;
@@ -457,6 +495,97 @@ public final class TeamSession {
         byte[] copy = new byte[length];
         System.arraycopy(data, 0, copy, 0, length);
         ws.send(ByteString.of(copy));
+    }
+
+    public void sendSceneEdit(String scene, String object, String action, Map<String, String> props, boolean last) {
+        Map<String, Map<String, String>> items = new LinkedHashMap<>();
+        items.put(object, props);
+        sendSceneEdits(scene, action, items, last);
+    }
+
+    public void sendSceneEdits(String scene, String action, Map<String, Map<String, String>> items, boolean last) {
+        WebSocket ws = socket;
+        if (ws == null || !isConnected() || !canEdit() || scene == null || items == null || items.isEmpty()) return;
+        JsonObject body = new JsonObject();
+        body.addProperty("t", "edit");
+        body.addProperty("scene", scene);
+        body.addProperty("action", action == null ? "move" : action);
+        body.addProperty("final", last);
+        JsonArray values = new JsonArray();
+        for (Map.Entry<String, Map<String, String>> item : items.entrySet()) {
+            if (item.getKey() == null || item.getValue() == null || item.getValue().isEmpty()) continue;
+            JsonObject one = new JsonObject();
+            one.addProperty("object", item.getKey());
+            JsonObject props = new JsonObject();
+            for (Map.Entry<String, String> e : item.getValue().entrySet()) {
+                if (e.getKey() != null && e.getValue() != null) props.addProperty(e.getKey(), e.getValue());
+            }
+            one.add("props", props);
+            values.add(one);
+        }
+        if (values.size() == 0) return;
+        body.add("items", values);
+        ws.send(body.toString());
+    }
+
+    /** Ask the server for the latest saved snapshot of a scene (when opening it or after a teammate saved). */
+    public void requestScene(String scene) {
+        if (scene == null || scene.isEmpty() || !isConnected()) return;
+        long now = System.currentTimeMillis();
+        Long previous = sceneRequests.get(scene);
+        if (previous != null && now - previous < 1200) return;
+        sceneRequests.put(scene, now);
+        fetchScene(scene);
+    }
+
+    /** Publish a complete scene after a structural/property edit so everyone sees create, delete and duplicate too. */
+    public void publishScene(String scene, String data) {
+        final Membership m = membership;
+        if (m == null || scene == null || scene.isEmpty() || data == null || !isConnected() || !canEdit()) return;
+        io.execute(() -> {
+            try {
+                int rev = client.saveScene(m, scene, data);
+                if (rev > 0) main.post(() -> {
+                    if (membership == m) sceneRevs.put(scene, rev);
+                });
+            } catch (IOException e) {
+                String error = message(e);
+                if (!error.contains("not_found") && !error.contains("404") && !error.contains("unsupported")) {
+                    main.post(() -> notifyError(error));
+                }
+            }
+        });
+    }
+
+    private void fetchScene(String scene) {
+        final Membership m = membership;
+        if (m == null || scene == null || scene.isEmpty()) return;
+        final int gen = generation;
+        io.execute(() -> {
+            try {
+                SceneSnapshot snapshot = client.scene(m, scene);
+                main.post(() -> {
+                    if (gen != generation || membership != m || snapshot == null || snapshot.scene == null) return;
+                    if (snapshot.rev <= 0 || snapshot.data == null) return;
+                    Integer known = sceneRevs.get(snapshot.scene);
+                    if (known != null && snapshot.rev <= known) return;
+                    sceneRevs.put(snapshot.scene, snapshot.rev);
+                    for (Listener listener : listeners) listener.onScene(this, snapshot);
+                });
+            } catch (IOException ignored) {
+            }
+        });
+    }
+
+    private void sendHere() {
+        WebSocket ws = socket;
+        if (ws == null || !isConnected()) return;
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "here");
+        m.addProperty("area", hereArea);
+        m.addProperty("scene", hereScene);
+        m.addProperty("file", hereFile);
+        ws.send(m.toString());
     }
 
     public void sendChat(String text) {
@@ -616,6 +745,7 @@ public final class TeamSession {
                     if (webSocket != socket) return;
                     state = "connected";
                     flush();
+                    sendHere();
                     reloadFiles();
                     if (wantVoice) joinVoice();
                     notifyState();
@@ -687,6 +817,7 @@ public final class TeamSession {
                 info = loaded;
                 syncMembership(loaded);
                 applyVoice(loaded.voice, loaded.voiceMuted);
+                applyPresence(loaded.presence);
                 notifyMembers();
                 notifyState();
                 notifyVoice();
@@ -715,6 +846,31 @@ public final class TeamSession {
             }
             applyVoice(members, muted);
             notifyVoice();
+            return;
+        }
+        if ("presence".equals(type)) {
+            if (json.has("members") && json.get("members").isJsonArray()) {
+                List<TeamClient.Presence> list = GSON.fromJson(json.getAsJsonArray("members"),
+                        new com.google.gson.reflect.TypeToken<List<TeamClient.Presence>>() {}.getType());
+                applyPresence(list);
+                notifyPresence();
+            }
+            return;
+        }
+        if ("scene".equals(type)) {
+            String scene = json.has("scene") ? json.get("scene").getAsString() : "";
+            int rev = json.has("rev") ? json.get("rev").getAsInt() : 0;
+            if (!scene.isEmpty() && rev > 0) {
+                Integer known = sceneRevs.get(scene);
+                if (known == null || rev > known) fetchScene(scene);
+            }
+            return;
+        }
+        if ("edit".equals(type)) {
+            TeamClient.SceneEdit edit = GSON.fromJson(json, TeamClient.SceneEdit.class);
+            if (edit != null && edit.scene != null && (edit.items != null || edit.object != null)) {
+                for (Listener listener : listeners) listener.onEdit(this, edit);
+            }
             return;
         }
         if ("chat".equals(type)) {
@@ -836,6 +992,14 @@ public final class TeamSession {
         return m;
     }
 
+    private void applyPresence(List<TeamClient.Presence> list) {
+        presence.clear();
+        if (list == null) return;
+        for (TeamClient.Presence p : list) {
+            if (p != null && p.id != null && !p.id.isEmpty() && presenceFor(p.id) == null) presence.add(p);
+        }
+    }
+
     private void applyVoice(List<String> members, List<String> muted) {
         List<String> previous = new ArrayList<>(voiceMembers);
         voiceMembers.clear();
@@ -918,6 +1082,7 @@ public final class TeamSession {
     private void closeSocket() {
         WebSocket old = socket;
         socket = null;
+        presence.clear();
         resetVoiceCall();
         if (voice != null) voice.stopPlayback();
         if (old != null) {
@@ -934,6 +1099,10 @@ public final class TeamSession {
 
     private void notifyMembers() {
         for (Listener listener : listeners) listener.onMembers(this);
+    }
+
+    private void notifyPresence() {
+        for (Listener listener : listeners) listener.onPresence(this);
     }
 
     private void notifyVoice() {

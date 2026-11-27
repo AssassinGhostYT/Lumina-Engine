@@ -143,6 +143,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         remote = new com.lumina.engine.ui.panels.RemotePanel(this);
         aiHub = new com.lumina.engine.ui.panels.AiHubPanel(this, remote, ai);
         team = new TeamPanel(this);
+        com.lumina.engine.team.TeamSceneSync.install();
         panels.setNavigator(java.util.Arrays.asList(elements, properties, events, joints, variables, files, aiHub, git, team, settings),
                 p -> { if (com.lumina.engine.remote.RemoteSession.isLocked() && p != files && p != aiHub) togglePanel(p); else panels.show(p); });
         com.lumina.engine.remote.RemoteSession.addListener(sessionListener);
@@ -1254,6 +1255,13 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
                 // the hidden scene vanished behind our back (project reloaded): leave prefab mode
                 if (inPrefabMode() && !prefabBusy && !(Boolean) r[1]) clearPrefabMode();
             });
+            Bridge.query(() -> Bridge.editor() == null ? null : Bridge.editor().getScene(), scene -> {
+                if (scene != null && !com.lumina.engine.prefab.PrefabStore.isTempScene(scene)) {
+                    com.lumina.engine.team.TeamSession.get().here("scene", scene, "");
+                    com.lumina.engine.team.TeamSession.get().requestScene(scene);
+                    com.lumina.engine.team.TeamSceneSync.applyScene(scene);
+                }
+            });
             refreshAll();
             // keep the chosen tool for the new editor
             Bridge.gl(() -> Bridge.controls().actionSetTouchMode(tool));
@@ -1294,6 +1302,7 @@ public class EditorShell extends FrameLayout implements ControlLayer.NativeUi, T
         prefabBusy = false;
         toolOpen = false;
         toolCloser = null;
+        com.lumina.engine.team.TeamSession.get().here("", "", "");
         panels.hide();
         updateVisibility();
     }

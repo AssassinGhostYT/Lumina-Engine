@@ -306,6 +306,8 @@ public class CodeEditorActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		TeamSession.get().removeListener(teamListener);
+		String scene = com.lumina.engine.ui.Bridge.editor() == null ? "" : com.lumina.engine.ui.Bridge.editor().getScene();
+		TeamSession.get().here(scene == null || scene.isEmpty() ? "" : "scene", scene == null ? "" : scene, "");
 		if(smart != null) smart.destroy();
 	}
 
@@ -315,6 +317,7 @@ public class CodeEditorActivity extends AppCompatActivity {
 		if (root == null) return;
 		TeamSession.get().init(this);
 		TeamSession.get().addListener(teamListener);
+		TeamSession.get().here("code", "", path);
 		editor.setEditable(false);
 		TeamSession.get().load(this, root, () -> {
 			if (TeamSession.get().membership() == null) {

@@ -293,10 +293,17 @@ public class LibgdxEditor extends Stage {
 				editorListener.onUpdateUndoRedo();
 			if(AUTO_SAVE)
 				project.save(LibgdxEditor.this);
+			com.lumina.engine.team.TeamSceneSync.touch(this, getSelectedActor(), teamTouchAction(), true);
 		}
 		return super.touchUp(arg0, arg1, arg2, arg3);
 	}
 	
+	private String teamTouchAction(){
+		if(touch_mode == TOUCHMODE.ROTATE) return "rotate";
+		if(touch_mode == TOUCHMODE.SCALE) return "scale";
+		return "move";
+	}
+
 	// when the editor touch started 
 	@Override
 	public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
@@ -372,6 +379,7 @@ public class LibgdxEditor extends Stage {
 			redoNStack.clear();
 			//refreshUndoRedo();
 			undoRedoUpdated();
+			com.lumina.engine.team.TeamSceneSync.markChanged(this);
 		}
 	}
 	
@@ -1012,6 +1020,7 @@ public class LibgdxEditor extends Stage {
 				editorListener.onUpdateUndoRedo();
 			if(controlLayer!=null)
 				controlLayer.updateUndoRedo();
+			com.lumina.engine.team.TeamSceneSync.markChanged(this);
 		}
 	}
 
@@ -1037,6 +1046,7 @@ public class LibgdxEditor extends Stage {
 				editorListener.onUpdateUndoRedo();
 			if(controlLayer!=null)
 				controlLayer.updateUndoRedo();
+			com.lumina.engine.team.TeamSceneSync.markChanged(this);
 		}
 	}
 	
@@ -1255,6 +1265,7 @@ public class LibgdxEditor extends Stage {
 				propertySet.put("y",propertySet.getFloat("y") - deltaY);
 				((EditorItem)selectedActor).update();
 				if(!dragKids.isEmpty()) Hierarchy.move(dragKids,-deltaX,-deltaY);
+				com.lumina.engine.team.TeamSceneSync.touch(this, selectedActor, "move", false);
 				
 				//selectedActor.setPosition(selectedActor.getX()+deltaX,selectedActor.getY()+deltaX);
 			} else if(touch_mode == TOUCHMODE.ROTATE){
@@ -1283,6 +1294,7 @@ public class LibgdxEditor extends Stage {
 				propertySet.put("rotation", angle);
 				((EditorItem)selectedActor).update();
 				if(!dragKids.isEmpty()) Hierarchy.rotate(dragKids,centerX,centerY,(float)deltaRotation);
+				com.lumina.engine.team.TeamSceneSync.touch(this, selectedActor, "rotate", false);
 				
 			} else if(touch_mode == TOUCHMODE.SCALE){
 			    deltaY = -deltaY;
@@ -1303,6 +1315,7 @@ public class LibgdxEditor extends Stage {
 				}
 				if(propertySet.containsKey("radius") || propertySet.containsKey("width")){
 					((EditorItem)selectedActor).update();
+					com.lumina.engine.team.TeamSceneSync.touch(this, selectedActor, "scale", false);
 				}
 			}
 		}
