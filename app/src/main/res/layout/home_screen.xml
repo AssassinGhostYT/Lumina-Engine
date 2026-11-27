@@ -144,6 +144,12 @@
                     android:text="Open" />
 
                 <TextView
+                    android:id="@+id/btn_join_team"
+                    style="@style/HomeButton.Secondary"
+                    android:layout_marginEnd="8dp"
+                    android:text="Join team" />
+
+                <TextView
                     android:id="@+id/btn_new_project"
                     style="@style/HomeButton.Primary"
                     android:text="New project" />

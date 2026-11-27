@@ -330,6 +330,7 @@ public final class TeamSession {
                     connect();
                     notifyMembers();
                     notifyState();
+                    if (projectPath != null) seedProject(new File(projectPath), null);
                     if (done != null) done.on(null);
                 });
             } catch (IOException e) {
@@ -747,6 +748,10 @@ public final class TeamSession {
                     flush();
                     sendHere();
                     reloadFiles();
+                    if ("scene".equals(hereArea) && hereScene != null && !hereScene.isEmpty()) {
+                        sceneRequests.remove(hereScene);
+                        requestScene(hereScene);
+                    }
                     if (wantVoice) joinVoice();
                     notifyState();
                     notifyVoice();

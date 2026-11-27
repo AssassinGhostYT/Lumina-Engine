@@ -36,7 +36,12 @@ import com.lumina.engine.Helpers.EngineSettings;
 import com.lumina.engine.MainActivity;
 import com.lumina.engine.editor.ui.sub.EditorField;
 import com.lumina.engine.R;
+import com.lumina.engine.remote.RemoteSettings;
+import com.lumina.engine.team.TeamClient;
+import com.lumina.engine.team.TeamCrdt;
+import com.lumina.engine.team.TeamSession;
 import com.lumina.engine.team.TeamSettings;
+import com.lumina.engine.ui.Dialogs;
 import com.lumina.engine.ui.Ui;
 import android.view.ViewGroup;
 
@@ -44,12 +49,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -147,6 +155,7 @@ public class ProjectsHomeView extends FrameLayout {
             {"Script Code Completion", "codeCompletion"}, {"Automatic Scene Saving", "autoSave"}, {"Persist Undo/Redo History", "saveUndoRedo"},
             {"Show ads", "home_show_ads"}, {"Ad", "home_ad_label"}, {"Hide ad", "home_ad_hide"},
             {"+ Use Template", "home_use_template"}, {"Join", "home_join"},
+            {"Join team", "team_join_short"},
     };
 
     static void translateTree(View v) {
@@ -234,6 +243,7 @@ public class ProjectsHomeView extends FrameLayout {
         search = findViewById(R.id.projects_search);
         findViewById(R.id.btn_new_project).setOnClickListener(v -> createNewProject());
         findViewById(R.id.btn_open).setOnClickListener(v -> host.importProject());
+        findViewById(R.id.btn_join_team).setOnClickListener(v -> joinTeamFromHome());
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
@@ -294,6 +304,104 @@ public class ProjectsHomeView extends FrameLayout {
         }
         projectsEmpty.setText(all.isEmpty() ? T("home_no_projects", "No projects yet") : T("home_no_match", "No matching projects"));
         projectsEmpty.setVisibility(shown == 0 ? VISIBLE : GONE);
+    }
+
+    /** Join a team from the home screen: the workspace is created and opened automatically. */
+    private void joinTeamFromHome() {
+        Dialogs.input(activity, T("team_join", "Join with an invite"), T("team_invite_paste", "Paste room#code"), "", value -> {
+            String raw = value == null ? "" : value.trim();
+            int hash = raw.indexOf('#');
+            return hash <= 0 || hash == raw.length() - 1 ? T("team_bad_invite", "Format: room#code") : null;
+        }, value -> {
+            String[] parts = value.trim().split("#", 2);
+            Dialogs.input(activity, T("team_your_name", "Your name"), "", android.os.Build.MODEL,
+                    v -> v.trim().isEmpty() ? T("team_need_name", "Write a name") : null, name -> {
+                        joinTeamWorkspace(parts[0].trim(), parts[1].trim(), name.trim());
+                    });
+        });
+    }
+
+    private void joinTeamWorkspace(String roomId, String code, String name) {
+        toast(T("team_joining", "Joining team…"));
+        io.execute(() -> {
+            String fail = null;
+            File dir = null;
+            try {
+                TeamClient client = new TeamClient();
+                TeamClient.Auth auth = client.join(activity, roomId, code, name);
+                if (auth == null || auth.room == null || auth.me == null || auth.token == null || auth.token.isEmpty())
+                    throw new Exception("bad_response");
+                dir = createWorkspace(auth.room.name);
+                if (dir == null) throw new Exception("workspace_failed");
+                TeamSettings.Membership m = new TeamSettings.Membership();
+                m.server = RemoteSettings.server(activity);
+                m.roomId = auth.room.id;
+                m.roomName = auth.room.name;
+                m.ownerId = auth.room.ownerId;
+                m.inviteCode = auth.room.inviteCode;
+                m.token = auth.token;
+                m.memberId = auth.me.id;
+                m.name = auth.me.name;
+                m.role = auth.me.role;
+                m.projectPath = dir.getAbsolutePath();
+                materializeTeamProject(client, m, dir);
+                TeamSettings.save(activity, m.projectPath, m);
+                TeamSession.get().init(activity);
+            } catch (Exception e) {
+                fail = e.getMessage() == null || e.getMessage().isEmpty() ? e.toString() : e.getMessage();
+            }
+            final String error = fail;
+            final File workspace = dir;
+            ui.post(() -> {
+                if (error != null) {
+                    toast(T("team_join_failed", "Could not join") + ": " + error);
+                    return;
+                }
+                TeamSession.get().load(activity, workspace.getAbsolutePath(), () -> host.openProject(workspace));
+            });
+        });
+    }
+
+    /** Writes the text files the owner published into the new workspace before opening it. */
+    private void materializeTeamProject(TeamClient client, TeamSettings.Membership m, File dir) throws Exception {
+        Map<String, TeamClient.FileState> snapshots = client.files(m);
+        if (snapshots == null || snapshots.isEmpty()) return;
+        String root = dir.getCanonicalPath() + File.separator;
+        for (Map.Entry<String, TeamClient.FileState> entry : snapshots.entrySet()) {
+            String path = entry.getKey();
+            if (path == null || path.isEmpty() || path.startsWith("/") || path.contains("..") || path.contains("\\")) continue;
+            TeamClient.FileState state = entry.getValue();
+            if (state == null || state.ops == null || state.ops.isEmpty()) continue;
+            TeamCrdt crdt = new TeamCrdt(TeamSettings.site(activity));
+            crdt.applyAll(state.ops);
+            String text = crdt.text();
+            if (text == null || text.isEmpty()) continue;
+            File target = new File(dir, path);
+            String full = target.getCanonicalPath();
+            if (!full.startsWith(root)) continue;
+            File parent = target.getParentFile();
+            if (parent != null) parent.mkdirs();
+            Files.write(target.toPath(), text.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private File createWorkspace(String roomName) {
+        String base = roomName == null ? "" : roomName.trim().replaceAll("[^A-Za-z0-9_]+", "_");
+        while (base.startsWith("_")) base = base.substring(1);
+        while (base.endsWith("_")) base = base.substring(0, base.length() - 1);
+        if (base.isEmpty()) base = "Equipo";
+        if (base.length() > 40) base = base.substring(0, 40);
+        if (base.matches("[0-9].*")) base = "Equipo_" + base;
+        File dir = new File(projectsDir, base);
+        int n = 2;
+        while (dir.exists()) dir = new File(projectsDir, base + "_" + (n++));
+        if (!dir.mkdirs()) return null;
+        createDefaultPaths(dir);
+        ProjectDialogs.writeProjectLanguage(dir, "java");
+        ProjectDialogs.writeOrientation(activity, dir, true);
+        new File(dir, "scenes").mkdirs();
+        new File(dir, "configs").mkdirs();
+        return dir;
     }
 
     private void openProject(File project) {
